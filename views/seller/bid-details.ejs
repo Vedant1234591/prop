@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid Details - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header', { 
+        user: user, 
+        currentPage: 'find-bids',
+        bidCount: bidCount || 0
+    }) %>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Project Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900"><%= project.title %></h1>
+                    <p class="text-gray-600 mt-2"><%= project.description %></p>
+                </div>
+                <span class="px-4 py-2 rounded-full text-sm font-medium 
+                    <%= project.bidSettings.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <%= project.bidSettings.isActive ? 'ACTIVE' : 'CLOSED' %>
+                </span>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 text-sm">
+                <div class="flex items-center">
+                    <i class="fas fa-tag mr-3 text-indigo-500"></i>
+                    <div>
+                        <p class="text-gray-500">Category</p>
+                        <p class="font-medium capitalize"><%= project.category.replace('-', ' ') %></p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-map-marker-alt mr-3 text-red-500"></i>
+                    <div>
+                        <p class="text-gray-500">Location</p>
+                        <p class="font-medium"><%= project.location.city %>, <%= project.location.state %></p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-dollar-sign mr-3 text-green-500"></i>
+                    <div>
+                        <p class="text-gray-500">Starting Bid</p>
+                        <p class="font-medium">$<%= project.bidSettings.startingBid %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column - Project Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Requirements -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Project Requirements</h2>
+                    <div class="prose max-w-none">
+                        <p class="text-gray-700 whitespace-pre-wrap"><%= project.requirements %></p>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Project Timeline</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Bid Submission Deadline</span>
+                            <div class="text-right">
+                                <span class="font-medium"><%= moment(project.bidSettings.bidEndDate).format('MMM D, YYYY h:mm A') %></span>
+                                <p class="text-sm <%= moment().isBefore(project.bidSettings.bidEndDate) ? 'text-green-600' : 'text-red-600' %>">
+                                    <%= moment().isBefore(project.bidSettings.bidEndDate) ? moment(project.bidSettings.bidEndDate).fromNow() + ' left' : 'Closed' %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Bid Application -->
+            <div class="space-y-6">
+                <!-- Customer Information -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center">
+                            <i class="fas fa-user mr-3 text-blue-500"></i>
+                            <div>
+                                <p class="font-medium"><%= project.customer.name %></p>
+                                <p class="text-gray-600"><%= project.customer.email %></p>
+                            </div>
+                        </div>
+                        <% if (project.customer.companyName) { %>
+                        <div class="flex items-center">
+                            <i class="fas fa-building mr-3 text-gray-500"></i>
+                            <span><%= project.customer.companyName %></span>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Bid Application -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <% if (existingBid) { %>
+                        Your Bid Submission
+                        <% } else { %>
+                        Submit Your Bid
+                        <% } %>
+                    </h3>
+
+                    <% if (existingBid) { %>
+                        <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xl font-bold text-blue-800">$<%= existingBid.amount %></span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                                    <%= existingBid.status.toUpperCase() %>
+                                </span>
+                            </div>
+                            <p class="text-sm text-blue-700 mb-2">Your proposal has been submitted.</p>
+                            <p class="text-xs text-blue-600">Submitted: <%= moment(existingBid.createdAt).format('MMM D, YYYY h:mm A') %></p>
+                        </div>
+                    <% } else if (project.bidSettings.isActive && moment().isBefore(project.bidSettings.bidEndDate)) { %>
+                        <!-- SIMPLIFIED BID FORM -->
+                        <form id="bidForm" action="/seller/apply-bid/<%= project._id %>" method="POST" class="space-y-4">
+                            <!-- Bid Amount -->
+                            <div>
+                                <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Bid Amount ($) *</label>
+                                <input type="number" 
+                                       id="amount" 
+                                       name="amount" 
+                                       required 
+                                       min="<%= project.bidSettings.startingBid %>" 
+                                       step="0.01"
+                                       value="<%= project.bidSettings.startingBid %>"
+                                       class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter your bid amount">
+                                <p class="text-xs text-gray-500 mt-1">Minimum: $<%= project.bidSettings.startingBid %></p>
+                            </div>
+
+                            <!-- Proposal -->
+                            <div>
+                                <label for="proposal" class="block text-sm font-medium text-gray-700 mb-1">Your Proposal *</label>
+                                <textarea id="proposal" 
+                                          name="proposal" 
+                                          rows="4" 
+                                          required
+                                          class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                          placeholder="Describe your approach, methodology, and why you're the best fit for this project...">I have experience in <%= project.category.replace('-', ' ') %> projects and can deliver quality results within your timeline.</textarea>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" 
+                                    id="submitBtn"
+                                    class="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 font-semibold">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Submit Bid
+                            </button>
+                        </form>
+                    <% } else { %>
+                        <div class="bg-red-50 border border-red-200 rounded-md p-4 text-center">
+                            <i class="fas fa-times-circle text-red-400 text-2xl mb-2"></i>
+                            <p class="text-red-800 font-medium">Bidding Closed</p>
+                            <p class="text-red-600 text-sm mt-1">The bid submission period for this project has ended.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Bid details page loaded');
+        
+        const bidForm = document.getElementById('bidForm');
+        const amountInput = document.getElementById('amount');
+        const proposalInput = document.getElementById('proposal');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (bidForm) {
+            console.log('Bid form found, adding event listener');
+            
+            bidForm.addEventListener('submit', function(e) {
+                console.log('Form submission started');
+                
+                let isValid = true;
+                let errorMessage = '';
+
+                // Validate amount
+                const amount = parseFloat(amountInput.value);
+                const minAmount = parseFloat(amountInput.getAttribute('min'));
+                
+                console.log('Amount validation:', { amount, minAmount });
+
+                if (!amount || isNaN(amount)) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid bid amount';
+                    amountInput.focus();
+                } else if (amount < minAmount) {
+                    isValid = false;
+                    errorMessage = `Bid amount must be at least $${minAmount}`;
+                    amountInput.focus();
+                }
+                
+                // Validate proposal
+                else if (!proposalInput.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'Proposal description is required';
+                    proposalInput.focus();
+                } else if (proposalInput.value.trim().length < 10) {
+                    isValid = false;
+                    errorMessage = 'Proposal must be at least 10 characters long';
+                    proposalInput.focus();
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    console.log('Form validation failed:', errorMessage);
+                    alert('Error: ' + errorMessage);
+                } else {
+                    console.log('Form validation passed, submitting...');
+                    // Show loading state
+                    if (submitBtn) {
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting Bid...';
+                        submitBtn.disabled = true;
+                    }
+                }
+            });
+        } else {
+            console.log('No bid form found on this page');
+        }
+    });
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

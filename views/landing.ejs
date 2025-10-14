@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propload - Professional Project Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        .hero-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-indigo-600">Propload</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/auth/login" class="text-gray-600 hover:text-indigo-600 transition duration-300">Login</a>
+                    <a href="/auth/register?role=customer" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg text-white">
+        <div class="max-w-7xl mx-auto px-4 py-20">
+            <div class="text-center">
+                <h1 class="text-5xl font-bold mb-6 animate__animated animate__fadeIn">Connect Projects with Professionals</h1>
+                <p class="text-xl mb-8 animate__animated animate__fadeIn animate__delay-1s">The ultimate platform for project owners and service providers to collaborate seamlessly</p>
+                <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="#join" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-100 transition duration-300">Join Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Join Options -->
+    <section id="join" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12">Choose Your Path</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Customer Card -->
+                <div class="card-hover bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Join as Customer</h3>
+                        <p class="text-gray-600 mb-6">Post your projects, receive competitive bids, and find the perfect professionals for your needs.</p>
+                        <ul class="text-left space-y-2 mb-8">
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Post projects easily
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Receive multiple bids
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Track project progress
+                            </li>
+                        </ul>
+                        <a href="/auth/register?role=customer" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300 w-full block">Join as Customer</a>
+                    </div>
+                </div>
+
+                <!-- Seller Card -->
+                <div class="card-hover bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Join as Seller</h3>
+                        <p class="text-gray-600 mb-6">Find projects that match your expertise, bid competitively, and grow your business.</p>
+                        <ul class="text-left space-y-2 mb-8">
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Access quality projects
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Competitive bidding
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Build your portfolio
+                            </li>
+                        </ul>
+                        <a href="/auth/register?role=seller" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 w-full block">Join as Seller</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2024 Propload. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

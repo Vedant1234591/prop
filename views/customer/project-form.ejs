@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Form - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center <%= step >= 1 ? 'text-indigo-600' : 'text-gray-400' %>">
+                    <div class="w-8 h-8 rounded-full border-2 <%= step >= 1 ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300' %> flex items-center justify-center text-sm font-semibold">
+                        1
+                    </div>
+                    <span class="ml-2 text-sm font-medium">Personal Details</span>
+                </div>
+                <div class="flex-1 h-1 mx-4 <%= step >= 2 ? 'bg-indigo-600' : 'bg-gray-300' %>"></div>
+                <div class="flex items-center <%= step >= 2 ? 'text-indigo-600' : 'text-gray-400' %>">
+                    <div class="w-8 h-8 rounded-full border-2 <%= step >= 2 ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300' %> flex items-center justify-center text-sm font-semibold">
+                        2
+                    </div>
+                    <span class="ml-2 text-sm font-medium">Project Details</span>
+                </div>
+                <div class="flex-1 h-1 mx-4 <%= step >= 3 ? 'bg-indigo-600' : 'bg-gray-300' %>"></div>
+                <div class="flex items-center <%= step >= 3 ? 'text-indigo-600' : 'text-gray-400' %>">
+                    <div class="w-8 h-8 rounded-full border-2 <%= step >= 3 ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300' %> flex items-center justify-center text-sm font-semibold">
+                        3
+                    </div>
+                    <span class="ml-2 text-sm font-medium">Bid Settings</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Personal Details -->
+        <% if (step === 1) { %>
+        <div class="bg-white shadow rounded-lg p-8 animate__animated animate__fadeIn">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Personal & Location Details</h2>
+            
+            <form action="/customer/project-step1/<%= category %>" method="POST" class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Project Title *</label>
+                        <input type="text" id="title" name="title" required 
+                               value="<%= projectData?.title || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">Contact Phone *</label>
+                        <input type="tel" id="phone" name="phone" required 
+                               value="<%= projectData?.contact?.phone || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Project Description *</label>
+                    <textarea id="description" name="description" rows="4" required
+                              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"><%= projectData?.description || '' %></textarea>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Location Details</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Address *</label>
+                            <input type="text" id="address" name="address" required 
+                                   value="<%= projectData?.location?.address || '' %>"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
+                            <input type="text" id="city" name="city" required 
+                                   value="<%= projectData?.location?.city || '' %>"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
+                            <input type="text" id="state" name="state" required 
+                                   value="<%= projectData?.location?.state || '' %>"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label for="zipCode" class="block text-sm font-medium text-gray-700">ZIP Code *</label>
+                            <input type="text" id="zipCode" name="zipCode" required 
+                                   value="<%= projectData?.location?.zipCode || '' %>"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" 
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300">
+                        Next Step
+                    </button>
+                </div>
+            </form>
+        </div>
+        <% } %>
+
+        <!-- Step 2: Project Details -->
+        <% if (step === 2) { %>
+        <div class="bg-white shadow rounded-lg p-8 animate__animated animate__fadeIn">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Project Specifications</h2>
+            
+            <form action="/customer/project-step2/<%= category %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label for="requirements" class="block text-sm font-medium text-gray-700">Detailed Requirements *</label>
+                    <textarea id="requirements" name="requirements" rows="6" required
+                              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"><%= projectData?.requirements || '' %></textarea>
+                </div>
+
+                <!-- Category-specific fields -->
+                <% if (category === 'electrification') { %>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="voltage" class="block text-sm font-medium text-gray-700">Voltage Requirements</label>
+                        <input type="text" id="voltage" name="specifications[voltage]" 
+                               value="<%= projectData?.specifications?.get('voltage') || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="wiringType" class="block text-sm font-medium text-gray-700">Wiring Type</label>
+                        <input type="text" id="wiringType" name="specifications[wiringType]" 
+                               value="<%= projectData?.specifications?.get('wiringType') || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <% } else if (category === 'architecture') { %>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="buildingType" class="block text-sm font-medium text-gray-700">Building Type</label>
+                        <input type="text" id="buildingType" name="specifications[buildingType]" 
+                               value="<%= projectData?.specifications?.get('buildingType') || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="floorArea" class="block text-sm font-medium text-gray-700">Floor Area (sq ft)</label>
+                        <input type="number" id="floorArea" name="specifications[floorArea]" 
+                               value="<%= projectData?.specifications?.get('floorArea') || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- File Uploads -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="images" class="block text-sm font-medium text-gray-700">Project Images</label>
+                        <input type="file" id="images" name="images" multiple accept="image/*"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Upload multiple images of your project</p>
+                    </div>
+
+                    <div>
+                        <label for="documents" class="block text-sm font-medium text-gray-700">Project Documents</label>
+                        <input type="file" id="documents" name="documents" multiple accept=".pdf,.doc,.docx"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">PDF, DOC, DOCX files only</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <a href="/customer/project-form/<%= category %>" 
+                       class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition duration-300">
+                        Previous
+                    </a>
+                    <button type="submit" 
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300">
+                        Next Step
+                    </button>
+                </div>
+            </form>
+        </div>
+        <% } %>
+
+        <!-- Step 3: Bid Settings -->
+        <% if (step === 3) { %>
+        <div class="bg-white shadow rounded-lg p-8 animate__animated animate__fadeIn">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Bid & Timeline Settings</h2>
+            
+            <form action="/customer/project-step3/<%= category %>" method="POST" class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="startingBid" class="block text-sm font-medium text-gray-700">Starting Bid Amount ($) *</label>
+                        <input type="number" id="startingBid" name="startingBid" required min="0" step="0.01"
+                               value="<%= projectData?.bidSettings?.startingBid || '' %>"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="bidEndDate" class="block text-sm font-medium text-gray-700">Bid End Date & Time *</label>
+                        <input type="datetime-local" id="bidEndDate" name="bidEndDate" required
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="startDate" class="block text-sm font-medium text-gray-700">Project Start Date & Time *</label>
+                        <input type="datetime-local" id="startDate" name="startDate" required
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="endDate" class="block text-sm font-medium text-gray-700">Project End Date & Time *</label>
+                        <input type="datetime-local" id="endDate" name="endDate" required
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <h4 class="font-semibold text-blue-800 mb-2">Important Notes:</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• Project will be in "Drafted" status until start date</li>
+                        <li>• Edit/Delete will be disabled once project starts</li>
+                        <li>• Project automatically moves to "In Progress" on start date</li>
+                        <li>• Highest bidder automatically wins when bidding period ends</li>
+                        <li>• Project automatically moves to "Failed" if not completed by end date</li>
+                    </ul>
+                </div>
+
+                <div class="flex justify-between">
+                    <a href="/customer/project-form/<%= category %>?step=2" 
+                       class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition duration-300">
+                        Previous
+                    </a>
+                    <button type="submit" 
+                            class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300">
+                        Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        // Set minimum datetime for date inputs - allow current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            
+            // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+            const formatDateTimeForInput = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+
+            const currentDateTime = formatDateTimeForInput(now);
+            
+            const bidEndDateInput = document.getElementById('bidEndDate');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            
+            // Set minimum values
+            if (bidEndDateInput) {
+                bidEndDateInput.min = currentDateTime;
+            }
+            
+            if (startDateInput) {
+                startDateInput.min = currentDateTime;
+                
+                startDateInput.addEventListener('change', function() {
+                    if (endDateInput) {
+                        const startDate = new Date(this.value);
+                        const minEndDate = new Date(startDate.getTime() + (60 * 1000)); // At least 1 minute after
+                        endDateInput.min = formatDateTimeForInput(minEndDate);
+                        
+                        // If current end date is before new start date, clear it
+                        if (endDateInput.value && new Date(endDateInput.value) <= startDate) {
+                            endDateInput.value = '';
+                        }
+                    }
+                });
+            }
+            
+            if (endDateInput) {
+                const minEndDate = new Date(now.getTime() + (60 * 1000)); // At least 1 minute from now
+                endDateInput.min = formatDateTimeForInput(minEndDate);
+            }
+
+            // Set default values to current time + 1 hour for better UX
+            const defaultDateTime = new Date(now.getTime() + (60 * 60 * 1000)); // 1 hour from now
+            const defaultFormatted = formatDateTimeForInput(defaultDateTime);
+
+            if (bidEndDateInput && !bidEndDateInput.value) {
+                bidEndDateInput.value = defaultFormatted;
+            }
+            if (startDateInput && !startDateInput.value) {
+                startDateInput.value = defaultFormatted;
+            }
+            if (endDateInput && !endDateInput.value) {
+                const endDefault = new Date(defaultDateTime.getTime() + (24 * 60 * 60 * 1000)); // 1 day after start
+                endDateInput.value = formatDateTimeForInput(endDefault);
+            }
+        });
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

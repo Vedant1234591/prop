@@ -1,0 +1,221 @@
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo and Brand -->
+            <div class="flex items-center">
+                <a href="/" class="flex-shrink-0 flex items-center">
+                    <i class="fas fa-rocket text-indigo-600 text-2xl mr-2"></i>
+                    <span class="text-xl font-bold text-gray-900">Propload</span>
+                </a>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <% if (user && user.role === 'admin') { %>
+                    <!-- Admin Navigation - Without currentPage highlighting -->
+                    <a href="/admin/dashboard" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="/admin/all-users" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Users</a>
+                    <a href="/admin/all-projects" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Projects</a>
+                    <a href="/admin/all-bids" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Bids</a>
+                    <a href="/admin/pending-contracts" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contracts</a>
+                    <a href="/admin/system-status" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">System</a>
+                    <a href="/admin/notices" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Notices</a>
+                <% } else if (user && user.role === 'customer') { %>
+                    <!-- Customer Navigation -->
+                    <a href="/customer/dashboard" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="/customer/projects" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">My Projects</a>
+                    <a href="/customer/projects/create" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Create Project</a>
+                <% } else if (user && user.role === 'seller') { %>
+                    <!-- Seller Navigation -->
+                    <a href="/seller/dashboard" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="/seller/bids" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">My Bids</a>
+                    <a href="/seller/projects/available" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Find Projects</a>
+                <% } else { %>
+                    <!-- Public Navigation -->
+                    <a href="/" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</a>
+                    <a href="/about" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">About</a>
+                    <a href="/contact" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
+                <% } %>
+            </nav>
+
+            <!-- User Menu -->
+            <div class="flex items-center space-x-4">
+                <% if (user) { %>
+                    <!-- Notifications Bell -->
+                    <div class="relative">
+                        <button class="text-gray-400 hover:text-gray-500 p-1">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
+                        </button>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none">
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span class="text-indigo-800 font-medium text-sm">
+                                    <%= user.name.charAt(0).toUpperCase() %>
+                                </span>
+                            </div>
+                            <span class="hidden md:block"><%= user.name %></span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false" 
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95">
+                            
+                            <div class="px-4 py-2 border-b border-gray-100">
+                                <p class="text-sm font-medium text-gray-900"><%= user.name %></p>
+                                <p class="text-xs text-gray-500"><%= user.email %></p>
+                                <p class="text-xs text-gray-400 capitalize mt-1"><%= user.role %></p>
+                            </div>
+
+                            <% if (user.role === 'admin') { %>
+                                <a href="/admin/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>Admin Dashboard
+                                </a>
+                            <% } else if (user.role === 'customer') { %>
+                                <a href="/customer/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                </a>
+                            <% } else if (user.role === 'seller') { %>
+                                <a href="/seller/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                </a>
+                            <% } %>
+
+                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Settings
+                            </a>
+                            
+                            <div class="border-t border-gray-100"></div>
+                            
+                            <form action="/auth/logout" method="POST" class="block w-full">
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- Login/Signup Buttons -->
+                    <div class="flex space-x-4">
+                        <a href="/auth/login" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Login</a>
+                        <a href="/auth/register" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Sign Up</a>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile menu, show/hide based on menu state. -->
+    <div class="md:hidden hidden" id="mobile-menu">
+        <div class="pt-2 pb-3 space-y-1">
+            <% if (user && user.role === 'admin') { %>
+                <a href="/admin/dashboard" class="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                <a href="/admin/all-users" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Users</a>
+                <a href="/admin/all-projects" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Projects</a>
+                <a href="/admin/all-bids" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Bids</a>
+                <a href="/admin/pending-contracts" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Contracts</a>
+                <a href="/admin/system-status" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">System</a>
+                <a href="/admin/notices" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Notices</a>
+            <% } else if (user && user.role === 'customer') { %>
+                <a href="/customer/dashboard" class="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                <a href="/customer/projects" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">My Projects</a>
+                <a href="/customer/projects/create" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Create Project</a>
+            <% } else if (user && user.role === 'seller') { %>
+                <a href="/seller/dashboard" class="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                <a href="/seller/bids" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">My Bids</a>
+                <a href="/seller/projects/available" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Find Projects</a>
+            <% } else { %>
+                <a href="/" class="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Home</a>
+                <a href="/about" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">About</a>
+                <a href="/contact" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Contact</a>
+            <% } %>
+        </div>
+        
+        <% if (user) { %>
+        <div class="pt-4 pb-3 border-t border-gray-200">
+            <div class="flex items-center px-4">
+                <div class="flex-shrink-0">
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span class="text-indigo-800 font-medium">
+                            <%= user.name.charAt(0).toUpperCase() %>
+                        </span>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <div class="text-base font-medium text-gray-800"><%= user.name %></div>
+                    <div class="text-sm font-medium text-gray-500"><%= user.email %></div>
+                </div>
+            </div>
+            <div class="mt-3 space-y-1">
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin/dashboard" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Admin Dashboard</a>
+                <% } else if (user.role === 'customer') { %>
+                    <a href="/customer/dashboard" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Dashboard</a>
+                <% } else if (user.role === 'seller') { %>
+                    <a href="/seller/dashboard" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Dashboard</a>
+                <% } %>
+                <a href="/profile" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Profile</a>
+                <a href="/settings" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Settings</a>
+                <form action="/auth/logout" method="POST" class="block">
+                    <button type="submit" class="w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Sign Out</button>
+                </form>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="pt-4 pb-3 border-t border-gray-200">
+            <div class="space-y-1">
+                <a href="/auth/login" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Login</a>
+                <a href="/auth/register" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Sign Up</a>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</header>
+
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+<script>
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuButton = document.querySelector('[aria-controls="mobile-menu"]');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                
+                // Toggle icon
+                const icon = this.querySelector('i');
+                if (icon) {
+                    if (isExpanded) {
+                        icon.className = 'fas fa-bars';
+                    } else {
+                        icon.className = 'fas fa-times';
+                    }
+                }
+            });
+        }
+    });
+</script>

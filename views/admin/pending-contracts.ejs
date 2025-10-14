@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Contracts - Admin - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header1') %>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages1') %>
+        
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Pending Contracts</h1>
+                <p class="text-gray-600 mt-2">Review and approve pending contracts</p>
+            </div>
+            
+            <% if (contracts.length > 0) { %>
+            <form action="/admin/contracts/bulk-approve" method="POST">
+                <button type="submit" 
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center font-medium"
+                    onclick="return confirm('Are you sure you want to approve ALL pending contracts? This action cannot be undone.')">
+                    <i class="fas fa-check-double mr-2"></i>Approve All Contracts
+                </button>
+            </form>
+            <% } %>
+        </div>
+
+        <% if (contracts.length > 0) { %>
+            <div class="grid gap-6">
+                <% contracts.forEach(contract => { %>
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-yellow-500">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900"><%= contract.project.title %></h2>
+                            <p class="text-gray-600"><%= contract.project.category %></p>
+                        </div>
+                        <span class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded-full">
+                            PENDING APPROVAL
+                        </span>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Customer</h3>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="font-medium"><%= contract.customer.name %></p>
+                                <p class="text-sm text-gray-600"><%= contract.customer.email %></p>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Seller</h3>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="font-medium"><%= contract.seller.name %></p>
+                                <p class="text-sm text-gray-600">
+                                    <%= contract.seller.companyName || 'No Company' %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-blue-900 text-lg">
+                                    $<%= contract.bid.amount.toLocaleString() %>
+                                </h3>
+                                <p class="text-blue-700">Winning Bid Amount</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-blue-600">
+                                    Submitted: <%= moment(contract.createdAt).format('MMM D, YYYY') %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <form action="/admin/contracts/<%= contract._id %>/approve" method="POST">
+                            <button type="submit" 
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                                onclick="return confirm('Are you sure you want to approve this contract?')">
+                                <i class="fas fa-check mr-2"></i>Approve Contract
+                            </button>
+                        </form>
+
+                        <button type="button" 
+                            onclick="showRejectForm('<%= contract._id %>')"
+                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center">
+                            <i class="fas fa-times mr-2"></i>Reject Contract
+                        </button>
+
+                        <form id="rejectForm-<%= contract._id %>" 
+                              action="/admin/contracts/<%= contract._id %>/reject" 
+                              method="POST" 
+                              class="hidden flex-1">
+                            <div class="flex space-x-2">
+                                <input type="text" 
+                                       name="rejectionReason" 
+                                       placeholder="Reason for rejection..."
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                       required>
+                                <button type="submit" 
+                                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                                    Submit
+                                </button>
+                                <button type="button" 
+                                        onclick="hideRejectForm('<%= contract._id %>')"
+                                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="bg-white shadow rounded-lg p-8 text-center">
+                <i class="fas fa-file-contract text-gray-400 text-4xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Pending Contracts</h3>
+                <p class="text-gray-500">All contracts have been processed.</p>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        function showRejectForm(contractId) {
+            document.getElementById('rejectForm-' + contractId).classList.remove('hidden');
+            event.target.style.display = 'none';
+        }
+
+        function hideRejectForm(contractId) {
+            document.getElementById('rejectForm-' + contractId).classList.add('hidden');
+            const rejectButton = document.querySelector(`[onclick="showRejectForm('${contractId}')"]`);
+            if (rejectButton) {
+                rejectButton.style.display = 'flex';
+            }
+        }
+    </script>
+</body>
+</html>

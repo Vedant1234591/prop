@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= userProfile.name %> - Admin - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header1') %>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages1') %>
+
+        <!-- Navigation -->
+        <div class="mb-6">
+            <a href="/admin/all-users" class="text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-arrow-left mr-2"></i>Back to All Users
+            </a>
+        </div>
+
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900"><%= userProfile.name %></h1>
+                <p class="text-gray-600 mt-2">User Details - Admin View</p>
+            </div>
+            <div class="flex space-x-3">
+                <span class="px-4 py-2 rounded-full text-sm font-medium 
+                    <%= userProfile.role === 'customer' ? 'bg-blue-100 text-blue-800' : '' %>
+                    <%= userProfile.role === 'seller' ? 'bg-green-100 text-green-800' : '' %>
+                    <%= userProfile.role === 'admin' ? 'bg-purple-100 text-purple-800' : '' %>">
+                    <%= userProfile.role.toUpperCase() %>
+                </span>
+                <span class="px-4 py-2 rounded-full text-sm font-medium 
+                    <%= userProfile.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <%= userProfile.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                </span>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column - User Information -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Basic Information -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Profile Details</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Name:</span>
+                                    <span class="font-medium"><%= userProfile.name %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Email:</span>
+                                    <span class="font-medium"><%= userProfile.email %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Role:</span>
+                                    <span class="font-medium capitalize"><%= userProfile.role %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Status:</span>
+                                    <span class="font-medium <%= userProfile.isActive ? 'text-green-600' : 'text-red-600' %>">
+                                        <%= userProfile.isActive ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-2">Account Details</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Joined:</span>
+                                    <span class="font-medium"><%= moment(userProfile.createdAt).format('MMM D, YYYY') %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Last Login:</span>
+                                    <span class="font-medium">
+                                        <%= userProfile.lastLogin ? moment(userProfile.lastLogin).fromNow() : 'Never' %>
+                                    </span>
+                                </div>
+                                <% if (userProfile.phone) { %>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Phone:</span>
+                                    <span class="font-medium"><%= userProfile.phone %></span>
+                                </div>
+                                <% } %>
+                                <% if (userProfile.companyName) { %>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Company:</span>
+                                    <span class="font-medium"><%= userProfile.companyName %></span>
+                                </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Activity -->
+                <% if (userProfile.role === 'customer' && userProjects.length > 0) { %>
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Customer Projects (<%= userProjects.length %>)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bids</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <% userProjects.forEach(project => { %>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900">
+                                                <%= project.title %>
+                                            </a>
+                                        </div>
+                                        <div class="text-sm text-gray-500"><%= project.category %></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <%= project.status === 'draft' ? 'bg-gray-100 text-gray-800' : '' %>
+                                            <%= project.status === 'active' ? 'bg-green-100 text-green-800' : '' %>
+                                            <%= project.status === 'completed' ? 'bg-blue-100 text-blue-800' : '' %>">
+                                            <%= project.status %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <%= project.bids ? project.bids.length : 0 %> bids
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <%= moment(project.createdAt).format('MMM D, YYYY') %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if (userProfile.role === 'seller' && userBids.length > 0) { %>
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Seller Bids (<%= userBids.length %>)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <% userBids.forEach(bid => { %>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            <% if (bid.project) { %>
+                                            <a href="/admin/projects/<%= bid.project._id %>" class="text-indigo-600 hover:text-indigo-900">
+                                                <%= bid.project.title %>
+                                            </a>
+                                            <% } else { %>
+                                            <span class="text-gray-400">Project Deleted</span>
+                                            <% } %>
+                                        </div>
+                                        <% if (bid.project) { %>
+                                        <div class="text-sm text-gray-500"><%= bid.project.category %></div>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        $<%= bid.amount.toLocaleString() %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <%= bid.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' : '' %>
+                                            <%= bid.status === 'won' ? 'bg-green-100 text-green-800' : '' %>
+                                            <%= bid.status === 'lost' ? 'bg-red-100 text-red-800' : '' %>
+                                            <%= bid.status === 'completed' ? 'bg-blue-100 text-blue-800' : '' %>">
+                                            <%= bid.status %>
+                                        </span>
+                                        <% if (bid.autoWon) { %>
+                                        <span class="ml-1 text-xs text-green-600" title="Auto-won by system">
+                                            <i class="fas fa-robot"></i>
+                                        </span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <%= moment(bid.createdAt).format('MMM D, YYYY') %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if (userProfile.role === 'seller' && userContracts.length > 0) { %>
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Contracts (<%= userContracts.length %>)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <% userContracts.forEach(contract => { %>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            <% if (contract.project) { %>
+                                            <a href="/admin/projects/<%= contract.project._id %>" class="text-indigo-600 hover:text-indigo-900">
+                                                <%= contract.project.title %>
+                                            </a>
+                                            <% } else { %>
+                                            <span class="text-gray-400">Project Deleted</span>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <% if (contract.customer) { %>
+                                            <%= contract.customer.name %>
+                                            <% } else { %>
+                                            <span class="text-gray-400">Customer Deleted</span>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <%= contract.status === 'pending-admin' ? 'bg-yellow-100 text-yellow-800' : '' %>
+                                            <%= contract.status === 'completed' ? 'bg-green-100 text-green-800' : '' %>
+                                            <%= contract.status === 'rejected' ? 'bg-red-100 text-red-800' : '' %>">
+                                            <%= contract.status %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <%= moment(contract.createdAt).format('MMM D, YYYY') %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Empty State Messages -->
+                <% if (userProfile.role === 'customer' && userProjects.length === 0) { %>
+                <div class="bg-white shadow rounded-lg p-6 text-center">
+                    <i class="fas fa-folder-open text-gray-400 text-4xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Projects Created</h3>
+                    <p class="text-gray-500">This customer hasn't created any projects yet.</p>
+                </div>
+                <% } %>
+
+                <% if (userProfile.role === 'seller' && userBids.length === 0) { %>
+                <div class="bg-white shadow rounded-lg p-6 text-center">
+                    <i class="fas fa-gavel text-gray-400 text-4xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Bids Submitted</h3>
+                    <p class="text-gray-500">This seller hasn't submitted any bids yet.</p>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Right Column - Actions & Additional Info -->
+            <div class="space-y-6">
+                <!-- Quick Actions -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                    <div class="space-y-3">
+                        <!-- Toggle User Status -->
+                        <form action="/admin/users/<%= userProfile._id %>/toggle-status" method="POST" class="mb-4">
+                            <button type="submit" 
+                                class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                                    <%= userProfile.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' %>">
+                                <i class="fas <%= userProfile.isActive ? 'fa-user-slash' : 'fa-user-check' %> mr-2"></i>
+                                <%= userProfile.isActive ? 'Deactivate User' : 'Activate User' %>
+                            </button>
+                        </form>
+
+                        <!-- Change Role -->
+                        <form action="/admin/users/<%= userProfile._id %>/update-role" method="POST">
+                            <div class="mb-3">
+                                <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Change Role</label>
+                                <select id="role" name="role" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="customer" <%= userProfile.role === 'customer' ? 'selected' : '' %>>Customer</option>
+                                    <option value="seller" <%= userProfile.role === 'seller' ? 'selected' : '' %>>Seller</option>
+                                    <option value="admin" <%= userProfile.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                <i class="fas fa-sync-alt mr-2"></i>Update Role
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Additional Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">User ID</h3>
+                            <p class="text-sm text-gray-900 font-mono"><%= userProfile._id %></p>
+                        </div>
+                        
+                        <% if (userProfile.bio) { %>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Bio</h3>
+                            <p class="text-sm text-gray-900"><%= userProfile.bio %></p>
+                        </div>
+                        <% } %>
+
+                        <% if (userProfile.website) { %>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Website</h3>
+                            <a href="<%= userProfile.website %>" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-900 break-all">
+                                <%= userProfile.website %>
+                            </a>
+                        </div>
+                        <% } %>
+
+                        <!-- Activity Summary -->
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Activity Summary</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Projects Created:</span>
+                                    <span class="font-medium"><%= userProfile.role === 'customer' ? userProjects.length : 0 %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Bids Submitted:</span>
+                                    <span class="font-medium"><%= userProfile.role === 'seller' ? userBids.length : 0 %></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Contracts:</span>
+                                    <span class="font-medium"><%= userProfile.role === 'seller' ? userContracts.length : 0 %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="bg-white shadow rounded-lg p-6 border border-red-200">
+                    <h2 class="text-xl font-semibold text-red-900 mb-4">Danger Zone</h2>
+                    <p class="text-sm text-red-600 mb-4">These actions are irreversible. Please proceed with caution.</p>
+                    
+                    <div class="space-y-3">
+                        <!-- Delete User (Optional) -->
+                        <form action="/admin/users/<%= userProfile._id %>/delete" method="POST" 
+                            onsubmit="return confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')">
+                            <button type="submit" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                                <i class="fas fa-trash mr-2"></i>Delete User Permanently
+                            </button>
+                        </form>
+                        
+                        <!-- Reset Password -->
+                        <button type="button" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="fas fa-key mr-2"></i>Send Password Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add confirmation for sensitive actions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Confirm role change
+            const roleForm = document.querySelector('form[action*="update-role"]');
+            if (roleForm) {
+                roleForm.addEventListener('submit', function(e) {
+                    const newRole = this.querySelector('#role').value;
+                    if (!confirm('Are you sure you want to change this user\'s role to ' + newRole.toUpperCase() + '?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // Confirm status toggle - using data attributes instead of EJS in JS
+            const statusForm = document.querySelector('form[action*="toggle-status"]');
+            if (statusForm) {
+                statusForm.addEventListener('submit', function(e) {
+                    const isActiveButton = this.querySelector('button');
+                    const isCurrentlyActive = isActiveButton.textContent.includes('Deactivate');
+                    const action = isCurrentlyActive ? 'deactivate' : 'activate';
+                    
+                    if (!confirm('Are you sure you want to ' + action + ' this user?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

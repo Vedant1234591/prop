@@ -1,0 +1,31 @@
+{
+  "name": "propload-website",
+  "version": "1.0.0",
+  "description": "A professional project bidding platform",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.40.0",
+    "csurf": "^1.11.0",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "mongoose": "^7.8.7",
+    "multer": "^1.4.4",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^3.0.3",
+    "pdfkit": "^0.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

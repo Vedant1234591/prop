@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Projects - Admin - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header1') %>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages1') %>
+        
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">All Projects</h1>
+                <p class="text-gray-600 mt-2">Manage and monitor all system projects</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bids</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <% projects.forEach(project => { %>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900">
+                                        <%= project.title %>
+                                    </a>
+                                </div>
+                                <div class="text-sm text-gray-500"><%= project.category %></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900"><%= project.customer.name %></div>
+                                <div class="text-sm text-gray-500"><%= project.customer.email %></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    <%= project.status === 'draft' ? 'bg-gray-100 text-gray-800' : '' %>
+                                    <%= project.status === 'active' ? 'bg-green-100 text-green-800' : '' %>
+                                    <%= project.status === 'completed' ? 'bg-blue-100 text-blue-800' : '' %>">
+                                    <%= project.status %>
+                                </span>
+                                <% if (project.bidSettings && project.bidSettings.isActive) { %>
+                                <span class="ml-1 text-xs text-green-600" title="Bidding Active">
+                                    <i class="fas fa-bullhorn"></i>
+                                </span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <%= project.bids ? project.bids.length : 0 %> bids
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <%= moment(project.createdAt).format('MMM D, YYYY') %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <% if (project.bidSettings && project.bidSettings.isActive) { %>
+                                <form action="/admin/projects/<%= project._id %>/force-close" method="POST" class="inline">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" 
+                                        onclick="return confirm('Are you sure you want to force close bidding for this project?')">
+                                        <i class="fas fa-stop-circle"></i> Close Bidding
+                                    </button>
+                                </form>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <% if (projects.length === 0) { %>
+        <div class="bg-white shadow rounded-lg p-8 text-center">
+            <i class="fas fa-project-diagram text-gray-400 text-4xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Projects Found</h3>
+            <p class="text-gray-500">There are no projects in the system yet.</p>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>
