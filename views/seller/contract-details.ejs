@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Details - Seller - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Contract Details</h1>
+                    <p class="text-gray-600">Project: <%= bid.project.title %></p>
+                </div>
+                <a href="/seller/my-bids" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    Back to My Bids
+                </a>
+            </div>
+
+            <!-- Contract Information -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Project Details</h3>
+                    <p class="text-gray-700"><strong>Title:</strong> <%= bid.project.title %></p>
+                    <p class="text-gray-700"><strong>Category:</strong> <%= bid.project.category %></p>
+                    <p class="text-gray-700"><strong>Bid Amount:</strong> $<%= bid.amount %></p>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Customer Information</h3>
+                    <p class="text-gray-700"><strong>Name:</strong> <%= bid.customer.name %></p>
+                    <p class="text-gray-700"><strong>Email:</strong> <%= bid.customer.email %></p>
+                    <% if (bid.customer.phone) { %>
+                    <p class="text-gray-700"><strong>Phone:</strong> <%= bid.customer.phone %></p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Contract Status -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold text-blue-800 mb-2">Contract Status</h3>
+                <p class="text-blue-700">
+                    <% if (!contract.customerSignedContract) { %>
+                        <strong>Step 1:</strong> Waiting for customer to upload their signed contract.
+                    <% } else if (!contract.sellerSignedContract) { %>
+                        <strong>Step 2:</strong> Customer has uploaded. Please download template and upload your signed contract.
+                    <% } else if (contract.status === 'pending-admin') { %>
+                        <strong>Step 3:</strong> Both contracts uploaded. Waiting for admin approval.
+                    <% } else if (contract.status === 'completed') { %>
+                        <strong>Completed:</strong> Contract approved on <%= moment(contract.adminApprovedAt).format('MMM D, YYYY') %>
+                    <% } else if (contract.status === 'rejected') { %>
+                        <strong>Rejected:</strong> <%= contract.adminRejectionReason %>
+                    <% } %>
+                </p>
+            </div>
+
+            <!-- Document Downloads -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- Your Documents -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Documents</h3>
+                    
+                    <% if (contract.sellerTemplate) { %>
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 mb-2">Contract Template</h4>
+                        <a href="/seller/download-contract-template/<%= bid._id %>" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center mb-2">
+                            <i class="fas fa-download mr-2"></i>Download Template
+                        </a>
+                        <p class="text-sm text-gray-500">Download, sign, and upload this template</p>
+                    </div>
+                    <% } %>
+                    
+                    <% if (contract.sellerSignedContract) { %>
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 mb-2">Your Signed Contract</h4>
+                        <a href="<%= contract.sellerSignedContract.url %>" target="_blank"
+                           class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 inline-flex items-center mb-2">
+                            <i class="fas fa-download mr-2"></i>Download Signed Contract
+                        </a>
+                        <p class="text-sm text-gray-500">
+                            Uploaded: <%= moment(contract.sellerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
+                        </p>
+                    </div>
+                    <% } %>
+                    
+                    <% if (contract.status === 'completed') { %>
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="font-medium text-gray-700 mb-2">Completion Certificate</h4>
+                        <a href="/seller/download-final-certificate/<%= bid._id %>" 
+                           class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 inline-flex items-center">
+                            <i class="fas fa-award mr-2"></i>Download Certificate
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Customer Documents -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Documents</h3>
+                    
+                    <% if (contract.customerSignedContract) { %>
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 mb-2">Customer's Signed Contract</h4>
+                        <a href="/seller/download-customer-contract/<%= bid._id %>" 
+                           class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 inline-flex items-center mb-2">
+                            <i class="fas fa-download mr-2"></i>Download Customer Contract
+                        </a>
+                        <p class="text-sm text-gray-500">
+                            Uploaded: <%= moment(contract.customerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
+                        </p>
+                    </div>
+                    <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-gray-600">Customer contract not yet uploaded</p>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Upload Section (if applicable) -->
+            <% if (contract.customerSignedContract && !contract.sellerSignedContract) { %>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-4">Upload Your Signed Contract</h3>
+                <p class="text-yellow-700 mb-4">
+                    Customer has uploaded their contract. Please download the template above, sign it, and upload the signed version.
+                </p>
+                <form action="/seller/upload-contract" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                    <input type="hidden" name="bidId" value="<%= bid._id %>">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload Your Signed Contract</label>
+                        <input type="file" name="contract" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required 
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100">
+                        <p class="text-xs text-gray-500 mt-1">Supported formats: PDF, Word documents, JPEG, PNG (Max 10MB)</p>
+                    </div>
+                    
+                    <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        <i class="fas fa-upload mr-2"></i>Upload Signed Contract
+                    </button>
+                </form>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

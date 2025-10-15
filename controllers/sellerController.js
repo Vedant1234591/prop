@@ -662,6 +662,8 @@ exports.updateProfileImage = async (req, res) => {
     }
 };
 
+
+
 // Upload Company Document - FIXED
 exports.uploadCompanyDocument = async (req, res) => {
     try {
@@ -714,84 +716,80 @@ exports.uploadCompanyDocument = async (req, res) => {
 };
 
 // Upload Contract - FIXED
-// In sellerController.js - Update uploadContract function
+// Enhanced upload seller contract
+// Step 2: Upload Signed Seller Contract
+// Fix the uploadContract method in sellerController
 exports.uploadContract = async (req, res) => {
     try {
-        const sellerId = req.session.userId;
         const { bidId } = req.body;
-        
-        console.log('=== SELLER CONTRACT UPLOAD DEBUG ===');
+        const sellerId = req.session.userId;
+
+        console.log('=== UPLOAD SELLER CONTRACT DEBUG ===');
         console.log('Bid ID:', bidId);
         console.log('Seller ID:', sellerId);
         console.log('File received:', req.file);
-        
+
         if (!req.file) {
-            req.flash('error', 'Please select a contract file to upload');
-            return res.redirect('/seller/my-bids');
+            req.flash('error', 'Please select a signed contract file');
+            return res.redirect('back');
         }
 
-        if (!sellerId) {
-            req.flash('error', 'Please log in to upload contract');
-            return res.redirect('/auth/login');
-        }
-
-        // Verify bid exists and belongs to seller
         const bid = await Bid.findOne({ _id: bidId, seller: sellerId });
         if (!bid) {
-            req.flash('error', 'Bid not found or unauthorized');
+            req.flash('error', 'Bid not found');
             return res.redirect('/seller/my-bids');
         }
 
-        if (bid.status !== 'won') {
-            req.flash('error', 'Only won bids can upload contracts');
-            return res.redirect('/seller/my-bids');
-        }
-
-        // Check contract status - customer must upload first
         const contract = await Contract.findOne({ bid: bidId });
         if (!contract) {
-            req.flash('error', 'Contract record not found. Please wait for customer to initiate the contract process.');
+            req.flash('error', 'Contract not found');
             return res.redirect('/seller/my-bids');
         }
 
-        // CRITICAL: Check if customer has uploaded their contract first
-        if (!contract.customerSignedContract || !contract.customerSignedContract.url) {
-            req.flash('error', 'Please wait for customer to upload their signed contract first');
+        // Check if seller can upload (customer must have uploaded first)
+        if (contract.status !== 'pending-seller' || !contract.customerSignedContract) {
+            req.flash('error', 'Cannot upload contract at this time. Wait for customer to upload first.');
             return res.redirect('/seller/my-bids');
         }
 
-        // Upload seller contract
+        // Update contract with signed document
         contract.sellerSignedContract = {
             public_id: req.file.filename,
             url: req.file.path,
             filename: req.file.originalname,
-            originalName: req.file.originalname,
             bytes: req.file.size,
             uploadedAt: new Date(),
-            uploadedBy: 'seller',
-            mimeType: req.file.mimetype,
-            signatureDate: new Date()
+            signatureDate: new Date(),
+            uploadedBy: 'seller'
         };
 
-        // Update contract status
-        contract.status = 'pending-admin'; // Both uploaded, waiting for admin approval
+        // Move to admin approval step
+        contract.status = 'pending-admin';
+        contract.currentStep = 3;
         contract.updatedAt = new Date();
+        
         await contract.save();
-
-        // Update bid status
-        bid.sellerAction = 'contract-uploaded';
-        bid.updatedAt = new Date();
-        await bid.save();
 
         console.log('✅ Seller contract uploaded successfully');
 
+        // Notify admin
+        const Notice = require('../models/Notice');
+        await Notice.create({
+            title: `Contract Ready for Approval - ${bid.project.title}`,
+            content: 'Both customer and seller have uploaded signed contracts. Please review and approve.',
+            targetAudience: 'admin',
+            noticeType: 'warning',
+            isActive: true,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
         req.flash('success', 'Contract uploaded successfully! Waiting for admin approval.');
         res.redirect('/seller/my-bids');
-        
     } catch (error) {
-        console.error('❌ Seller contract upload error:', error);
+        console.error('❌ Upload seller contract error:', error);
         req.flash('error', 'Error uploading contract: ' + error.message);
-        res.redirect('/seller/my-bids');
+        res.redirect('back');
     }
 };
 // Seller Notices
@@ -1001,5 +999,129 @@ exports.getContractDetails = async (req, res) => {
         res.redirect('/seller/my-bids');
     }
 };
+// Download contract template for seller
 
-module.exports = exports;
+// Download final certificate for seller
+exports.downloadFinalCertificate = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const sellerId = req.session.userId;
+
+        console.log('📥 Download seller final certificate request:', { bidId, sellerId });
+
+        const bid = await Bid.findOne({ _id: bidId, seller: sellerId });
+        if (!bid) {
+            req.flash('error', 'Bid not found');
+            return res.redirect('/seller/my-bids');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || contract.status !== 'completed') {
+            req.flash('error', 'Certificate not available yet');
+            return res.redirect('/seller/my-bids');
+        }
+
+        // Check for seller certificate first, then final contract
+        if (contract.sellerCertificate && contract.sellerCertificate.url) {
+            console.log('✅ Redirecting to seller certificate:', contract.sellerCertificate.url);
+            res.redirect(contract.sellerCertificate.url);
+        } else if (contract.finalContract && contract.finalContract.url) {
+            console.log('✅ Redirecting to final contract:', contract.finalContract.url);
+            res.redirect(contract.finalContract.url);
+        } else {
+            req.flash('error', 'Certificate not generated yet');
+            res.redirect('/seller/my-bids');
+        }
+    } catch (error) {
+        console.error('❌ Download certificate error:', error);
+        req.flash('error', 'Error downloading certificate');
+        res.redirect('/seller/my-bids');
+    }
+};
+
+
+
+// Enhanced seller download methods
+exports.downloadContractTemplate = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const sellerId = req.session.userId;
+
+        console.log('📥 Download seller contract template request:', { bidId, sellerId });
+
+        const bid = await Bid.findOne({ _id: bidId, seller: sellerId });
+        if (!bid) {
+            req.flash('error', 'Bid not found');
+            return res.redirect('/seller/my-bids');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/seller/my-bids');
+        }
+
+        if (!contract.sellerTemplate || !contract.sellerTemplate.url) {
+            req.flash('error', 'Contract template not available yet');
+            return res.redirect('/seller/my-bids');
+        }
+
+        console.log('🔗 Seller template URL:', contract.sellerTemplate.url);
+        
+        // ✅ FIX: Transform URL for download
+        let downloadUrl = contract.sellerTemplate.url;
+
+
+        console.log("this is seller contract seller template",contract.sellerTemplate)
+
+        console.log("This is download url",downloadUrl);
+        if (downloadUrl.includes('/upload/')) {
+            downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+        }
+        
+        res.setHeader('Content-Disposition', `attachment; filename="seller_template_${bidId}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.redirect(downloadUrl);
+        
+    } catch (error) {
+        console.error('❌ Download seller template error:', error);
+        req.flash('error', 'Error downloading contract template');
+        res.redirect('/seller/my-bids');
+    }
+};
+
+exports.downloadCustomerContract = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const sellerId = req.session.userId;
+
+        const bid = await Bid.findOne({ _id: bidId, seller: sellerId });
+        if (!bid) {
+            req.flash('error', 'Bid not found');
+            return res.redirect('/seller/my-bids');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || !contract.customerSignedContract || !contract.customerSignedContract.url) {
+            req.flash('error', 'Customer contract not available yet');
+            return res.redirect('/seller/my-bids');
+        }
+
+        console.log('🔗 Customer contract URL:', contract.customerSignedContract.url);
+        
+        // ✅ FIX: Transform URL for download
+        let downloadUrl = contract.customerSignedContract.url;
+        if (downloadUrl.includes('/upload/')) {
+            downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+        }
+        
+        res.setHeader('Content-Disposition', `attachment; filename="customer_contract_${bidId}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.redirect(downloadUrl);
+        
+    } catch (error) {
+        console.error('❌ Download customer contract error:', error);
+        req.flash('error', 'Error downloading customer contract');
+        res.redirect('/seller/my-bids');
+    }
+};

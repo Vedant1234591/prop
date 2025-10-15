@@ -266,19 +266,292 @@ exports.getAllBids = async (req, res) => {
 // Contract Management - FIXED VERSION
 
 // Get Pending Contracts
+// Add to the existing adminController.js
+
+// Enhanced Contract Management Methods
+
+// Get Contract Details with enhanced information
+exports.getContractDetails = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+
+        const contract = await Contract.findById(contractId)
+            .populate('project', 'title description category timeline location')
+            .populate('customer', 'name email phone address')
+            .populate('seller', 'name companyName email phone taxId')
+            .populate('bid', 'amount proposal timeline')
+            .populate('approvedBy', 'name email');
+
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        res.render('admin/contract-details', {
+            user: req.user,
+            currentPage: 'pending-contracts',
+            contract: contract,
+            moment: require('moment')
+        });
+    } catch (error) {
+        console.error('Get contract details error:', error);
+        req.flash('error', 'Error loading contract details');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+// Enhanced Approve Contract with PDF Generation
+exports.approveContract = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        const { adminNotes } = req.body;
+
+        console.log('🔄 Approving contract:', contractId);
+
+        // Find contract with all related data
+        const contract = await Contract.findById(contractId)
+            .populate('project')
+            .populate('bid')
+            .populate('customer')
+            .populate('seller');
+
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        // Verify both parties have uploaded signed contracts
+        if (!contract.customerSignedContract || !contract.customerSignedContract.url) {
+            req.flash('error', 'Customer has not uploaded signed contract');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        if (!contract.sellerSignedContract || !contract.sellerSignedContract.url) {
+            req.flash('error', 'Seller has not uploaded signed contract');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        console.log('📜 Generating completion certificate...');
+        
+        // Generate completion certificate
+        const PDFGenerator = require('../services/pdfGenerator');
+        const certificate = await PDFGenerator.generateCertificate(
+            contract.bid, 
+            contract.project, 
+            contract.customer, 
+            contract.seller
+        );
+
+        console.log('✅ Certificate generated:', certificate ? 'Yes' : 'No');
+
+        // Update contract with approval and certificate
+        contract.status = 'completed';
+        contract.adminApproved = true;
+        contract.adminApprovedAt = new Date();
+        contract.approvedBy = req.user._id;
+        contract.adminNotes = adminNotes;
+        
+        // Store the final certificate
+        contract.finalCertificate = {
+            public_id: certificate.public_id,
+            url: certificate.secure_url,
+            filename: `completion_certificate_${contract._id}.pdf`,
+            bytes: certificate.bytes,
+            generatedAt: new Date()
+        };
+        
+        contract.updatedAt = new Date();
+        
+        await contract.save();
+        console.log('✅ Contract approved:', contract._id);
+
+        // Update bid status with certificate
+        if (contract.bid) {
+            const bid = await Bid.findById(contract.bid._id);
+            if (bid) {
+                bid.status = 'completed';
+                bid.adminVerified = true;
+                bid.certificateGenerated = true;
+                bid.certificateUrl = certificate.secure_url;
+                bid.certificatePublicId = certificate.public_id;
+                bid.certificateGeneratedAt = new Date();
+                bid.updatedAt = new Date();
+                await bid.save();
+                console.log('✅ Bid updated:', bid._id);
+            }
+        }
+
+        // Update project status
+        if (contract.project) {
+            const project = await Project.findById(contract.project._id);
+            if (project) {
+                project.status = 'completed';
+                project.completedAt = new Date();
+                project.updatedAt = new Date();
+                await project.save();
+                console.log('✅ Project completed:', project._id);
+            }
+        }
+
+        // Create success notices for both parties
+        const Notice = require('../models/Notice');
+        await Notice.create({
+            title: `Contract Approved - ${contract.project.title}`,
+            content: `Your contract has been approved by admin! Completion certificate is now available for download.${adminNotes ? ` Admin Notes: ${adminNotes}` : ''}`,
+            targetAudience: 'customer',
+            specificUser: contract.customer._id,
+            noticeType: 'success',
+            isActive: true,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await Notice.create({
+            title: `Contract Approved - ${contract.project.title}`,
+            content: `Your contract has been approved by admin! Completion certificate is now available for download.${adminNotes ? ` Admin Notes: ${adminNotes}` : ''}`,
+            targetAudience: 'seller',
+            specificUser: contract.seller._id,
+            noticeType: 'success',
+            isActive: true,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        req.flash('success', 'Contract approved successfully! Completion certificate generated.');
+        res.redirect('/admin/pending-contracts');
+
+    } catch (error) {
+        console.error('❌ Approve contract error:', error);
+        req.flash('error', 'Error approving contract: ' + error.message);
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+// Enhanced Reject Contract with detailed feedback
+exports.rejectContract = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        const { rejectionReason, correctiveAction } = req.body;
+
+        console.log('Rejecting contract:', contractId);
+
+        const contract = await Contract.findById(contractId)
+            .populate('project')
+            .populate('customer')
+            .populate('seller');
+
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        // Update contract status
+        contract.status = 'rejected';
+        contract.rejectionReason = rejectionReason;
+        contract.adminApproved = false;
+        contract.updatedAt = new Date();
+        await contract.save();
+
+        console.log('✅ Contract rejected:', contract._id);
+
+        // Create rejection notices for both parties with corrective actions
+        const Notice = require('../models/Notice');
+        
+        await Notice.create({
+            title: `Contract Requires Correction - ${contract.project.title}`,
+            content: `Your contract requires corrections before approval. Reason: ${rejectionReason}${correctiveAction ? ` Corrective Action: ${correctiveAction}` : ''}`,
+            targetAudience: 'customer',
+            specificUser: contract.customer._id,
+            noticeType: 'error',
+            isActive: true,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await Notice.create({
+            title: `Contract Requires Correction - ${contract.project.title}`,
+            content: `Your contract requires corrections before approval. Reason: ${rejectionReason}${correctiveAction ? ` Corrective Action: ${correctiveAction}` : ''}`,
+            targetAudience: 'seller',
+            specificUser: contract.seller._id,
+            noticeType: 'error',
+            isActive: true,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        req.flash('success', 'Contract rejected successfully. Both parties notified with correction instructions.');
+        res.redirect('/admin/pending-contracts');
+    } catch (error) {
+        console.error('❌ Reject contract error:', error);
+        req.flash('error', 'Error rejecting contract: ' + error.message);
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+// Download Contract Documents for Admin Review
+exports.downloadCustomerContract = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+
+        const contract = await Contract.findById(contractId);
+        if (!contract || !contract.customerSignedContract?.url) {
+            req.flash('error', 'Customer contract not available');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        console.log('📥 Downloading customer contract:', contract.customerSignedContract.url);
+        res.redirect(contract.customerSignedContract.url);
+    } catch (error) {
+        console.error('❌ Download customer contract error:', error);
+        req.flash('error', 'Error downloading customer contract');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+// Add this function to your adminController.js
 exports.getPendingContracts = async (req, res) => {
     try {
-        const pendingContracts = await Contract.find({ status: 'pending-admin' })
-            .populate('bid')
-            .populate('project', 'title category')
-            .populate('customer', 'name email')
-            .populate('seller', 'name companyName')
-            .sort({ createdAt: -1 });
+        const pendingContracts = await Contract.find({ 
+            status: 'pending-admin' 
+        })
+        .populate('project', 'title category featuredImage')
+        .populate('customer', 'name email phone')
+        .populate('seller', 'name companyName email')
+        .populate('bid', 'amount proposal')
+        .populate('approvedBy', 'name')
+        .sort({ updatedAt: -1 });
+
+        // Calculate statistics
+        let readyCount = 0;
+        let waitingCount = 0;
+        let autoCount = 0;
+
+        pendingContracts.forEach(contract => {
+            if (contract.customerSignedContract && contract.customerSignedContract.url && 
+                contract.sellerSignedContract && contract.sellerSignedContract.url) {
+                readyCount++;
+            } else {
+                waitingCount++;
+            }
+            if (contract.autoGenerated) {
+                autoCount++;
+            }
+        });
+
+        const stats = {
+            totalPending: pendingContracts.length,
+            readyForApproval: readyCount,
+            waitingDocuments: waitingCount,
+            autoGenerated: autoCount,
+            totalApproved: await Contract.countDocuments({ status: 'completed' }),
+            totalRejected: await Contract.countDocuments({ status: 'rejected' }),
+            totalContracts: await Contract.countDocuments()
+        };
 
         res.render('admin/pending-contracts', {
             user: req.user,
             currentPage: 'pending-contracts',
-            contracts: pendingContracts,
+            contracts: pendingContracts || [],
+            stats: stats,
             moment: require('moment')
         });
     } catch (error) {
@@ -287,154 +560,176 @@ exports.getPendingContracts = async (req, res) => {
         res.redirect('/admin/dashboard');
     }
 };
-
-// Approve Contract - FIXED VERSION
-exports.approveContract = async (req, res) => {
+// Download Seller Contract
+exports.downloadSellerContract = async (req, res) => {
     try {
         const { contractId } = req.params;
 
-        console.log('Approving contract:', contractId);
+        const contract = await Contract.findById(contractId);
+        if (!contract || !contract.sellerSignedContract?.url) {
+            req.flash('error', 'Seller contract not available');
+            return res.redirect('/admin/pending-contracts');
+        }
 
-        // Find and update contract in one operation
-        const contract = await Contract.findByIdAndUpdate(
-            contractId,
-            {
-                status: 'completed',
-                adminApproved: true,
-                adminApprovedAt: new Date(),
-                approvedBy: req.user._id,
-                updatedAt: new Date()
-            },
-            { new: true }
-        );
+        console.log('📥 Downloading seller contract:', contract.sellerSignedContract.url);
+        res.redirect(contract.sellerSignedContract.url);
+    } catch (error) {
+        console.error('❌ Download seller contract error:', error);
+        req.flash('error', 'Error downloading seller contract');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+// Download Contract Template
+exports.downloadContractTemplate = async (req, res) => {
+    try {
+        const { contractId, party } = req.params;
 
+        const contract = await Contract.findById(contractId);
         if (!contract) {
             req.flash('error', 'Contract not found');
             return res.redirect('/admin/pending-contracts');
         }
 
-        console.log('Contract approved:', contract._id);
-
-        // Update bid status
-        if (contract.bid) {
-            await Bid.findByIdAndUpdate(contract.bid, {
-                status: 'completed',
-                adminVerified: true,
-                updatedAt: new Date()
-            });
-            console.log('Bid updated:', contract.bid);
+        let templateUrl = null;
+        if (party === 'customer' && contract.customerTemplate?.url) {
+            templateUrl = contract.customerTemplate.url;
+        } else if (party === 'seller' && contract.sellerTemplate?.url) {
+            templateUrl = contract.sellerTemplate.url;
         }
 
-        // Update project status
-        if (contract.project) {
-            await Project.findByIdAndUpdate(contract.project, {
-                status: 'completed',
-                completedAt: new Date(),
-                updatedAt: new Date()
-            });
-            console.log('Project updated:', contract.project);
-        }
-
-        req.flash('success', 'Contract approved successfully!');
-        res.redirect('/admin/pending-contracts');
-
-    } catch (error) {
-        console.error('Approve contract error:', error);
-        req.flash('error', 'Error approving contract: ' + error.message);
-        res.redirect('/admin/pending-contracts');
-    }
-};
-
-// Reject Contract - FIXED VERSION
-exports.rejectContract = async (req, res) => {
-    try {
-        const { contractId } = req.params;
-        const { rejectionReason } = req.body;
-
-        console.log('Rejecting contract:', contractId);
-
-        const contract = await Contract.findByIdAndUpdate(
-            contractId,
-            {
-                status: 'rejected',
-                rejectionReason: rejectionReason,
-                adminApproved: false,
-                updatedAt: new Date()
-            },
-            { new: true }
-        );
-
-        if (!contract) {
-            req.flash('error', 'Contract not found');
+        if (!templateUrl) {
+            req.flash('error', 'Contract template not available');
             return res.redirect('/admin/pending-contracts');
         }
 
-        console.log('Contract rejected:', contract._id);
-
-        // Also update the associated bid status
-        if (contract.bid) {
-            await Bid.findByIdAndUpdate(contract.bid, {
-                status: 'rejected',
-                adminVerified: false,
-                updatedAt: new Date()
-            });
-        }
-
-        req.flash('success', 'Contract rejected successfully');
-        res.redirect('/admin/pending-contracts');
+        console.log('📥 Downloading contract template:', templateUrl);
+        res.redirect(templateUrl);
     } catch (error) {
-        console.error('Reject contract error:', error);
-        req.flash('error', 'Error rejecting contract: ' + error.message);
+        console.error('❌ Download contract template error:', error);
+        req.flash('error', 'Error downloading contract template');
         res.redirect('/admin/pending-contracts');
     }
 };
 
-// NEW: Bulk Approve All Pending Contracts
+
+// Fix the bulkApproveContracts method
 exports.bulkApproveContracts = async (req, res) => {
     try {
-        const pendingContracts = await Contract.find({ status: 'pending-admin' });
+        const pendingContracts = await Contract.find({ status: 'pending-admin' })
+            .populate('project')
+            .populate('bid')
+            .populate('customer')
+            .populate('seller');
 
         if (pendingContracts.length === 0) {
             req.flash('info', 'No pending contracts to approve');
             return res.redirect('/admin/pending-contracts');
         }
 
-        const updatePromises = pendingContracts.map(async (contract) => {
-            // Update contract
-            await Contract.findByIdAndUpdate(contract._id, {
-                status: 'completed',
-                adminApproved: true,
-                adminApprovedAt: new Date(),
-                approvedBy: req.user._id,
-                updatedAt: new Date()
-            });
+        const PDFGenerator = require('../services/pdfGenerator');
+        let approvedCount = 0;
+        let skippedCount = 0;
 
-            // Update bid
-            if (contract.bid) {
-                await Bid.findByIdAndUpdate(contract.bid, {
-                    status: 'completed',
-                    adminVerified: true,
-                    updatedAt: new Date()
-                });
+        for (const contract of pendingContracts) {
+            try {
+                // Validate both parties have uploaded signed contracts
+                if (!contract.customerSignedContract?.url || !contract.sellerSignedContract?.url) {
+                    console.log(`⏭️ Skipping contract ${contract._id} - missing signed contracts`);
+                    skippedCount++;
+                    continue;
+                }
+
+                console.log(`🔄 Processing contract: ${contract._id}`);
+
+                // Generate completion certificate
+                const certificate = await PDFGenerator.generateCertificate(
+                    contract.bid, 
+                    contract.project, 
+                    contract.customer, 
+                    contract.seller
+                );
+
+                // Update contract
+                contract.status = 'completed';
+                contract.adminApproved = true;
+                contract.adminApprovedAt = new Date();
+                contract.approvedBy = req.user._id;
+                contract.finalCertificate = {
+                    public_id: certificate.public_id,
+                    url: certificate.secure_url,
+                    filename: `completion_certificate_${contract._id}.pdf`,
+                    bytes: certificate.bytes,
+                    generatedAt: new Date()
+                };
+                contract.updatedAt = new Date();
+                await contract.save();
+
+                // Update bid
+                if (contract.bid) {
+                    await Bid.findByIdAndUpdate(contract.bid._id, {
+                        status: 'completed',
+                        adminVerified: true,
+                        certificateGenerated: true,
+                        certificateUrl: certificate.secure_url,
+                        certificatePublicId: certificate.public_id,
+                        certificateGeneratedAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+
+                // Update project
+                if (contract.project) {
+                    await Project.findByIdAndUpdate(contract.project._id, {
+                        status: 'completed',
+                        completedAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+
+                // Create notices
+                const Notice = require('../models/Notice');
+                await Notice.create([
+                    {
+                        title: `Contract Approved - ${contract.project.title}`,
+                        content: 'Your contract has been approved by admin! Completion certificate is now available for download.',
+                        targetAudience: 'customer',
+                        specificUser: contract.customer._id,
+                        noticeType: 'success',
+                        isActive: true,
+                        startDate: new Date(),
+                        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    },
+                    {
+                        title: `Contract Approved - ${contract.project.title}`,
+                        content: 'Your contract has been approved by admin! Completion certificate is now available for download.',
+                        targetAudience: 'seller',
+                        specificUser: contract.seller._id,
+                        noticeType: 'success',
+                        isActive: true,
+                        startDate: new Date(),
+                        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    }
+                ]);
+
+                approvedCount++;
+                console.log(`✅ Bulk approved contract: ${contract._id}`);
+
+            } catch (error) {
+                console.error(`❌ Error processing contract ${contract._id}:`, error.message);
+                skippedCount++;
             }
+        }
 
-            // Update project
-            if (contract.project) {
-                await Project.findByIdAndUpdate(contract.project, {
-                    status: 'completed',
-                    completedAt: new Date(),
-                    updatedAt: new Date()
-                });
-            }
-        });
-
-        await Promise.all(updatePromises);
-
-        req.flash('success', `Successfully approved ${pendingContracts.length} contract(s)!`);
+        if (approvedCount > 0) {
+            req.flash('success', `Successfully approved ${approvedCount} contract(s)!${skippedCount > 0 ? ` ${skippedCount} contract(s) skipped due to missing documents.` : ''}`);
+        } else {
+            req.flash('info', `No contracts could be approved. ${skippedCount} contract(s) skipped due to missing documents.`);
+        }
+        
         res.redirect('/admin/pending-contracts');
 
     } catch (error) {
-        console.error('Bulk approve contracts error:', error);
+        console.error('❌ Bulk approve contracts error:', error);
         req.flash('error', 'Error bulk approving contracts: ' + error.message);
         res.redirect('/admin/pending-contracts');
     }
@@ -597,3 +892,7 @@ exports.generateCertificate = async (req, res) => {
         res.redirect('/admin/pending-contracts');
     }
 };
+
+
+
+module.exports = exports;

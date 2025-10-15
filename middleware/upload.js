@@ -230,39 +230,63 @@ const uploadSingle = multer({
 });
 
 // Contract documents upload - ENHANCED
+// ✅ ENHANCED Contract documents upload - FIXED
+// Make sure the uploadContracts configuration is correct:
 const uploadContracts = multer({
   storage: new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
       folder: 'propload/contracts',
-      // NEW: Better organization for contracts
+      resource_type: 'auto', // Allow all resource types
       public_id: (req, file) => {
+        console.log('📤 Contract upload detected:', {
+          originalName: file.originalname,
+          mimetype: file.mimetype,
+          path: req.path,
+          baseUrl: req.baseUrl
+        });
+        
         const timestamp = Date.now();
-        const type = req.path.includes('customer') ? 'customer' : 'seller';
-        const projectId = req.body.projectId || 'unknown';
-        return `contract_${type}_${projectId}_${timestamp}`;
+        const random = Math.random().toString(36).substring(2, 15);
+        const originalName = file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // Determine if it's customer or seller upload
+        let userType = 'unknown';
+        if (req.baseUrl && req.baseUrl.includes('/customer')) {
+          userType = 'customer';
+        } else if (req.baseUrl && req.baseUrl.includes('/seller')) {
+          userType = 'seller';
+        }
+        
+        const public_id = `contract_${userType}_${originalName}_${timestamp}_${random}`;
+        console.log('Generated public_id:', public_id);
+        return public_id;
       }
     }
   }),
   fileFilter: (req, file, cb) => {
+    console.log('🔍 Contract file filter checking:', file.mimetype, file.originalname);
+    
     const allowedTypes = [
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'image/jpeg',
+      'image/jpg',
       'image/png'
     ];
+    
     if (allowedTypes.includes(file.mimetype)) {
-      console.log('✓ Contract document accepted');
+      console.log('✅ Contract document accepted:', file.mimetype);
       cb(null, true);
     } else {
-      console.log('✗ Contract document rejected');
+      console.log('❌ Contract document rejected:', file.mimetype);
       cb(new Error('Only PDF, Word documents, and images are allowed for contracts'), false);
     }
   },
   limits: {
-    fileSize: 10 * 1024 * 1024,
-    files: 3
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 1
   }
 });
 

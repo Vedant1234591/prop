@@ -1,3 +1,4 @@
+// models/Contract.js - Enhanced version
 const mongoose = require('mongoose');
 
 const contractSchema = new mongoose.Schema({
@@ -21,7 +22,24 @@ const contractSchema = new mongoose.Schema({
         ref: 'User',
         required: [true, 'Seller reference is required']
     },
-    // Cloudinary contract files
+
+    // STEP 1: Contract Templates (Auto-generated)
+    customerTemplate: {
+        public_id: String,
+        url: String,
+        filename: String,
+        bytes: Number,
+        generatedAt: Date
+    },
+    sellerTemplate: {
+        public_id: String,
+        url: String,
+        filename: String,
+        bytes: Number,
+        generatedAt: Date
+    },
+
+    // STEP 2: Signed Contracts (Uploaded by users)
     customerSignedContract: {
         public_id: String,
         url: String,
@@ -29,14 +47,9 @@ const contractSchema = new mongoose.Schema({
         originalName: String,
         bytes: Number,
         uploadedAt: Date,
-        uploadedBy: { 
-            type: String, 
-            enum: ['customer', 'seller', 'admin'],
-            default: 'customer'
-        },
-        ipAddress: String,
-        mimeType: String,
-        signatureDate: Date
+        uploadedBy: { type: String, enum: ['customer'], default: 'customer' },
+        signatureDate: Date,
+        ipAddress: String
     },
     sellerSignedContract: {
         public_id: String,
@@ -45,169 +58,159 @@ const contractSchema = new mongoose.Schema({
         originalName: String,
         bytes: Number,
         uploadedAt: Date,
-        uploadedBy: { 
-            type: String, 
-            enum: ['customer', 'seller', 'admin'],
-            default: 'seller'
-        },
-        ipAddress: String,
-        mimeType: String,
-        signatureDate: Date
+        uploadedBy: { type: String, enum: ['seller'], default: 'seller' },
+        signatureDate: Date,
+        ipAddress: String
     },
-    finalContract: {
+// In the contract schema, ensure you have:
+finalCertificate: {
+    public_id: String,
+    url: String,
+    filename: String,
+    bytes: Number,
+    generatedAt: Date
+},
+    // STEP 3: Final Certificates (Auto-generated after admin approval)
+    customerCertificate: {
         public_id: String,
         url: String,
         filename: String,
         bytes: Number,
-        generatedAt: Date,
-        mimeType: String,
-        version: String
+        generatedAt: Date
     },
-    // Additional contract documents
-    supportingDocuments: [{
-        public_id: {
-            type: String,
-            required: true
-        },
-        url: {
-            type: String,
-            required: true
-        },
+    sellerCertificate: {
+        public_id: String,
+        url: String,
         filename: String,
-        originalName: String,
-        documentType: {
-            type: String,
-            enum: ['addendum', 'amendment', 'certificate', 'insurance', 'other'],
-            required: true
-        },
-        description: String,
         bytes: Number,
-        uploadedAt: {
-            type: Date,
-            default: Date.now
-        },
-        uploadedBy: {
-            type: String,
-            enum: ['customer', 'seller', 'admin'],
-            required: true
-        }
-    }],
+        generatedAt: Date
+    },
+    adminCertificate: {
+        public_id: String,
+        url: String,
+        filename: String,
+        bytes: Number,
+        generatedAt: Date
+    },
+
+    // Contract Details
+    contractValue: {
+        type: Number,
+        required: true
+    },
     terms: {
         type: Map,
         of: mongoose.Schema.Types.Mixed,
         default: new Map()
     },
+
+    // Status Management
+    currentStep: {
+        type: Number,
+        enum: [1, 2, 3, 4], // 1: Customer upload, 2: Seller upload, 3: Admin approval, 4: Completed
+        default: 1
+    },
     status: {
         type: String,
-        enum: ['draft', 'pending-customer', 'pending-seller', 'pending-admin', 'approved', 'rejected', 'cancelled', 'completed'],
+        enum: ['pending-customer', 'pending-seller', 'pending-admin', 'completed', 'rejected'],
         default: 'pending-customer'
     },
+
+    // Admin Approval
     adminApproved: {
         type: Boolean,
         default: false
     },
-    adminApprovedAt: Date,
-    approvedBy: {
+    adminApprovedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    adminNotes: {
-        type: String,
-        maxlength: [1000, 'Admin notes cannot exceed 1000 characters']
-    },
-    rejectionReason: {
-        type: String,
-        maxlength: [1000, 'Rejection reason cannot exceed 1000 characters']
-    },
-    version: {
-        type: Number,
-        default: 1
-    },
-    contractValue: {
-        type: Number,
-        required: true
-    },
-    paymentSchedule: [{
-        milestone: String,
-        amount: Number,
-        dueDate: Date,
-        status: {
-            type: String,
-            enum: ['pending', 'paid', 'overdue'],
-            default: 'pending'
-        },
-        paidAt: Date
-    }],
-    autoGenerated: {
-        type: Boolean,
-        default: true
-    },
-    contractType: {
-        type: String,
-        enum: ['standard', 'premium', 'custom'],
-        default: 'standard'
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
+    adminApprovedAt: Date,
+    adminNotes: String,
+    adminRejectionReason: String,
+
+    // Timestamps
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
-// Pre-save middleware
+// Pre-save middleware to sync currentStep with status
 contractSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     
-    // Auto-update status based on signed contracts
-    if (this.customerSignedContract?.url && this.sellerSignedContract?.url) {
-        this.status = 'pending-admin';
-    } else if (this.customerSignedContract?.url && !this.sellerSignedContract?.url) {
-        this.status = 'pending-seller';
-    } else if (!this.customerSignedContract?.url && this.sellerSignedContract?.url) {
-        this.status = 'pending-customer';
+    // Sync currentStep with status
+    switch(this.status) {
+        case 'pending-customer':
+            this.currentStep = 1;
+            break;
+        case 'pending-seller':
+            this.currentStep = 2;
+            break;
+        case 'pending-admin':
+            this.currentStep = 3;
+            break;
+        case 'completed':
+            this.currentStep = 4;
+            break;
+        default:
+            this.currentStep = 1;
     }
     
     next();
 });
 
-// Instance methods
-contractSchema.methods.addSupportingDocument = function(documentData) {
-    this.supportingDocuments.push(documentData);
-    return this.save();
-};
-
-contractSchema.methods.removeSupportingDocument = function(publicId) {
-    this.supportingDocuments = this.supportingDocuments.filter(doc => doc.public_id !== publicId);
-    return this.save();
-};
-
-contractSchema.methods.isComplete = function() {
-    return !!(this.customerSignedContract?.url && this.sellerSignedContract?.url);
+// Instance Methods
+contractSchema.methods.canCustomerUpload = function() {
+    return this.status === 'pending-customer' && !this.customerSignedContract?.url;
 };
 
 contractSchema.methods.isReadyForAdmin = function() {
-    return this.isComplete() && this.status === 'pending-admin';
+    return this.customerSignedContract && this.customerSignedContract.url && 
+           this.sellerSignedContract && this.sellerSignedContract.url;
 };
 
-contractSchema.methods.markAsAdminApproved = function(adminId, notes = '') {
+// Add this method to check if seller can upload
+contractSchema.methods.canSellerUpload = function() {
+    return this.status === 'pending-seller' && 
+           this.customerSignedContract && this.customerSignedContract.url && 
+           !this.sellerSignedContract;
+};
+
+contractSchema.methods.completeCustomerStep = async function() {
+    if (this.customerSignedContract?.url) {
+        this.status = 'pending-seller';
+        this.currentStep = 2;
+        this.updatedAt = new Date();
+        await this.save();
+    }
+    return this;
+};
+
+contractSchema.methods.completeSellerStep = async function() {
+    if (this.sellerSignedContract?.url) {
+        this.status = 'pending-admin';
+        this.currentStep = 3;
+        this.updatedAt = new Date();
+        await this.save();
+    }
+    return this;
+};
+
+contractSchema.methods.approveByAdmin = async function(adminId, notes = '') {
     this.status = 'completed';
+    this.currentStep = 4;
     this.adminApproved = true;
+    this.adminApprovedBy = adminId;
     this.adminApprovedAt = new Date();
-    this.approvedBy = adminId;
     this.adminNotes = notes;
     return this.save();
 };
 
-// Indexes
-contractSchema.index({ bid: 1 });
-contractSchema.index({ project: 1 });
-contractSchema.index({ customer: 1, status: 1 });
-contractSchema.index({ seller: 1, status: 1 });
-contractSchema.index({ status: 1 });
-contractSchema.index({ createdAt: -1 });
-contractSchema.index({ status: 1, updatedAt: -1 });
-
+contractSchema.methods.getCurrentStep = function() {
+    if (this.status === 'pending-customer') return 1;
+    if (this.status === 'pending-seller') return 2;
+    if (this.status === 'pending-admin') return 3;
+    if (this.status === 'completed') return 4;
+    return 1;
+};
 module.exports = mongoose.model('Contract', contractSchema);

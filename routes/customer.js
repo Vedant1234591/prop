@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
 const { protect, requireRole } = require('../middleware/auth');
-const { upload, uploadImages, uploadDocuments, uploadSingle } = require('../middleware/upload');
+const { upload, uploadImages, uploadDocuments, uploadSingle, uploadContracts } = require('../middleware/upload');
 
 // Apply auth middleware to all customer routes
 router.use(protect);
 router.use(requireRole('customer'));
 
-// Dashboard and main routes - FIXED ROUTE DEFINITION
+// Dashboard and main routes
 router.get('/dashboard', customerController.getDashboard);
 router.get('/my-projects', customerController.getMyProjects);
 router.get('/bids', customerController.getBids);
@@ -47,23 +47,28 @@ router.post('/project/:projectId/add-image', uploadSingle.single('image'), custo
 router.post('/project/:projectId/remove-image/:publicId', customerController.removeProjectImage);
 router.post('/project/:projectId/remove-document/:publicId', customerController.removeProjectDocument);
 
-// Bid management routes - ENHANCED
+// Bid management routes
 router.post('/select-bid/:bidId', customerController.selectBid);
-router.get('/project-bids/:projectId', customerController.getProjectBids); // NEW
+router.get('/project-bids/:projectId', customerController.getProjectBids);
 
-// Contract routes with Cloudinary file upload - ENHANCED
-router.post('/upload-customer-contract', uploadSingle.single('contract'), customerController.uploadCustomerContract); // RENAMED
+// ✅ FIXED CONTRACT ROUTES - CORRECT METHOD NAMES
+router.post('/upload-customer-contract', uploadContracts.single('contract'), customerController.uploadCustomerContract);
+router.get('/download-contract-template/:bidId', customerController.downloadContractTemplate);
+router.get('/download-seller-contract/:bidId', customerController.downloadSellerContract);
+router.get('/download-final-certificate/:bidId', customerController.downloadFinalCertificate);
+
+// OLD ROUTES (Keep for backward compatibility)
 router.get('/download-contract/:bidId', customerController.downloadContract);
-router.get('/download-certificate/:bidId', customerController.downloadCertificate); // NEW
+router.get('/download-certificate/:bidId', customerController.downloadCertificate);
 router.get('/view-contract/:projectId', customerController.viewContract);
 
-// NEW: Contract status and management routes
+// Contract status and management routes
 router.get('/contract-status/:projectId', customerController.getContractStatus);
-router.get('/won-projects', customerController.getWonProjects); // NEW
+router.get('/won-projects', customerController.getWonProjects);
 
 const statusAutomation = require('../services/statusAutomation');
 
-// Manual status update route (optional)
+// Manual status update route
 router.get('/update-statuses', async (req, res) => {
     try {
         const result = await statusAutomation.updateAllProjectStatuses();
@@ -78,7 +83,7 @@ router.get('/update-statuses', async (req, res) => {
     }
 });
 
-// NEW: Auto-process projects route for customer
+// Auto-process projects route for customer
 router.get('/auto-process-projects', async (req, res) => {
     try {
         const Project = require('../models/Project');
@@ -91,9 +96,5 @@ router.get('/auto-process-projects', async (req, res) => {
         res.redirect('/customer/my-projects');
     }
 });
-router.post('/upload-customer-contract', upload.single('contract'), customerController.uploadCustomerContract);
-router.get('/download-customer-contract/:bidId', customerController.downloadCustomerContract);
-router.get('/download-seller-contract/:bidId', customerController.downloadSellerContract);
-
 
 module.exports = router;

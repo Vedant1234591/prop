@@ -1,4 +1,3 @@
-// routes/seller.js
 const express = require('express');
 const router = express.Router();
 const sellerController = require('../controllers/sellerController');
@@ -23,7 +22,14 @@ router.post('/withdraw-bid/:id', sellerController.withdrawBid);
 
 // Contract management routes
 router.get('/contract-details/:bidId', sellerController.getContractDetails);
+
+// ✅ FIXED CONTRACT ROUTES - CORRECT METHOD NAMES
 router.post('/upload-contract', uploadContracts.single('contract'), sellerController.uploadContract);
+router.get('/download-contract-template/:bidId', sellerController.downloadContractTemplate);
+router.get('/download-customer-contract/:bidId', sellerController.downloadCustomerContract);
+router.get('/download-final-certificate/:bidId', sellerController.downloadFinalCertificate);
+
+// OLD ROUTES (Keep for backward compatibility)
 router.get('/download-contract/:bidId', sellerController.downloadContract);
 router.get('/download-certificate/:bidId', sellerController.downloadCertificate);
 
@@ -35,6 +41,5 @@ router.post('/upload-company-document', uploadDocuments.single('companyDocument'
 
 // Notices routes
 router.get('/notices', sellerController.getNotices);
-router.post('/upload-contract', upload.single('contract'), sellerController.uploadContract);
-router.get('/download-contract/:bidId', sellerController.downloadContract)
+
 module.exports = router;

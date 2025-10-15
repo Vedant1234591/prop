@@ -23,11 +23,17 @@ router.post('/projects/:projectId/force-close', adminController.forceCloseBiddin
 // Bid Management
 router.get('/all-bids', adminController.getAllBids);
 
-// Contract Management - UPDATED WITH BULK APPROVE
+// Contract Management - COMPLETE ROUTES
 router.get('/pending-contracts', adminController.getPendingContracts);
+router.get('/contracts/:contractId', adminController.getContractDetails);
 router.post('/contracts/:contractId/approve', adminController.approveContract);
 router.post('/contracts/:contractId/reject', adminController.rejectContract);
-router.post('/contracts/bulk-approve', adminController.bulkApproveContracts); // NEW ROUTE
+router.post('/contracts/bulk-approve', adminController.bulkApproveContracts);
+
+// Contract Document Downloads
+router.get('/contracts/:contractId/download-customer', adminController.downloadCustomerContract);
+router.get('/contracts/:contractId/download-seller', adminController.downloadSellerContract);
+router.get('/contracts/:contractId/template/:party', adminController.downloadContractTemplate);
 
 // System Management
 router.get('/system-status', adminController.getSystemStatus);
