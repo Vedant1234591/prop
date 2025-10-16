@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Propload - India's First Online Real Estate Bidding Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="title" content="Top Real Estate Bidding Platform in India" />
+    <meta name="author" content="Propload" />
+    <meta
+      name="description"
+      content="Propload connects clients with builders, architects, and professionals for construction, electrification, and interior design projects."
+    />
+    <meta
+      name="keywords"
+      content="Real Estate Bidding, Hire Builders Online, Construction Bidding, Hire Architects India, Interior Design Professionals India, Construction Services India, Electrification Services India, Online Project Bidding"
+    />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.propload.com" />
+    <meta
+      property="og:title"
+      content="Top Real Estate Bidding Platform in India"
+    />
+    <meta
+      property="og:description"
+      content="Propload connects clients with builders, architects, and other professionals for construction, electrification, and interior design projects in India."
+    />
+    <meta property="og:image" content="/images/landing/Vector.jpeg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://www.propload.com" />
+    <meta
+      property="twitter:title"
+      content="Top Real Estate Bidding Platform in India"
+    />
+    <meta
+      property="twitter:description"
+      content="Discover Propload: India's leading platform for connecting clients with qualified builders, architects, and professionals in construction, electrification, and interior design."
+    />
+    <meta property="twitter:image" content="/images/landing/Vector.jpeg" />
+
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      .btn-primary-custom {
+        background-color: #40788e;
+        color: white;
+      }
+      .btn-primary-custom:hover {
+        background-color: #2f5e6b;
+        color: white;
+      }
+      .text-primary-custom {
+        color: #40788e;
+      }
+      .text-secondary-custom {
+        color: #e9e2b3;
+      }
+      header a {
+        text-decoration: none;
+      }
+
+      /* Zoom + blur animation for carousel images */
+      .carousel-item img {
+        transition: transform 1.5s ease, filter 1.5s ease;
+      }
+
+      /* Animate the active image */
+      .carousel-item.active img {
+        animation: zoomBlur 8s ease-in-out infinite;
+      }
+
+      @keyframes zoomBlur {
+        0% {
+          transform: scale(1);
+          filter: blur(0px);
+        }
+        50% {
+          transform: scale(1.05);
+          filter: blur(1px);
+        }
+        100% {
+          transform: scale(1);
+          filter: blur(0px);
+        }
+      }
+
+      /* Optional: fade in text smoothly */
+      .carousel-caption h2,
+      .carousel-caption p,
+      .carousel-caption .btn {
+        animation: fadeInUp 1.5s ease forwards;
+        opacity: 0;
+      }
+
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="container-fluid py-3">
+      <div class="container d-flex justify-content-between align-items-center">
+        <a href="/">
+          <img
+            src="/images/landing/logo.png"
+            alt="Propload Logo"
+            style="height: 50px"
+          />
+        </a>
+        <nav>
+          <ul class="d-flex list-unstyled mb-0">
+            <li class="mx-2">
+              <a href="/" class="text-primary-custom no underline">Home</a>
+            </li>
+            <li class="mx-2">
+              <a href="/about" class="text-primary-custom">About Us</a>
+            </li>
+            <li class="mx-2">
+              <a href="/blogs" class="text-primary-custom">Our Blogs</a>
+            </li>
+            <li class="mx-2">
+              <a href="/store" class="text-primary-custom">Store</a>
+            </li>
+            <li class="mx-2">
+              <a href="/contact" class="text-primary-custom">Contact Us</a>
+            </li>
+          </ul>
+        </nav>
+        <div>
+          <a
+            href="/auth/register?role=seller"
+            class="btn btn-primary-custom mx-1"
+            >Join as Seller</a
+          >
+          <a
+            href="/auth/register?role=customer"
+            class="btn btn-primary-custom mx-1"
+            >Join as Customer</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <!-- Carousel -->
+    <div id="carouselExample" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        <% carouselItems.forEach((item, index) => { %>
+        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+          <img
+            src="<%= item.img %>"
+            class="d-block w-100"
+            alt="<%= item.title %>"
+          />
+          <div
+            class="carousel-caption d-flex flex-column justify-content-center align-items-center text-center"
+            style="top: 0; bottom: 0"
+          >
+            <h2
+              class="text-white display-4 mb-3"
+              style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6)"
+            >
+              <%= item.title %>
+            </h2>
+            <p
+              class="text-white mb-4 fs-5"
+              style="text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6)"
+            >
+              <%= item.desc %>
+            </p>
+            <div>
+              <a
+                href="<%= item.contactLink %>"
+                class="btn text-white px-5 py-3 mx-2"
+                style="background-color: #40788e; border-radius: 0.5rem"
+              >
+                Talk to our Team
+              </a>
+              <a
+                href="<%= item.registerLink %>"
+                class="btn text-dark px-5 py-3 mx-2"
+                style="background-color: #e9e2b3; border-radius: 0.5rem"
+              >
+                Register Your Project
+              </a>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <button
+        class="carousel-control-prev"
+        type="button"
+        data-bs-target="#carouselExample"
+        data-bs-slide="prev"
+      >
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button
+        class="carousel-control-next"
+        type="button"
+        data-bs-target="#carouselExample"
+        data-bs-slide="next"
+      >
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+
+    <!-- About Section -->
+    <section class="container-fluid py-5">
+      <div class="container py-5">
+        <div class="row g-5 align-items-center">
+          <!-- Left: Image Cluster -->
+          <div
+            class="col-xl-6 position-relative wow fadeInLeft"
+            data-wow-delay="0.1s"
+          >
+            <div class="d-flex position-relative">
+              <img
+                src="/images/landing/about.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="z-index: 3; margin-right: -50px"
+                alt="About Us"
+              />
+              <img
+                src="/images/landing/about-1.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="
+                  z-index: 2;
+                  margin-left: -50px;
+                  position: absolute;
+                  top: 20px;
+                  left: 50px;
+                "
+                alt="About Us"
+              />
+              <img
+                src="/images/landing/about-2.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="z-index: 1; position: absolute; top: 60px; left: 100px"
+                alt="About Us"
+              />
+            </div>
+          </div>
+
+          <!-- Right: Text Content -->
+          <div class="col-xl-6 wow fadeInRight" data-wow-delay="0.1s">
+            <h5 class="text-secondary-custom text-uppercase mb-2">
+              Propload: India’s Leading Online Bidding Platform
+            </h5>
+            <h2 class="text-primary-custom mb-4">
+              Making Your Vision Come True with Simplicity
+            </h2>
+            <p class="fs-5 mb-4">
+              Connecting you with the right professionals to bring your project
+              to life, at the best price.
+            </p>
+
+            <!-- Features / Icons -->
+            <div class="row g-4">
+              <div class="col-lg-6 d-flex align-items-center">
+                <div class="bg-secondary-custom rounded p-3 me-3">
+                  <i class="fas fa-user-shield fa-2x text-primary-custom"></i>
+                </div>
+                <div>
+                  <h5 class="mb-1">Easy Project Registration</h5>
+                  <p class="mb-0">
+                    Register your project effortlessly and get connected with
+                    professionals.
+                  </p>
+                </div>
+              </div>
+              <div class="col-lg-6 d-flex align-items-center">
+                <div class="bg-secondary-custom rounded p-3 me-3">
+                  <i class="fas fa-users-cog fa-2x text-primary-custom"></i>
+                </div>
+                <div>
+                  <h5 class="mb-1">Smart Professional Filtering</h5>
+                  <p class="mb-0">
+                    Get matched with verified experts suited to your project
+                    needs.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checklist -->
+            <div class="row mt-4">
+              <div class="col-lg-6">
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Cost-Effective Solutions
+                </p>
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Time-Saving
+                </p>
+              </div>
+              <div class="col-lg-6">
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Nationwide Reach
+                </p>
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i>Trusted
+                  Professionals
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section class="py-5" style="background-color: #f7f8fb">
+      <div class="container text-center">
+        <p
+          class="text-uppercase fw-semibold mb-2"
+          style="color: #40788e; letter-spacing: 2px"
+        >
+          Why Us
+        </p>
+        <h2 class="fw-bold mb-5 display-5" style="color: #40788e">
+          Why Choose Us
+        </h2>
+
+        <div class="row g-4">
+          <!-- Card 1 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i class="fas fa-tasks fa-2x" style="color: #e9e4b5"></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Seamless Project Management
+              </h5>
+              <p class="text-muted fs-5">
+                Easily manage your project from start to finish with an
+                intuitive platform that streamlines the process.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i class="fas fa-tags fa-2x" style="color: #e9e4b5"></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Competitive Pricing for Your Project
+              </h5>
+              <p class="text-muted fs-5">
+                Get the best value for your project by connecting with multiple
+                professionals who offer competitive bids.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i
+                    class="fas fa-network-wired fa-2x"
+                    style="color: #e9e4b5"
+                  ></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Nationwide Network of Experts
+              </h5>
+              <p class="text-muted fs-5">
+                Access a vast network of verified professionals across India,
+                ensuring you find the right match for your needs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      /* Hover + transition effects */
+      .custom-card {
+        transition: all 0.4s ease;
+        border-radius: 15px;
+      }
+
+      .custom-card:hover {
+        transform: translateY(-10px) scale(1.03);
+        box-shadow: 0 10px 30px rgba(64, 120, 142, 0.3);
+      }
+
+      .custom-card:hover i {
+        transform: rotate(10deg) scale(1.1);
+        transition: transform 0.3s ease;
+      }
+
+      .custom-card i {
+        transition: transform 0.3s ease;
+      }
+    </style>
+
+    <!-- Services Section -->
+    <section class="container py-5 bg-light">
+      <div class="text-center mb-5">
+        <h2 class="text-primary-custom">Our Services</h2>
+      </div>
+      <div class="row g-4">
+        <% services.forEach(service => { %>
+        <div class="col-lg-3 col-md-6">
+          <div class="card h-100 text-center">
+            <img
+              src="<%= service.img %>"
+              class="card-img-top"
+              alt="<%= service.title %>"
+            />
+            <div class="card-body">
+              <h5 class="card-title"><%= service.title %></h5>
+              <p class="card-text"><%= service.desc %></p>
+              <a href="<%= service.link %>" class="btn btn-primary-custom"
+                >Register Project</a
+              >
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section class="container py-5">
+      <!-- Section Header -->
+      <div class="text-center mb-5">
+        <p class="text-uppercase text-muted mb-2" style="letter-spacing: 1px">
+          News & Blog
+        </p>
+        <h2 class="fw-bold" style="color: #2f6c7b; font-size: 2.8rem">
+          Our Latest News Post And <br />Articles?
+        </h2>
+      </div>
+
+      <!-- Blog Cards -->
+      <div class="row g-4 justify-content-center">
+        <% blogs.forEach(blog => { %>
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+            <!-- Blog Image -->
+            <img
+              src="<%= blog.img %>"
+              class="card-img-top"
+              alt="<%= blog.title %>"
+              style="height: 260px; object-fit: cover"
+            />
+
+            <!-- Card Body -->
+            <div class="card-body">
+              <!-- Date -->
+              <p class="text-muted mb-2" style="font-size: 0.95rem">
+                <i class="bi bi-calendar-event me-2"></i>
+                <%= blog.date %>
+              </p>
+
+              <!-- Title -->
+              <h5 class="fw-semibold mb-3" style="color: #2f6c7b">
+                <%= blog.title %>
+              </h5>
+
+              <!-- Read More -->
+              <a
+                href="<%= blog.link %>"
+                class="btn d-inline-block fw-semibold"
+                style="
+                  background-color: #2f6c7b;
+                  color: #fff;
+                  border: none;
+                  padding: 10px 24px;
+                  border-radius: 6px;
+                  text-transform: capitalize;
+                  transition: all 0.3s ease;
+                "
+              >
+                Read More
+              </a>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="container py-5 bg-light">
+      <div class="text-center mb-5">
+        <h2 class="text-primary-custom">Client Testimonials</h2>
+      </div>
+      <div class="row g-4">
+        <% testimonials.forEach(testimonial => { %>
+        <div class="col-lg-4">
+          <div class="card p-3 h-100">
+            <p>"<%= testimonial.review %>"</p>
+            <div class="d-flex align-items-center mt-3">
+              <img
+                src="<%= testimonial.img %>"
+                alt="<%= testimonial.name %>"
+                class="rounded-circle me-3"
+                width="60"
+                height="60"
+              />
+              <div>
+                <h6 class="mb-0"><%= testimonial.name %></h6>
+                <small class="text-muted"><%= testimonial.profession %></small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <!-- Footer Section -->
+    <section
+      class="py-5"
+      style="background: linear-gradient(to top, #1f2c56, #3c4b85); color: #fff"
+    >
+      <div class="container">
+        <div class="row">
+          <!-- Newsletter -->
+          <div class="col-md-3 mb-4">
+            <h5 class="fw-bold">Newsletter</h5>
+            <p class="small text-light">
+              Don't miss out—subscribe or face eternal FOMO!
+            </p>
+            <form class="d-flex">
+              <input
+                type="email"
+                class="form-control me-2"
+                placeholder="Enter your email"
+              />
+              <button class="btn btn-warning text-dark fw-bold" type="submit">
+                Subscribe!
+              </button>
+            </form>
+          </div>
+
+          <!-- Explore -->
+          <div class="col-md-3 mb-4">
+            <h5 class="fw-bold">Explore</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Home</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>About Us</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Blogs</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Contact Us</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Sitemap</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Legal -->
+          <div class="col-md-3 mb-4">
+            <h5 class="fw-bold">Legal</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Terms</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Shipping Policy</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-light text-decoration-none d-block py-1"
+                  ><i class="fas fa-chevron-right me-2"></i>Refund Policy</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Contact Info -->
+          <div class="col-md-3 mb-4">
+            <h5 class="fw-bold">Contact Info</h5>
+            <p class="small">
+              <i class="fas fa-map-marker-alt me-2"></i>4th floor, MIG 303,
+              Green Garden, Patrapada, Bhubaneswar, Odisha 751019
+            </p>
+            <p class="small mb-1">
+              <i class="fas fa-envelope me-2"></i>info@propload.com
+            </p>
+            <p class="small mb-1">
+              <i class="fas fa-envelope me-2"></i>customer@propload.com
+            </p>
+            <p class="small mb-1">
+              <i class="fas fa-envelope me-2"></i>seller@propload.com
+            </p>
+            <p class="small"><i class="fas fa-phone me-2"></i>+91 9776622267</p>
+            <div class="d-flex mt-2">
+              <a href="#" class="btn btn-outline-light btn-sm me-2"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="btn btn-outline-light btn-sm me-2"
+                ><i class="fab fa-twitter"></i
+              ></a>
+              <a href="#" class="btn btn-outline-light btn-sm me-2"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="btn btn-outline-light btn-sm"
+                ><i class="fab fa-linkedin-in"></i
+              ></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div
+          class="d-flex justify-content-between pt-3 mt-3 border-top border-light"
+        >
+          <p class="mb-0 small">
+            &copy; Propload All rights reserved by Propaxe Quest Private
+            Limited.
+          </p>
+          <p class="mb-0 small">Designed By Propload Interns</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FontAwesome CDN -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
