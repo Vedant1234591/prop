@@ -1068,129 +1068,6 @@ exports.downloadFinalCertificate = async (req, res) => {
   }
 };
 
-// Enhanced seller download methods
-
-// exports.downloadContractTemplate = async (req, res) => {
-//   try {
-//     const { bidId } = req.params;
-//     const sellerId = req.session.userId;
-
-//     console.log("📥 Download seller contract template request:", {
-//       bidId,
-//       sellerId,
-//     });
-
-//     const bid = await Bid.findOne({ _id: bidId, seller: sellerId });
-//     if (!bid) {
-//       req.flash("error", "Bid not found");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     const contract = await Contract.findOne({ bid: bidId });
-//     if (!contract) {
-//       req.flash("error", "Contract not found");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     if (!contract.sellerTemplate || !contract.sellerTemplate.url) {
-//       req.flash("error", "Contract template not available yet");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     console.log("🔗 Seller template URL:", contract.sellerTemplate.url);
-
-//     // ✅ FIX: Transform URL for download
-//     let downloadUrl = contract.sellerTemplate.url;
-
-//     console.log(
-//       "this is seller contract seller template",
-//       contract.sellerTemplate
-//     );
-
-//     console.log("This is download url", downloadUrl);
-//     if (downloadUrl.includes("/upload/")) {
-//       downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
-//     }
-
-//     res.setHeader(
-//       "Content-Disposition",
-//       `attachment; filename="seller_template_${bidId}.pdf"`
-//     );
-//     res.setHeader("Content-Type", "application/pdf");
-//     res.redirect(downloadUrl);
-//   } catch (error) {
-//     console.error("❌ Download seller template error:", error);
-//     req.flash("error", "Error downloading contract template");
-//     res.redirect("/seller/my-bids");
-//   }
-// };
-//uttkarsh
-// exports.downloadContractTemplate = async (req, res) => {
-//   try {
-//     const { bidId } = req.params;
-//     const sellerId = req.session.userId;
-
-//     console.log("📥 Download seller contract template request:", {
-//       bidId,
-//       sellerId,
-//     });
-
-//     // 🔍 Verify the bid belongs to the logged-in seller
-//     const bid = await Bid.findOne({ _id: bidId, seller: sellerId }).populate(
-//       "project"
-//     );
-
-//     console.log("to check: ", bid);
-
-//     if (!bid) {
-//       console.log("❌ Unauthorized or invalid bid");
-//       req.flash("error", "Unauthorized or invalid bid");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     // 🔍 Find associated contract
-//     const contract = await Contract.findOne({ bid: bidId });
-//     if (!contract || !contract.sellerTemplate?.url) {
-//       console.log("❌ Contract template not found or unavailable");
-//       req.flash("error", "Contract template not available yet");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     const fileUrl = contract.sellerTemplate.url;
-//     console.log("🔗 Seller template Cloudinary URL:", fileUrl);
-
-//     // ✅ If file is PUBLIC (contains /upload/), redirect directly
-//     if (fileUrl.includes("/upload/")) {
-//       console.log("🌍 Public Cloudinary file detected — redirecting directly.");
-//       return res.redirect(fileUrl);
-//     }
-
-//     // 🔐 Otherwise, generate a signed private URL (for older files)
-//     const match = fileUrl.match(/\/v\d+\/(.+)\.pdf$/);
-//     if (!match) {
-//       console.error("❌ Could not extract valid public_id from:", fileUrl);
-//       req.flash("error", "Invalid Cloudinary file path");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     const publicId = match[1];
-//     console.log("🆔 Extracted public_id:", publicId);
-
-//     const signedUrl = cloudinary.utils.private_download_url(publicId, "pdf", {
-//       resource_type: "raw",
-//       type: "authenticated",
-//       attachment: true,
-//     });
-
-//     console.log("✅ Signed private download URL:", signedUrl);
-//     return res.redirect(signedUrl);
-//   } catch (error) {
-//     console.error("❌ Download seller template error:", error);
-//     req.flash("error", "Error downloading contract template");
-//     return res.redirect("/seller/my-bids");
-//   }
-// };
-
 exports.downloadContractTemplate = async (req, res) => {
   try {
     console.log("=== 📥 SELLER CONTRACT DOWNLOAD START ===");
@@ -1266,8 +1143,13 @@ exports.downloadContractTemplate = async (req, res) => {
       req.flash("error", "Invalid Cloudinary file path");
       return res.redirect("/seller/my-bids");
     }
+    const publicId = contract.sellerTemplate.public_id
+      ? contract.sellerTemplate.public_id
+      : contract.sellerTemplate.url.split("/upload/")[1]?.split(".pdf")[0];
 
-    const publicId = match[1];
+    console.log("📂 Extracted publicId:", publicId);
+
+    // const publicId = match[1];
     console.log("🆔 Extracted public_id:", publicId);
 
     const signedUrl = cloudinary.utils.private_download_url(publicId, "pdf", {
@@ -1289,67 +1171,6 @@ exports.downloadContractTemplate = async (req, res) => {
     return res.redirect("/seller/my-bids");
   }
 };
-
-// const { generateSellerContractUrl } = require("../utils/cloudinaryUtils");
-
-// exports.downloadContractTemplate = async (req, res) => {
-//   try {
-//     const { bidId } = req.params;
-//     const sellerId = req.session.userId;
-
-//     console.log("=== 📥 SELLER CONTRACT DOWNLOAD START ===");
-//     console.log("Bid ID:", bidId, "| Seller ID:", sellerId);
-
-//     // 🔍 Ensure bid belongs to this seller
-//     const bid = await Bid.findOne({ _id: bidId, seller: sellerId }).populate(
-//       "project"
-//     );
-//     if (!bid) {
-//       console.log("🚫 Unauthorized or invalid bid");
-//       req.flash("error", "Unauthorized access or invalid bid");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     // 🔍 Get the seller contract
-//     const contract = await Contract.findOne({ bid: bidId });
-//     if (!contract?.sellerTemplate?.url) {
-//       console.log("❌ Seller contract template missing");
-//       req.flash("error", "Contract template not available yet");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     const fileUrl = contract.sellerTemplate.url;
-//     console.log("🔗 Seller template Cloudinary URL:", fileUrl);
-
-//     // ✅ If it's a public file, redirect directly
-//     if (fileUrl.includes("/upload/")) {
-//       console.log("🌍 Public Cloudinary file detected — redirecting directly.");
-//       return res.redirect(fileUrl);
-//     }
-
-//     // 🔐 Otherwise, extract the public_id from authenticated file
-//     const match = fileUrl.match(/\/v\d+\/(.+)\.pdf$/);
-//     if (!match) {
-//       console.error("❌ Invalid Cloudinary file path:", fileUrl);
-//       req.flash("error", "Invalid Cloudinary file path");
-//       return res.redirect("/seller/my-bids");
-//     }
-
-//     const publicId = match[1];
-//     console.log("🆔 Extracted public_id:", publicId);
-
-//     // ✅ Generate signed private download URL using helper
-//     const signedUrl = generateSellerContractUrl(publicId);
-//     console.log("✅ Signed private Cloudinary Download URL:", signedUrl);
-
-//     console.log("=== ✅ SELLER CONTRACT DOWNLOAD END ===\n");
-//     return res.redirect(signedUrl);
-//   } catch (error) {
-//     console.error("❌ Download seller contract error:", error);
-//     req.flash("error", "Error downloading seller contract: " + error.message);
-//     return res.redirect("/seller/my-bids");
-//   }
-// };
 
 exports.downloadCustomerContract = async (req, res) => {
   try {

@@ -1,25 +1,3 @@
-// const cloudinary = require("cloudinary").v2;
-// require("dotenv").config();
-
-// const cloudinary = require("cloudinary").v2;
-
-// const downloadUrl = cloudinary.utils.private_download_url(
-//   "propload/contract-templates/customer_contract_68f0ccb7a81d1b18b301815c_1760611560863.pdf",
-//   "pdf",
-//   { type: "authenticated", attachment: true }
-// );
-
-// console.log("✅ Signed Download URL:", downloadUrl);
-// res.redirect(downloadUrl);
-
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
-
-// module.exports = cloudinary;
-
 const cloudinary = require("cloudinary").v2;
 require("dotenv").config();
 
