@@ -15,14 +15,15 @@ const statusAutomation = require("../services/statusAutomation");
 
 // Seller Dashboard - Enhanced with real-time updates
 exports.pendingPage = async (req, res) => {
-  res.render('seller/pending')
+  return res.render('seller/pending')
+ 
 }
 exports.getDashboard = async (req, res) => {
   try {
     const sellerId = req.session.userId;
 const seller = await Seller.findOne({ userId: sellerId })
 if(!seller||!seller.adminVerified){
-  res.render('seller/pending')
+ return res.redirect('/seller/pending-Approval')
 }
     console.log("=== SELLER DASHBOARD DEBUG ===");
     console.log("Seller ID:", sellerId);
