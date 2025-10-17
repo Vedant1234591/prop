@@ -14,6 +14,7 @@ exports.getLogin = (req, res) => {
   }
   res.render("auth/login");
 };
+
 // In your auth controller - update postLogin function
 exports.postLogin = async (req, res) => {
   try {

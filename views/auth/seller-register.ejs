@@ -42,13 +42,38 @@
       .hidden {
         display: none;
       }
+
+      /* Base select styling */
+      .propload-select {
+        border-color: #ccc;
+        transition: all 0.3s ease;
+      }
+
+      /* When the select box is focused */
+      .propload-select:focus {
+        border-color: #e9e2b3 !important;
+        box-shadow: 0 0 0 0.25rem rgba(233, 226, 179, 0.5);
+      }
+
+      /* When an option is selected */
+      .propload-select option:checked {
+        background-color: #e9e2b3 !important;
+        color: #000;
+      }
+
+      /* Optional: hover effect */
+      .propload-select:hover {
+        border-color: #dcd39e;
+      }
     </style>
   </head>
-  <body class="bg-light">
+  <body class="bg-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="shadow-sm w-full px-20">
+      <%- include('../partials/landingHeader') %>
+    </div>
     <div class="container py-5">
-      <h2 class="fw-bold text-center mb-4">
-        Seller / Service Provider Registration
-      </h2>
+      <h2 class="text-center mb-4">Seller / Service Provider Registration</h2>
 
       <!-- Steps -->
       <div class="step-header">
@@ -86,9 +111,14 @@
         <!-- ===== Step 1 ===== -->
         <div id="step1">
           <h5 class="fw-bold mb-3">Business Information</h5>
+
           <div class="mb-3">
             <label class="form-label">Business Type *</label>
-            <select name="BusinessType" class="form-select" required>
+            <select
+              name="BusinessType"
+              class="form-select propload-select"
+              required
+            >
               <option value="">Select</option>
               <option>Proprietorship</option>
               <option>Partnership</option>
@@ -103,14 +133,13 @@
             <input
               type="text"
               name="BusinessName"
-              class="form-control"
-              pattern="^[A-Za-z0-9\s&.,-]{3,100}$"
+              class="form-control propload-select"
               required
             />
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Business Details *</label>
+            <label class="form-label propload-select">Business Details *</label>
             <input
               type="text"
               name="BusinessDetails"
@@ -120,7 +149,7 @@
             />
           </div>
 
-          <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+          <button type="button" class="bg-propload btn" onclick="nextStep(2)">
             Next
           </button>
         </div>
@@ -169,7 +198,7 @@
           <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
             Back
           </button>
-          <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+          <button type="button" class="btn bg-propload" onclick="nextStep(3)">
             Next
           </button>
         </div>
@@ -271,7 +300,11 @@
           <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
             Back
           </button>
-          <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+          <button
+            type="button"
+            class="btn btn-primary bg-propload"
+            onclick="nextStep(4)"
+          >
             Next
           </button>
         </div>
