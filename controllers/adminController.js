@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Seller = require('../models/Seller');
 const Project = require('../models/Project');
 const Bid = require('../models/Bid');
 const Contract = require('../models/Contract');
@@ -49,23 +50,46 @@ exports.getDashboard = async (req, res) => {
     }
 };
 
+
+//seler verification
+exports.VerifySeller = async (req, res) => {
+   
+
+       try {
+        const seller = await Seller.findById(req.params.id);
+        seller.adminVerified = true;
+        await seller.save();
+        req.flash('success', 'Seller verified');
+        res.redirect('back');
+    } catch (err) {
+        console.error('Verify bid error:', err);
+        req.flash('error', 'Could not verify bid');
+        res.redirect('back');
+    }
+    
+}
+
+
 // User Management
 exports.getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find()
-            .select('name email role companyName isActive createdAt lastLogin')
-            .sort({ createdAt: -1 });
+  try {
+    const users = await User.find()
+     
 
-        res.render('admin/all-users', {
-            user: req.user,
-            currentPage: 'all-users',
-            users: users || []
-        });
-    } catch (error) {
-        console.error('Get all users error:', error);
-        req.flash('error', 'Error loading users');
-        res.redirect('/admin/dashboard');
-    }
+    const sellers = await Seller.find().populate('userId');
+     
+
+    return res.render('admin/all-users', {
+      user: req.user,
+      currentPage: 'all-users',
+      users: users || [],
+      sellers: sellers || []
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    req.flash('error', 'Error loading users');
+    return res.redirect('/admin/dashboard');
+  }
 };
 
 exports.getUserDetails = async (req, res) => {
