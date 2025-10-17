@@ -77,7 +77,7 @@ const TaxAssessmentSchema = new mongoose.Schema({
 
 const sellerSchema = new mongoose.Schema({
      userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
     index: true
@@ -148,4 +148,4 @@ sellerSchema.pre('save', function (next) {
 /* Suggested index if you query PANs often inside taxAssessments */
 // sellerSchema.index({ 'taxAssessments.pan': 1 });
 
-module.exports = mongoose.model('Project', sellerSchema);
+module.exports = mongoose.model('Seller', sellerSchema);

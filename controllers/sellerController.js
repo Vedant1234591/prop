@@ -4,6 +4,7 @@ const Bid = require("../models/Bid");
 const User = require("../models/User");
 const Notice = require("../models/Notice");
 const Contract = require("../models/Contract");
+const Seller = require("../models/Seller");
 const cloudinary = require("../config/cloudinary");
 
 // const cloudinary = require("../config/cloudinary");
@@ -13,10 +14,16 @@ const mongoose = require("mongoose");
 const statusAutomation = require("../services/statusAutomation");
 
 // Seller Dashboard - Enhanced with real-time updates
+exports.pendingPage = async (req, res) => {
+  res.render('seller/pending')
+}
 exports.getDashboard = async (req, res) => {
   try {
     const sellerId = req.session.userId;
-
+const seller = await Seller.findOne({ userId: sellerId })
+if(!seller||!seller.adminVerified){
+  res.render('seller/pending')
+}
     console.log("=== SELLER DASHBOARD DEBUG ===");
     console.log("Seller ID:", sellerId);
 
