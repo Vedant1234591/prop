@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Seller Registration</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .step-header {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+      }
+      .circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: bold;
+      }
+      .active .circle {
+        background-color: #4b6ef5;
+      }
+      .completed .circle {
+        background-color: #2ecc71;
+      }
+      .inactive .circle {
+        background-color: #bbb;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <h2 class="fw-bold text-center mb-4">
+        Seller / Service Provider Registration
+      </h2>
+
+      <!-- Steps -->
+      <div class="step-header">
+        <div class="step active" id="indicator1">
+          <div class="circle">1</div>
+          Business Info
+        </div>
+        <div class="step inactive" id="indicator2">
+          <div class="circle">2</div>
+          Documents
+        </div>
+        <div class="step inactive" id="indicator3">
+          <div class="circle">3</div>
+          Office
+        </div>
+        <div class="step inactive" id="indicator4">
+          <div class="circle">4</div>
+          Tax
+        </div>
+      </div>
+
+      <form
+        id="sellerForm"
+        action="/auth/seller-register"
+        method="POST"
+        enctype="multipart/form-data"
+        class="bg-white p-5 rounded shadow-sm"
+      >
+        <input
+          type="hidden"
+          name="userId"
+          value="<%= user ? user._id : '' %>"
+        />
+
+        <!-- ===== Step 1 ===== -->
+        <div id="step1">
+          <h5 class="fw-bold mb-3">Business Information</h5>
+          <div class="mb-3">
+            <label class="form-label">Business Type *</label>
+            <select name="BusinessType" class="form-select" required>
+              <option value="">Select</option>
+              <option>Proprietorship</option>
+              <option>Partnership</option>
+              <option>Private Limited</option>
+              <option>Public Sector Unit</option>
+              <option>Government Department</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Business Name *</label>
+            <input
+              type="text"
+              name="BusinessName"
+              class="form-control"
+              pattern="^[A-Za-z0-9\s&.,-]{3,100}$"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Business Details *</label>
+            <input
+              type="text"
+              name="BusinessDetails"
+              class="form-control"
+              placeholder="e.g., Manufacturing, Trading"
+              required
+            />
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+            Next
+          </button>
+        </div>
+
+        <!-- ===== Step 2 ===== -->
+        <div id="step2" class="hidden">
+          <h5 class="fw-bold mb-3">Personal Verification</h5>
+
+          <div class="mb-3">
+            <label class="form-label">Personal Details *</label>
+            <input
+              type="text"
+              name="PersonalDetails"
+              class="form-control"
+              placeholder="Name, Designation, Contact"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"
+              >Upload Aadhaar (JPG/PNG/PDF, max 2MB)</label
+            >
+            <input
+              type="file"
+              name="Aadhaar"
+              accept=".jpg,.jpeg,.png,.pdf"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"
+              >Upload PAN Card (JPG/PNG/PDF, max 2MB)</label
+            >
+            <input
+              type="file"
+              name="Pancard"
+              accept=".jpg,.jpeg,.png,.pdf"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+            Back
+          </button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+            Next
+          </button>
+        </div>
+
+        <!-- ===== Step 3 ===== -->
+        <div id="step3" class="hidden">
+          <h5 class="fw-bold mb-3">Office Location</h5>
+
+          <div class="mb-3">
+            <label class="form-label">Office Name *</label>
+            <input
+              type="text"
+              name="officeLocations[0][officeName]"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">State *</label>
+              <input
+                type="text"
+                name="officeLocations[0][address][state]"
+                pattern="^[A-Za-z\s]{3,50}$"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">District *</label>
+              <input
+                type="text"
+                name="officeLocations[0][address][district]"
+                pattern="^[A-Za-z\s]{3,50}$"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">City *</label>
+              <input
+                type="text"
+                name="officeLocations[0][address][city]"
+                pattern="^[A-Za-z\s]{2,50}$"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">PIN Code *</label>
+              <input
+                type="text"
+                name="officeLocations[0][address][pinCode]"
+                pattern="^[1-9][0-9]{5}$"
+                maxlength="6"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Full Address *</label>
+            <textarea
+              name="officeLocations[0][address][fullAddress]"
+              class="form-control"
+              rows="2"
+              required
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">GSTIN *</label>
+            <input
+              type="text"
+              name="officeLocations[0][gstin]"
+              pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
+              maxlength="15"
+              class="form-control"
+              required
+            />
+            <small class="text-muted">Format: 22ABCDE1234F1Z5</small>
+          </div>
+
+          <div class="form-check mb-4">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              name="officeLocations[0][primary]"
+              checked
+            />
+            <label class="form-check-label">Set as Primary Office</label>
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+            Back
+          </button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+            Next
+          </button>
+        </div>
+
+        <!-- ===== Step 4 ===== -->
+        <div id="step4" class="hidden">
+          <h5 class="fw-bold mb-3">Tax Assessment</h5>
+
+          <div class="mb-3">
+            <label class="form-label">PAN *</label>
+            <input
+              type="text"
+              name="taxAssessments[0][pan]"
+              pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+              maxlength="10"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">ITR Type *</label>
+            <select
+              name="taxAssessments[0][itrType]"
+              class="form-select"
+              required
+            >
+              <option value="">Select</option>
+              <option>ITR-1</option>
+              <option>ITR-2</option>
+              <option>ITR-3</option>
+              <option>ITR-4</option>
+              <option>ITR-5</option>
+              <option>ITR-6</option>
+              <option>ITR-7</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Assessment Year *</label>
+            <input
+              type="text"
+              name="taxAssessments[0][assessmentYear]"
+              placeholder="2023-24"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Acknowledgement No.</label>
+            <input
+              type="text"
+              name="taxAssessments[0][ackNumber]"
+              pattern="^[A-Za-z0-9]{6,20}$"
+              class="form-control"
+            />
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Profit / Gain from Business *</label>
+              <input
+                type="number"
+                name="taxAssessments[0][profitGainFromBusiness]"
+                min="0"
+                step="0.01"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Gross Receipts *</label>
+              <input
+                type="number"
+                name="taxAssessments[0][grossReceipts]"
+                min="0"
+                step="0.01"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Upload ITR Document (PDF/Image)</label>
+            <input
+              type="file"
+              name="taxAssessments[0][documents]"
+              multiple
+              accept=".jpg,.jpeg,.png,.pdf"
+              class="form-control"
+            />
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
+            Back
+          </button>
+          <button type="submit" class="btn btn-success">
+            Submit Registration
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      function nextStep(step) {
+        document
+          .querySelectorAll('[id^="step"]')
+          .forEach((s) => s.classList.add("hidden"));
+        document.getElementById(`step${step}`).classList.remove("hidden");
+        updateIndicator(step);
+      }
+      function prevStep(step) {
+        document
+          .querySelectorAll('[id^="step"]')
+          .forEach((s) => s.classList.add("hidden"));
+        document.getElementById(`step${step}`).classList.remove("hidden");
+        updateIndicator(step);
+      }
+      function updateIndicator(step) {
+        document.querySelectorAll(".step").forEach((el, i) => {
+          el.classList.remove("active", "completed", "inactive");
+          if (i + 1 < step) el.classList.add("completed");
+          else if (i + 1 === step) el.classList.add("active");
+          else el.classList.add("inactive");
+        });
+      }
+    </script>
+  </body>
+</html>
