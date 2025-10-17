@@ -71,6 +71,20 @@
                                     <h3 class="text-xl font-semibold text-gray-900">
                                         <%= project.title || 'Untitled Project' %>
                                     </h3>
+                                    <%if(project.adminVerified){ %>
+                                        <h2 class="text-sm text-green-600 font-medium flex items-center">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Verified by Admin
+                                        </h2>
+                                        <%}%>
+                                        <%if(!project.adminVerified){ %>
+                                        <h2 class="text-sm text-red-600 font-medium flex items-center">
+                                           <i class="fas fa-exclamation-circle mr-1"></i>
+
+                                            Under Review 
+                                        </h2>
+                                        <%}%>
+                                        
                                     <span class="px-3 py-1 rounded-full text-xs font-medium 
                                         <%= project.status === 'drafted' ? 'bg-yellow-100 text-yellow-800' : '' %>
                                         <%= project.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : '' %>

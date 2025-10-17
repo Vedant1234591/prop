@@ -32,6 +32,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bids</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Verification Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -81,6 +84,22 @@
                                 </form>
                                 <% } %>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <% if (!project.adminVerified ) { %>
+                                                <form action="/admin/projects/<%= project._id %>/verify" method="POST"
+                                                    class="inline">
+                                                    <button type="submit"
+                                                        class="bg-red-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold hover:bg-yellow-200">
+                                                        Verify Now
+                                                    </button>
+                                                </form>
+                                                <% } else { %>
+                                                    <span
+                                                        class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                                        Verified
+                                                    </span>
+                                                    <% } %>
+                                        </td>
                         </tr>
                         <% }); %>
                     </tbody>

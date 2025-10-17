@@ -17,6 +17,7 @@ router.post("/users/:userId/update-role", adminController.updateUserRole);
 
 // Project Management
 router.get("/all-projects", adminController.getAllProjects);
+router.post("/projects/:projectId/verify", adminController.verifyProject);
 router.get("/projects/:id", adminController.getProjectDetails);
 router.post(
   "/projects/:projectId/force-close",
@@ -25,6 +26,8 @@ router.post(
 
 // Bid Management
 router.get("/all-bids", adminController.getAllBids);
+// router.post("/bids/:bidId/verify", adminController.verifyBid);
+
 
 // Contract Management - COMPLETE ROUTES
 router.get("/pending-contracts", adminController.getPendingContracts);
