@@ -1,0 +1,71 @@
+.btn-primary-custom {
+  background-color: #40788e;
+  color: white;
+}
+.btn-primary-custom:hover {
+  background-color: #2f5e6b;
+  color: white;
+}
+.text-primary-custom {
+  color: #40788e;
+}
+.text-secondary-custom {
+  color: #e9e2b3;
+}
+header a {
+  text-decoration: none;
+}
+
+/* Zoom + blur animation for carousel images */
+.carousel-item img {
+  transition: transform 1.5s ease, filter 1.5s ease;
+}
+
+/* Animate the active image */
+.carousel-item.active img {
+  animation: zoomBlur 8s ease-in-out infinite;
+}
+
+@keyframes zoomBlur {
+  0% {
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: blur(1px);
+  }
+  100% {
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Optional: fade in text smoothly */
+.carousel-caption h2,
+.carousel-caption p,
+.carousel-caption .btn {
+  animation: fadeInUp 1.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* login */
+
+.bg-propload {
+  background-color: #e9e2b3;
+}
+
+.bg-propload:hover {
+  background-color: #dcd39e;
+}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -50,4 +50,121 @@
         </form>
     </div>
 </body>
+</html> -->
+
+<!-- //uttkarsh -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Login - Propload</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Load Tailwind last -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      .bg-propload {
+        background-color: #e9e2b3;
+      }
+
+      .bg-propload:hover {
+        background-color: #dcd39e;
+      }
+    </style>
+  </head>
+
+  <body class="bg-white min-h-screen flex flex-col">
+    <div class="shadow-sm w-full px-20">
+      <%- include('../partials/landingHeader') %>
+    </div>
+
+    <div
+      class="mx-10 flex flex-col gap-12 md:flex-row items-center justify-center flex-grow py-10"
+    >
+      <!-- Left Side: Illustration -->
+      <div class="max-h-full md:w-1/2 flex justify-center mb-10 md:mb-0">
+        <img
+          src="/images/login/login.webp"
+          alt="Construction Crane"
+          class="w-[40rem] h-[35rem] object-contain"
+        />
+      </div>
+
+      <!-- Right Side: Login Form -->
+      <div
+        class="mr-20 md:w-1/2 max-w-md bg-white p-8 rounded-lg border border-gray-100"
+      >
+        <h2 class="text-3xl font-semibold text-gray-800 mb-6 text-center">
+          Login to Your Account
+        </h2>
+
+        <%- include('../partials/flash-messages') %>
+
+        <form action="/auth/login" method="POST" class="space-y-5">
+          <div>
+            <label for="email" class="block text-gray-700 font-medium mb-2"
+              >Email Address</label
+            >
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div>
+            <label for="password" class="block text-gray-700 font-medium mb-2"
+              >Password</label
+            >
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button
+            class="w-full bg-propload text-gray-800 font-semibold py-2 rounded-md transition duration-200"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <p class="text-center text-gray-600 mt-5">
+          Don’t have an account?
+          <a
+            href="/auth/register?role=customer"
+            class="text-blue-600 hover:underline"
+            >Join as Customer</a
+          >
+          or
+          <a
+            href="/auth/register?role=seller"
+            class="text-blue-600 hover:underline"
+            >Join as Seller</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
 </html>

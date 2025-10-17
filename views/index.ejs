@@ -52,7 +52,7 @@
       rel="stylesheet"
     />
 
-    <style>
+    <!-- <style>
       .btn-primary-custom {
         background-color: #40788e;
         color: white;
@@ -114,52 +114,12 @@
           transform: translateY(0);
         }
       }
-    </style>
+    </style> -->
   </head>
   <body>
     <!-- Header -->
-    <header class="container-fluid py-3">
-      <div class="container d-flex justify-content-between align-items-center">
-        <a href="/">
-          <img
-            src="/images/landing/logo.png"
-            alt="Propload Logo"
-            style="height: 50px"
-          />
-        </a>
-        <nav>
-          <ul class="d-flex list-unstyled mb-0">
-            <li class="mx-2">
-              <a href="/" class="text-primary-custom no underline">Home</a>
-            </li>
-            <li class="mx-2">
-              <a href="/about" class="text-primary-custom">About Us</a>
-            </li>
-            <li class="mx-2">
-              <a href="/blogs" class="text-primary-custom">Our Blogs</a>
-            </li>
-            <li class="mx-2">
-              <a href="/store" class="text-primary-custom">Store</a>
-            </li>
-            <li class="mx-2">
-              <a href="/contact" class="text-primary-custom">Contact Us</a>
-            </li>
-          </ul>
-        </nav>
-        <div>
-          <a
-            href="/auth/register?role=seller"
-            class="btn btn-primary-custom mx-1"
-            >Join as Seller</a
-          >
-          <a
-            href="/auth/register?role=customer"
-            class="btn btn-primary-custom mx-1"
-            >Join as Customer</a
-          >
-        </div>
-      </div>
-    </header>
+
+    <%- include('./partials/landingHeader') %>
 
     <!-- Carousel -->
     <div id="carouselExample" class="carousel slide" data-bs-ride="carousel">
