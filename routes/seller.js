@@ -9,6 +9,7 @@ router.use(ensureAuthenticated);
 router.use(ensureSeller);
 
 // Dashboard routes
+router.get('/pending-Approval', sellerController.pendingPage);
 router.get('/dashboard', sellerController.getDashboard);
 router.get('/analytics', sellerController.getBidAnalytics);
 
