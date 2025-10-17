@@ -92,7 +92,7 @@ exports.getUserDetails = async (req, res) => {
             userBids = await Bid.find({ seller: userId })
                 .populate('project', 'title category')
                 .sort({ createdAt: -1 });
-            
+
             userContracts = await Contract.find({ seller: userId })
                 .populate('project', 'title')
                 .populate('customer', 'name')
@@ -179,7 +179,25 @@ exports.getAllProjects = async (req, res) => {
         res.redirect('/admin/dashboard');
     }
 };
+exports.verifyProject = async (req, res) => {
+    try {
+        const bid = await Project.findById(req.params.projectId);
+        console.log('Verifying bid:', bid);
+        if (!bid) {
+            req.flash('error', 'Bid not found');
+            return res.redirect('back');
+        }
+        bid.adminVerified = true;
+        await bid.save();
+        req.flash('success', 'Bid verified');
+        res.redirect('back');
+    } catch (err) {
+        console.error('Verify bid error:', err);
+        req.flash('error', 'Could not verify bid');
+        res.redirect('back');
+    }
 
+}
 exports.getProjectDetails = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id)
@@ -249,7 +267,7 @@ exports.getAllBids = async (req, res) => {
             .populate('seller', 'name companyName')
             .populate('customer', 'name email')
             .sort({ createdAt: -1 });
-
+        console.log('Bids fetched:', bids[0].adminVerified);
         res.render('admin/all-bids', {
             user: req.user,
             currentPage: 'all-bids',
@@ -262,6 +280,8 @@ exports.getAllBids = async (req, res) => {
         res.redirect('/admin/dashboard');
     }
 };
+
+
 
 // Contract Management - FIXED VERSION
 
@@ -332,13 +352,13 @@ exports.approveContract = async (req, res) => {
         }
 
         console.log('📜 Generating completion certificate...');
-        
+
         // Generate completion certificate
         const PDFGenerator = require('../services/pdfGenerator');
         const certificate = await PDFGenerator.generateCertificate(
-            contract.bid, 
-            contract.project, 
-            contract.customer, 
+            contract.bid,
+            contract.project,
+            contract.customer,
             contract.seller
         );
 
@@ -350,7 +370,7 @@ exports.approveContract = async (req, res) => {
         contract.adminApprovedAt = new Date();
         contract.approvedBy = req.user._id;
         contract.adminNotes = adminNotes;
-        
+
         // Store the final certificate
         contract.finalCertificate = {
             public_id: certificate.public_id,
@@ -359,9 +379,9 @@ exports.approveContract = async (req, res) => {
             bytes: certificate.bytes,
             generatedAt: new Date()
         };
-        
+
         contract.updatedAt = new Date();
-        
+
         await contract.save();
         console.log('✅ Contract approved:', contract._id);
 
@@ -456,7 +476,7 @@ exports.rejectContract = async (req, res) => {
 
         // Create rejection notices for both parties with corrective actions
         const Notice = require('../models/Notice');
-        
+
         await Notice.create({
             title: `Contract Requires Correction - ${contract.project.title}`,
             content: `Your contract requires corrections before approval. Reason: ${rejectionReason}${correctiveAction ? ` Corrective Action: ${correctiveAction}` : ''}`,
@@ -510,15 +530,15 @@ exports.downloadCustomerContract = async (req, res) => {
 // Add this function to your adminController.js
 exports.getPendingContracts = async (req, res) => {
     try {
-        const pendingContracts = await Contract.find({ 
-            status: 'pending-admin' 
+        const pendingContracts = await Contract.find({
+            status: 'pending-admin'
         })
-        .populate('project', 'title category featuredImage')
-        .populate('customer', 'name email phone')
-        .populate('seller', 'name companyName email')
-        .populate('bid', 'amount proposal')
-        .populate('approvedBy', 'name')
-        .sort({ updatedAt: -1 });
+            .populate('project', 'title category featuredImage')
+            .populate('customer', 'name email phone')
+            .populate('seller', 'name companyName email')
+            .populate('bid', 'amount proposal')
+            .populate('approvedBy', 'name')
+            .sort({ updatedAt: -1 });
 
         // Calculate statistics
         let readyCount = 0;
@@ -526,7 +546,7 @@ exports.getPendingContracts = async (req, res) => {
         let autoCount = 0;
 
         pendingContracts.forEach(contract => {
-            if (contract.customerSignedContract && contract.customerSignedContract.url && 
+            if (contract.customerSignedContract && contract.customerSignedContract.url &&
                 contract.sellerSignedContract && contract.sellerSignedContract.url) {
                 readyCount++;
             } else {
@@ -643,9 +663,9 @@ exports.bulkApproveContracts = async (req, res) => {
 
                 // Generate completion certificate
                 const certificate = await PDFGenerator.generateCertificate(
-                    contract.bid, 
-                    contract.project, 
-                    contract.customer, 
+                    contract.bid,
+                    contract.project,
+                    contract.customer,
                     contract.seller
                 );
 
@@ -725,7 +745,7 @@ exports.bulkApproveContracts = async (req, res) => {
         } else {
             req.flash('info', `No contracts could be approved. ${skippedCount} contract(s) skipped due to missing documents.`);
         }
-        
+
         res.redirect('/admin/pending-contracts');
 
     } catch (error) {
@@ -739,7 +759,7 @@ exports.bulkApproveContracts = async (req, res) => {
 exports.getSystemStatus = async (req, res) => {
     try {
         const systemStats = await statusAutomation.updateAllProjectStatuses();
-        
+
         const autoProcessStats = {
             lastRun: new Date(),
             draftedToActive: systemStats.data?.draftedToActive || 0,
@@ -763,16 +783,16 @@ exports.getSystemStatus = async (req, res) => {
 exports.autoProcessAll = async (req, res) => {
     try {
         const result = await statusAutomation.manualUpdate();
-        
+
         if (result.success) {
-            req.flash('success', 
+            req.flash('success',
                 `Auto-processing completed! Projects activated: ${result.data.draftedToActive}, ` +
                 `Bidding closed: ${result.data.biddingClosed}, Bids processed: ${result.data.bidsProcessed}`
             );
         } else {
             req.flash('error', 'Auto-processing failed: ' + result.message);
         }
-        
+
         res.redirect('/admin/system-status');
     } catch (error) {
         req.flash('error', 'Error during auto-processing: ' + error.message);

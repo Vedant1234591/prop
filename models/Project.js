@@ -7,6 +7,10 @@ const projectSchema = new mongoose.Schema({
         trim: true,
         maxlength: [200, 'Title cannot exceed 200 characters']
     },
+    adminVerified: {
+        type: Boolean,
+        default: false
+    },
     description: {
         type: String,
         required: [true, 'Project description is required'],

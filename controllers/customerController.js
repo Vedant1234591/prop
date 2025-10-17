@@ -146,7 +146,7 @@ exports.getMyProjects = async (req, res) => {
         },
       })
       .select(
-        "title description category status location timeline bidSettings featuredImage images bids selectedBid createdAt"
+        "title description adminVerified category status location timeline bidSettings featuredImage images bids selectedBid createdAt "
       );
 
     // NEW: Get contract information for each project
@@ -172,6 +172,7 @@ exports.getMyProjects = async (req, res) => {
       project: { $in: projectIds },
       status: "submitted",
     });
+    console.log(projects[0].adminVerified)
 
     res.render("customer/my-projects", {
       user: userData,
@@ -201,6 +202,7 @@ exports.getProjectDetails = async (req, res) => {
         populate: {
           path: "seller",
           select: "name companyName email phone rating profileImage",
+
         },
       })
       .populate({
