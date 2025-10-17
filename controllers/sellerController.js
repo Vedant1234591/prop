@@ -184,7 +184,6 @@ exports.getFindBids = async (req, res) => {
       seller: sellerId,
       status: "submitted",
     });
-    
 
     res.render("seller/find-bids", {
       user: userData,
