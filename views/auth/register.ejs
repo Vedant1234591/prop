@@ -1,93 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register - Propload</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-50 min-h-screen py-12">
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-50 min-h-screen py-12">
     <div class="max-w-2xl mx-auto px-4">
-        <div class="text-center mb-8">
-            <a href="/" class="text-3xl font-bold text-indigo-600">Propload</a>
-            <h2 class="mt-4 text-2xl font-bold text-gray-900">
-                Join as <%= role === 'seller' ? 'Service Provider' : 'Customer' %>
-            </h2>
-        </div>
+      <div class="text-center mb-8">
+        <a href="/" class="text-3xl font-bold text-indigo-600">Propload</a>
+        <h2 class="mt-4 text-2xl font-bold text-gray-900">
+          Join as <%= role === 'seller' ? 'Service Provider' : 'Customer' %>
+        </h2>
+      </div>
 
-        <%- include('../partials/flash-messages') %>
+      <%- include('../partials/flash-messages') %>
 
-        <div class="bg-white shadow rounded-lg p-8">
-            <form action="/auth/register" method="POST" class="space-y-6">
-                <input type="hidden" name="role" value="<%= role %>">
-                
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">Full Name *</label>
-                        <input type="text" id="name" name="name" required 
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+      <div class="bg-white shadow rounded-lg p-8">
+        <form action="/auth/register" method="POST" class="space-y-6">
+          <input type="hidden" name="role" value="<%= role %>" />
 
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email Address *</label>
-                        <input type="email" id="email" name="email" required 
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700"
+                >Full Name *</label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
 
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number *</label>
-                        <input type="tel" id="phone" name="phone" required 
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700"
+                >Email Address *</label
+              >
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
 
-                    <% if (role === 'seller') { %>
-                    <div>
-                        <label for="companyName" class="block text-sm font-medium text-gray-700">Company Name *</label>
-                        <input type="text" id="companyName" name="companyName" required 
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    <% } %>
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700"
+                >Phone Number *</label
+              >
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password *</label>
-                        <input type="password" id="password" name="password" required minlength="6"
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+            <% if (role === 'seller') { %>
+            <div>
+              <label
+                for="companyName"
+                class="block text-sm font-medium text-gray-700"
+                >Company Name *</label
+              >
+              <input
+                type="text"
+                id="companyName"
+                name="companyName"
+                required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <% } %>
 
-                    <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password *</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6"
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                </div>
+            <div>
+              <label
+                for="password"
+                class="block text-sm font-medium text-gray-700"
+                >Password *</label
+              >
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minlength="6"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
 
-                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                    <p class="text-sm text-blue-700">
-                        By registering, you agree to our Terms of Service and Privacy Policy.
-                    </p>
-                </div>
+            <div>
+              <label
+                for="confirmPassword"
+                class="block text-sm font-medium text-gray-700"
+                >Confirm Password *</label
+              >
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                required
+                minlength="6"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
 
-                <div class="flex items-center justify-between">
-                    <a href="/auth/login" class="text-indigo-600 hover:text-indigo-500 text-sm">
-                        Already have an account? Sign in
-                    </a>
-                    <button type="submit" 
-                            class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300">
-                        Create Account
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="text-center mt-6">
-            <p class="text-gray-600">
-                Want to join as <%= role === 'seller' ? 'customer' : 'service provider' %>?
-                <a href="/auth/register?role=<%= role === 'seller' ? 'customer' : 'seller' %>" 
-                   class="text-indigo-600 hover:text-indigo-500">
-                    Click here
-                </a>
+          <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <p class="text-sm text-blue-700">
+              By registering, you agree to our Terms of Service and Privacy
+              Policy.
             </p>
-        </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <a
+              href="/auth/login"
+              class="text-indigo-600 hover:text-indigo-500 text-sm"
+            >
+              Already have an account? Sign in
+            </a>
+            <button
+              type="submit"
+              class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300"
+            >
+              Create Account
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="text-center mt-6">
+        <p class="text-gray-600">
+          Want to join as <%= role === 'seller' ? 'customer' :
+          'service_provider' %>?
+          <a
+            href="/auth/register?role=<%= role === 'seller' ? 'customer' : 'seller' %>"
+            class="text-indigo-600 hover:text-indigo-500"
+          >
+            Click here
+          </a>
+        </p>
+      </div>
     </div>
-</body>
+  </body>
 </html>
