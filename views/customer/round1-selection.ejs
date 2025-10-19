@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round 1 Selection - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bid-card.selected {
+            border-color: #10B981;
+            background-color: #F0FDF4;
+        }
+        .bid-card.selected .selection-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header') %>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Round 1: Select Top 3 Bids</h1>
+                    <p class="text-gray-600 mt-2">Project: <strong><%= project.title %></strong></p>
+                    <p class="text-gray-500 text-sm mt-1">Select exactly 3 bids to proceed to Round 2</p>
+                    <p class="text-yellow-600 text-sm mt-1">
+                        <i class="fas fa-clock mr-1"></i>
+                        You have 24 hours to make your selection
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                        Round 1 Selection
+                    </span>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Total Bids: <span class="font-semibold"><%= bids.length %></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selection Instructions -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 text-xl mt-1 mr-3"></i>
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-800 mb-2">Selection Process</h3>
+                    <ul class="text-blue-700 space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Review all 10 top bids from Round 1 (sorted by amount)
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Select exactly 3 bids to proceed to Round 2
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Selected sellers will have 24 hours to update their bids in Round 2
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            After Round 2, you'll select the final winner
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selection Counter -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6 sticky top-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <span class="text-lg font-semibold text-gray-700">Selected: </span>
+                    <span id="selected-count" class="text-2xl font-bold text-indigo-600">0</span>
+                    <span class="text-gray-500">/ 3 bids</span>
+                </div>
+                <div id="selection-actions" class="hidden">
+                    <form id="selection-form" action="/customer/project/<%= project._id %>/select-top3" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <div id="selected-bids-container"></div>
+                        <button type="submit" 
+                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold flex items-center">
+                            <i class="fas fa-arrow-right mr-2"></i>
+                            Proceed to Round 2
+                        </button>
+                    </form>
+                </div>
+                <div id="selection-warning" class="text-orange-600 text-sm">
+                    Select exactly 3 bids to continue
+                </div>
+            </div>
+        </div>
+
+        <!-- Bids Grid -->
+        <div class="grid gap-6" id="bids-container">
+            <% bids.forEach((bid, index) => { %>
+            <div class="bid-card bg-white shadow rounded-lg p-6 border-2 border-gray-200 transition-all duration-300 hover:shadow-lg cursor-pointer selectable-bid"
+                 data-bid-id="<%= bid._id %>">
+                <div class="flex justify-between items-start">
+                    <!-- Selection Indicator -->
+                    <div class="selection-indicator hidden absolute top-4 right-4">
+                        <div class="bg-green-500 text-white p-2 rounded-full">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+
+                    <!-- Bid Information -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
+                                        Rank #<%= index + 1 %>
+                                    </span>
+                                    <span class="text-2xl font-bold text-green-600">$<%= bid.amount.toLocaleString() %></span>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                        <i class="fas fa-gavel mr-1"></i>Round 1
+                                    </span>
+                                </div>
+                                
+                                <!-- Seller Information -->
+                                <div class="flex items-center space-x-4 mb-3">
+                                    <% if (bid.seller.profileImage && bid.seller.profileImage.url) { %>
+                                    <img src="<%= bid.seller.profileImage.url %>" 
+                                         alt="<%= bid.seller.companyName || bid.seller.name %>"
+                                         class="w-16 h-16 rounded-full object-cover border-2 border-gray-200">
+                                    <% } else { %>
+                                    <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center border-2 border-gray-200">
+                                        <i class="fas fa-user text-gray-600 text-xl"></i>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <div class="flex-1">
+                                        <h3 class="text-xl font-semibold text-gray-900">
+                                            <%= bid.seller.companyName || bid.seller.name %>
+                                        </h3>
+                                        <p class="text-gray-600"><%= bid.seller.email %></p>
+                                        <% if (bid.seller.phone) { %>
+                                        <p class="text-gray-500 text-sm"><%= bid.seller.phone %></p>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Seller Rating -->
+                                <% if (bid.seller.rating) { %>
+                                <div class="flex items-center mb-3">
+                                    <div class="flex items-center">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                        <i class="fas fa-star <%= i <= Math.floor(bid.seller.rating) ? 'text-yellow-400' : 'text-gray-300' %> mr-1"></i>
+                                        <% } %>
+                                        <span class="text-gray-700 ml-2 font-medium">
+                                            <%= bid.seller.rating.toFixed(1) %> 
+                                        </span>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                                <!-- Seller Experience -->
+                                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                                    <% if (bid.seller.yearsOfExperience) { %>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-briefcase mr-2 text-blue-500"></i>
+                                        <span><%= bid.seller.yearsOfExperience %> years experience</span>
+                                    </div>
+                                    <% } %>
+                                    <% if (bid.seller.specialization) { %>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-tags mr-2 text-green-500"></i>
+                                        <span><%= bid.seller.specialization %></span>
+                                    </div>
+                                    <% } %>
+                                </div>
+
+                                <!-- Bid Proposal -->
+                                <div class="mb-4">
+                                    <h4 class="font-semibold text-gray-700 mb-2">Proposal:</h4>
+                                    <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
+                                        <%= bid.proposal %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Selection Checkbox -->
+                            <div class="ml-6">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="selectedBids" 
+                                           value="<%= bid._id %>"
+                                           class="bid-select-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 transition duration-300">
+                                    <span class="text-lg font-semibold text-gray-700">Select</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Seller Documents -->
+                        <% if (bid.seller.companyDocuments && bid.seller.companyDocuments.length > 0) { %>
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="font-semibold text-gray-700 mb-2">Company Documents:</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <% bid.seller.companyDocuments.forEach(doc => { %>
+                                <a href="<%= doc.url %>" 
+                                   target="_blank"
+                                   class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition duration-300">
+                                    <i class="fas fa-file-pdf text-red-500 mr-1"></i>
+                                    <%= doc.documentType || 'Document' %>
+                                </a>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+
+        <!-- No Bids Message -->
+        <% if (bids.length === 0) { %>
+        <div class="bg-white shadow rounded-lg p-12 text-center">
+            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Bids Available</h3>
+            <p class="text-gray-500">There are no bids to display for selection.</p>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        let selectedBids = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const bidCards = document.querySelectorAll('.selectable-bid');
+            const selectionActions = document.getElementById('selection-actions');
+            const selectedCount = document.getElementById('selected-count');
+            const selectedBidsContainer = document.getElementById('selected-bids-container');
+            const selectionWarning = document.getElementById('selection-warning');
+            const selectionForm = document.getElementById('selection-form');
+
+            // Add click handlers to bid cards
+            bidCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on the checkbox directly
+                    if (e.target.type === 'checkbox') return;
+
+                    const checkbox = this.querySelector('.bid-select-checkbox');
+                    const bidId = this.getAttribute('data-bid-id');
+                    
+                    toggleBidSelection(checkbox, card, bidId);
+                });
+
+                // Also handle checkbox clicks
+                const checkbox = card.querySelector('.bid-select-checkbox');
+                checkbox.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const bidId = card.getAttribute('data-bid-id');
+                    const cardElement = card;
+                    
+                    toggleBidSelection(this, cardElement, bidId);
+                });
+            });
+
+            function toggleBidSelection(checkbox, card, bidId) {
+                if (checkbox.checked) {
+                    // Deselect
+                    checkbox.checked = false;
+                    card.classList.remove('selected');
+                    selectedBids = selectedBids.filter(id => id !== bidId);
+                } else {
+                    // Select if we have less than 3
+                    if (selectedBids.length < 3) {
+                        checkbox.checked = true;
+                        card.classList.add('selected');
+                        selectedBids.push(bidId);
+                    } else {
+                        showAlert('You can only select 3 bids. Please deselect one first.', 'warning');
+                        return;
+                    }
+                }
+                updateSelectionUI();
+            }
+
+            function updateSelectionUI() {
+                selectedCount.textContent = selectedBids.length;
+                
+                // Update hidden inputs
+                selectedBidsContainer.innerHTML = '';
+                selectedBids.forEach(bidId => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selectedBids';
+                    input.value = bidId;
+                    selectedBidsContainer.appendChild(input);
+                });
+
+                // Show/hide selection actions
+                if (selectedBids.length === 3) {
+                    selectionActions.classList.remove('hidden');
+                    selectionWarning.classList.add('hidden');
+                } else {
+                    selectionActions.classList.add('hidden');
+                    selectionWarning.classList.remove('hidden');
+                    
+                    if (selectedBids.length > 0) {
+                        selectionWarning.textContent = `Select ${3 - selectedBids.length} more bids to continue`;
+                    } else {
+                        selectionWarning.textContent = 'Select exactly 3 bids to continue';
+                    }
+                }
+            }
+
+            // Form submission validation
+            selectionForm.addEventListener('submit', function(e) {
+                console.log('Submitting form with selected bids:', selectedBids);
+                
+                if (selectedBids.length !== 3) {
+                    e.preventDefault();
+                    showAlert('Please select exactly 3 bids before proceeding.', 'error');
+                    return false;
+                }
+                
+                // Additional confirmation
+                const confirmed = confirm('Are you sure you want to proceed with these 3 bids to Round 2? This action cannot be undone.');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                return true;
+            });
+
+            function showAlert(message, type) {
+                // Remove any existing alerts
+                const existingAlert = document.querySelector('.fixed-alert');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `fixed-alert fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                    type === 'error' ? 'bg-red-500 text-white' : 
+                    type === 'warning' ? 'bg-yellow-500 text-white' : 
+                    'bg-green-500 text-white'
+                }`;
+                alertDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${
+                            type === 'error' ? 'fa-exclamation-triangle' : 
+                            type === 'warning' ? 'fa-exclamation-circle' : 
+                            'fa-check-circle'
+                        } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(alertDiv);
+                
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        });
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

@@ -21,6 +21,63 @@
             </div>
         </div>
 
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-project-diagram text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Projects</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= projects.length %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending Verification</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            <%= projects.filter(p => p.adminStatus === 'pending').length %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Projects</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            <%= projects.filter(p => p.status === 'active').length %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Defected Projects</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            <%= projects.filter(p => p.adminStatus === 'rejected').length %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -30,11 +87,10 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bids</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Round</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Verification Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -46,7 +102,7 @@
                                         <%= project.title %>
                                     </a>
                                 </div>
-                                <div class="text-sm text-gray-500"><%= project.category %></div>
+                                <div class="text-sm text-gray-500 capitalize"><%= project.category.replace('-', ' ') %></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900"><%= project.customer.name %></div>
@@ -54,9 +110,11 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    <%= project.status === 'draft' ? 'bg-gray-100 text-gray-800' : '' %>
+                                    <%= project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' %>
                                     <%= project.status === 'active' ? 'bg-green-100 text-green-800' : '' %>
-                                    <%= project.status === 'completed' ? 'bg-blue-100 text-blue-800' : '' %>">
+                                    <%= project.status === 'defected' ? 'bg-red-100 text-red-800' : '' %>
+                                    <%= project.status === 'completed' ? 'bg-blue-100 text-blue-800' : '' %>
+                                    <%= project.status === 'failed' ? 'bg-gray-100 text-gray-800' : '' %>">
                                     <%= project.status %>
                                 </span>
                                 <% if (project.bidSettings && project.bidSettings.isActive) { %>
@@ -69,37 +127,61 @@
                                 <%= project.bids ? project.bids.length : 0 %> bids
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <%= moment(project.createdAt).format('MMM D, YYYY') %>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                                <% if (project.bidSettings && project.bidSettings.isActive) { %>
-                                <form action="/admin/projects/<%= project._id %>/force-close" method="POST" class="inline">
-                                    <button type="submit" class="text-red-600 hover:text-red-900" 
-                                        onclick="return confirm('Are you sure you want to force close bidding for this project?')">
-                                        <i class="fas fa-stop-circle"></i> Close Bidding
-                                    </button>
-                                </form>
+                                <% if (project.biddingRounds && project.biddingRounds.currentRound) { %>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                        Round <%= project.biddingRounds.currentRound %>
+                                    </span>
+                                    <% if (project.biddingRounds.currentRound === 1.5) { %>
+                                        <span class="text-xs text-yellow-600">(Selection Phase)</span>
+                                    <% } %>
+                                <% } else { %>
+                                    <span class="text-gray-400">Not Started</span>
                                 <% } %>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <% if (!project.adminVerified ) { %>
-                                                <form action="/admin/projects/<%= project._id %>/verify" method="POST"
-                                                    class="inline">
-                                                    <button type="submit"
-                                                        class="bg-red-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold hover:bg-yellow-200">
-                                                        Verify Now
-                                                    </button>
-                                                </form>
-                                                <% } else { %>
-                                                    <span
-                                                        class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
-                                                        Verified
-                                                    </span>
-                                                    <% } %>
-                                        </td>
+                                <%= moment(project.createdAt).format('MMM D, YYYY') %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <% if (project.adminStatus === 'pending') { %>
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span>
+                                    <a href="/admin/projects/<%= project._id %>/verify" 
+                                       class="ml-2 text-blue-600 hover:text-blue-900 text-xs">Review</a>
+                                <% } else if (project.adminStatus === 'approved') { %>
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Approved</span>
+                                    <div class="text-xs text-green-600">
+                                        <%= moment(project.adminVerifiedAt).format('MMM D') %>
+                                    </div>
+                                <% } else if (project.adminStatus === 'rejected') { %>
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Defected</span>
+                                    <% if (project.adminRemarks) { %>
+                                    <div class="text-xs text-red-600 mt-1" title="<%= project.adminRemarks %>">
+                                        <i class="fas fa-comment-alt"></i> Remarks
+                                    </div>
+                                    <% } %>
+                                <% } else { %>
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"><%= project.adminStatus %></span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex flex-col space-y-1">
+                                    <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900 text-xs">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <% if (project.adminStatus === 'pending') { %>
+                                    <a href="/admin/projects/<%= project._id %>/verify" class="text-blue-600 hover:text-blue-900 text-xs">
+                                        <i class="fas fa-clipboard-check"></i> Verify
+                                    </a>
+                                    <% } %>
+                                    <% if (project.bidSettings && project.bidSettings.isActive && project.status === 'active') { %>
+                                    <form action="/admin/projects/<%= project._id %>/force-close" method="POST" class="inline">
+                                        <button type="submit" class="text-red-600 hover:text-red-900 text-xs" 
+                                            onclick="return confirm('Are you sure you want to force close bidding for this project?')">
+                                            <i class="fas fa-stop-circle"></i> Close Bidding
+                                        </button>
+                                    </form>
+                                    <% } %>
+                                </div>
+                            </td>
                         </tr>
                         <% }); %>
                     </tbody>
@@ -115,5 +197,17 @@
         </div>
         <% } %>
     </div>
+
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach(message => {
+                message.style.transition = 'opacity 0.5s ease';
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 500);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>

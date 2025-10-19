@@ -68,7 +68,54 @@
                 </div>
             </div>
         </div>
-
+<!-- Pending Projects for Verification -->
+<div class="bg-white shadow rounded-lg mb-8">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">Projects Pending Verification</h2>
+        <p class="text-sm text-gray-600 mt-1">Projects waiting for admin approval</p>
+    </div>
+    <div class="p-6">
+        <% 
+        const pendingProjects = recentProjects.filter(project => project.adminStatus === 'pending');
+        if (pendingProjects.length > 0) { %>
+            <div class="space-y-4">
+                <% pendingProjects.forEach(project => { %>
+                <div class="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium text-gray-900"><%= project.title %></h3>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                Pending Verification
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600">
+                            by <%= project.customer.name %> • 
+                            Category: <span class="capitalize"><%= project.category %></span> • 
+                            Created: <%= moment(project.createdAt).format('MMM D, YYYY') %>
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Starting Bid: $<%= project.bidSettings.startingBid %> • 
+                            Timeline: <%= project.timeline.duration %> days
+                        </p>
+                    </div>
+                    <div class="ml-4 flex space-x-2">
+                        <a href="/admin/project-verification/<%= project._id %>" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm">
+                            Review
+                        </a>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="text-center py-8">
+                <i class="fas fa-check-circle text-green-400 text-4xl mb-3"></i>
+                <p class="text-gray-500">No projects pending verification</p>
+                <p class="text-sm text-gray-400 mt-1">All projects have been reviewed</p>
+            </div>
+        <% } %>
+    </div>
+</div>
         <div class="grid lg:grid-cols-2 gap-8">
             <!-- Recent Projects -->
             <div class="bg-white shadow rounded-lg">

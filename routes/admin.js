@@ -7,57 +7,60 @@ const { ensureAuthenticated, ensureAdmin } = require("../middleware/auth");
 router.use(ensureAuthenticated, ensureAdmin);
 
 // Dashboard
-router.get("/dashboard", adminController.getDashboard);
+router.get('/dashboard', adminController.getDashboard);
 
 // User Management
-router.get("/all-users", adminController.getAllUsers);
-router.get("/users/:userId", adminController.getUserDetails);
-router.post("/users/:userId/toggle-status", adminController.toggleUserStatus);
-router.post("/users/:userId/update-role", adminController.updateUserRole);
+router.get('/all-users', adminController.getAllUsers);
+router.get('/users/:userId', adminController.getUserDetails);
+router.post('/users/:userId/toggle-status', adminController.toggleUserStatus);
+router.post('/users/:userId/update-role', adminController.updateUserRole);
 
-// Project Management
-router.get("/all-projects", adminController.getAllProjects);
-router.post("/projects/:projectId/verify", adminController.verifyProject);
-router.get("/projects/:id", adminController.getProjectDetails);
-router.post(
-  "/projects/:projectId/force-close",
-  adminController.forceCloseBidding
-);
+// Project Management - ENHANCED with verification workflow
+router.get('/all-projects', adminController.getAllProjects);
+router.get('/projects/:id', adminController.getProjectDetails);
+router.get('/projects/:projectId/verify', adminController.verifyProject);
+router.post('/projects/:projectId/approve', adminController.approveProject);
+router.post('/projects/:projectId/reject', adminController.rejectProject);
+router.post('/projects/:projectId/force-close', adminController.forceCloseBidding);
 
 // Bid Management
-router.get("/all-bids", adminController.getAllBids);
-// router.post("/bids/:bidId/verify", adminController.verifyBid);
+router.get('/all-bids', adminController.getAllBids);
+
+// Contract Management - ENHANCED with rejection workflow
+
+// Contract routes - THESE MUST BE DEFINED BEFORE ANY DYNAMIC ROUTES
+router.get('/pending-contracts', adminController.getPendingContracts);
+router.get('/contracts/:contractId', adminController.getContractDetails);
 
 
-// Contract Management - COMPLETE ROUTES
-router.get("/pending-contracts", adminController.getPendingContracts);
-router.get("/contracts/:contractId", adminController.getContractDetails);
-router.post("/contracts/:contractId/approve", adminController.approveContract);
-router.post("/contracts/:contractId/reject", adminController.rejectContract);
-router.post("/contracts/bulk-approve", adminController.bulkApproveContracts);
+router.post('/contracts/:contractId/reject', adminController.rejectContract);
+router.post('/contracts/:contractId/reject-with-remarks', adminController.rejectContractWithRemarks);
+router.post('/bulk-approve-contracts', adminController.bulkApproveContracts);
 
-// Contract Document Downloads
-router.get(
-  "/contracts/:contractId/download-customer",
-  adminController.downloadCustomerContract
-);
-router.get(
-  "/contracts/:contractId/download-seller",
-  adminController.downloadSellerContract
-);
-router.get(
-  "/contracts/:contractId/template/:party",
-  adminController.downloadContractTemplate
-);
+// Document Downloads
+router.get('/contracts/:contractId/download-customer', adminController.downloadCustomerContract);
+router.get('/contracts/:contractId/download-seller', adminController.downloadSellerContract);
+router.get('/contracts/:contractId/download-template/:party', adminController.downloadContractTemplate);
 
 // System Management
-router.get("/system-status", adminController.getSystemStatus);
-router.post("/auto-process-all", adminController.autoProcessAll);
+router.get('/system-status', adminController.getSystemStatus);
+router.post('/auto-process-all', adminController.autoProcessAll);
 
 // Notice Management
-router.get("/notices", adminController.getNotices);
-router.post("/notices", adminController.createNotice);
-router.post("/notices/:noticeId/update", adminController.updateNotice);
-router.post("/notices/:noticeId/delete", adminController.deleteNotice);
+router.get('/notices', adminController.getNotices);
+router.post('/notices', adminController.createNotice);
+router.post('/notices/:noticeId/update', adminController.updateNotice);
+router.post('/notices/:noticeId/delete', adminController.deleteNotice);
 
+// Certificate Generation
+router.post('/generate-certificate/:bidId', adminController.generateCertificate);
+
+
+
+router.post('/contracts/:contractId/approve', adminController.approveContract);
+router.post('/contracts/:contractId/reject-customer', adminController.rejectCustomerContract);
+router.post('/contracts/:contractId/reject-seller', adminController.rejectSellerContract);
+router.get('/contracts/:contractId/download-customer-certificate', adminController.downloadCustomerCertificate);
+router.get('/contracts/:contractId/download-seller-certificate', adminController.downloadSellerCertificate);
+router.get('/contracts/:contractId/download-final-certificate', adminController.downloadFinalCertificate);
 module.exports = router;

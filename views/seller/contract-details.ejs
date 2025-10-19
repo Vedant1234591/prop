@@ -18,6 +18,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Contract Details</h1>
                     <p class="text-gray-600">Project: <%= bid.project.title %></p>
+                    <p class="text-sm text-gray-500">Winning Bid: $<%= bid.amount %> • Round <%= bid.round %> Winner</p>
                 </div>
                 <a href="/seller/my-bids" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
                     Back to My Bids
@@ -30,7 +31,8 @@
                     <h3 class="font-semibold text-gray-900 mb-2">Project Details</h3>
                     <p class="text-gray-700"><strong>Title:</strong> <%= bid.project.title %></p>
                     <p class="text-gray-700"><strong>Category:</strong> <%= bid.project.category %></p>
-                    <p class="text-gray-700"><strong>Bid Amount:</strong> $<%= bid.amount %></p>
+                    <p class="text-gray-700"><strong>Winning Bid:</strong> $<%= bid.amount %></p>
+                    <p class="text-gray-700"><strong>Round Won:</strong> Round <%= bid.round %></p>
                 </div>
                 
                 <div class="bg-gray-50 rounded-lg p-4">
@@ -47,9 +49,9 @@
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-semibold text-blue-800 mb-2">Contract Status</h3>
                 <p class="text-blue-700">
-                    <% if (!contract.customerSignedContract) { %>
+                    <% if (!contract.customerSignedContract || !contract.customerSignedContract.url) { %>
                         <strong>Step 1:</strong> Waiting for customer to upload their signed contract.
-                    <% } else if (!contract.sellerSignedContract) { %>
+                    <% } else if (!contract.sellerSignedContract || !contract.sellerSignedContract.url) { %>
                         <strong>Step 2:</strong> Customer has uploaded. Please download template and upload your signed contract.
                     <% } else if (contract.status === 'pending-admin') { %>
                         <strong>Step 3:</strong> Both contracts uploaded. Waiting for admin approval.
@@ -57,8 +59,24 @@
                         <strong>Completed:</strong> Contract approved on <%= moment(contract.adminApprovedAt).format('MMM D, YYYY') %>
                     <% } else if (contract.status === 'rejected') { %>
                         <strong>Rejected:</strong> <%= contract.adminRejectionReason %>
+                    <% } else if (contract.status === 'correcting') { %>
+                        <strong>Correction Required:</strong> <%= contract.currentRejection.reason %>
                     <% } %>
                 </p>
+
+                <!-- Correction Deadline Warning -->
+                <% if (contract.status === 'correcting' && contract.currentRejection) { %>
+                <div class="mt-3 bg-red-50 border border-red-200 rounded p-3">
+                    <p class="text-red-700 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Correction Required:</strong> <%= contract.currentRejection.reason %>
+                        <% if (contract.currentRejection.deadline) { %>
+                            <br>Deadline: <%= moment(contract.currentRejection.deadline).format('MMM D, YYYY h:mm A') %>
+                            (<%= contract.getRemainingCorrectionTime ? contract.getRemainingCorrectionTime() : 'Time remaining' %>)
+                        <% } %>
+                    </p>
+                </div>
+                <% } %>
             </div>
 
             <!-- Document Downloads -->
@@ -121,13 +139,14 @@
                     <div class="text-center py-4">
                         <i class="fas fa-clock text-gray-400 text-2xl mb-2"></i>
                         <p class="text-gray-600">Customer contract not yet uploaded</p>
+                        <p class="text-sm text-gray-500 mt-1">You'll be notified when customer uploads their contract</p>
                     </div>
                     <% } %>
                 </div>
             </div>
 
             <!-- Upload Section (if applicable) -->
-            <% if (contract.customerSignedContract && !contract.sellerSignedContract) { %>
+            <% if (contract.customerSignedContract && contract.customerSignedContract.url && (!contract.sellerSignedContract || !contract.sellerSignedContract.url)) { %>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-yellow-800 mb-4">Upload Your Signed Contract</h3>
                 <p class="text-yellow-700 mb-4">
@@ -150,6 +169,88 @@
                 </form>
             </div>
             <% } %>
+
+            <!-- Contract Process Timeline -->
+            <div class="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Contract Process Timeline</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-0.5">1</div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Customer Uploads Contract</h4>
+                            <p class="text-sm text-gray-600">Customer downloads template, signs, and uploads first</p>
+                            <% if (contract.customerSignedContract && contract.customerSignedContract.url) { %>
+                            <p class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-check-circle mr-1"></i>Completed: <%= moment(contract.customerSignedContract.uploadedAt).format('MMM D, YYYY') %>
+                            </p>
+                            <% } else { %>
+                            <p class="text-xs text-yellow-600 mt-1">
+                                <i class="fas fa-clock mr-1"></i>Waiting for customer
+                            </p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="bg-green-100 text-green-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-0.5">2</div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Seller Uploads Contract</h4>
+                            <p class="text-sm text-gray-600">Seller downloads template, signs, and uploads after customer</p>
+                            <% if (contract.sellerSignedContract && contract.sellerSignedContract.url) { %>
+                            <p class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-check-circle mr-1"></i>Completed: <%= moment(contract.sellerSignedContract.uploadedAt).format('MMM D, YYYY') %>
+                            </p>
+                            <% } else if (contract.customerSignedContract && contract.customerSignedContract.url) { %>
+                            <p class="text-xs text-blue-600 mt-1">
+                                <i class="fas fa-arrow-right mr-1"></i>Your turn to upload
+                            </p>
+                            <% } else { %>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-clock mr-1"></i>Waiting for customer first
+                            </p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="bg-purple-100 text-purple-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-0.5">3</div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Admin Approval</h4>
+                            <p class="text-sm text-gray-600">Admin manually reviews and approves both contracts</p>
+                            <% if (contract.status === 'completed') { %>
+                            <p class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-check-circle mr-1"></i>Approved: <%= moment(contract.adminApprovedAt).format('MMM D, YYYY') %>
+                            </p>
+                            <% } else if (contract.status === 'pending-admin') { %>
+                            <p class="text-xs text-purple-600 mt-1">
+                                <i class="fas fa-shield-alt mr-1"></i>Under admin review
+                            </p>
+                            <% } else { %>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-clock mr-1"></i>Waiting for contract uploads
+                            </p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="bg-indigo-100 text-indigo-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 mt-0.5">4</div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Certificate Generation</h4>
+                            <p class="text-sm text-gray-600">Completion certificate generated after admin approval</p>
+                            <% if (contract.status === 'completed') { %>
+                            <p class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-check-circle mr-1"></i>Certificate available for download
+                            </p>
+                            <% } else { %>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-clock mr-1"></i>Available after approval
+                            </p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

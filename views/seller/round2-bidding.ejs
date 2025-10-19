@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round 2 Bidding - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Round 2: Update Your Bid</h1>
+                    <p class="text-gray-600 mt-2">Project: <strong><%= project.title %></strong></p>
+                    <p class="text-green-600 text-sm mt-1">
+                        <i class="fas fa-trophy mr-1"></i>
+                        Congratulations! You've been selected for Round 2 (Top 3)
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                        Round 2 Bidding
+                    </span>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Time Left: <span id="time-left" class="font-semibold text-red-600"></span>
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1" id="end-time"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bidding Form -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <form action="/seller/project/<%= project._id %>/update-round2-bid" method="POST" id="round2-form">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                
+                <div class="grid gap-6">
+                    <!-- Current Bid Display -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-blue-800 mb-2">Your Round 1 Bid</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-blue-600">Amount</p>
+                                <p class="text-xl font-bold text-blue-800">$<%= bid.amount.toLocaleString() %></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-blue-600">Proposal</p>
+                                <p class="text-blue-700 line-clamp-3"><%= bid.proposal %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                            New Bid Amount for Round 2 *
+                            <span class="text-green-600 ml-2">(Highest bid wins!)</span>
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">$</span>
+                            </div>
+                            <input type="number" 
+                                   name="amount" 
+                                   id="amount"
+                                   value="<%= bid.amount %>"
+                                   step="0.01"
+                                   min="1"
+                                   class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 py-3 border-gray-300 rounded-md text-lg font-semibold"
+                                   placeholder="0.00"
+                                   required>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">USD</span>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Enter your best bid amount. The highest bidder wins the project automatically after 2 minutes.
+                        </p>
+                    </div>
+
+                    <!-- Proposal Input -->
+                    <div>
+                        <label for="proposal" class="block text-sm font-medium text-gray-700 mb-2">
+                            Updated Proposal for Round 2 *
+                        </label>
+                        <textarea name="proposal" 
+                                  id="proposal" 
+                                  rows="6"
+                                  class="focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md p-3 text-gray-700"
+                                  placeholder="Improve your proposal to make it more competitive. Describe your approach, timeline, and why you're the best choice..."
+                                  required><%= bid.proposal %></textarea>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Enhance your proposal to increase your chances of winning. You have limited time!
+                        </p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Submit before timer ends. Winner selected automatically.
+                        </div>
+                        <button type="submit" 
+                                id="submit-btn"
+                                class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold flex items-center text-lg">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Final Bid for Round 2
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Round 2 Instructions -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-6">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1 mr-3"></i>
+                <div>
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Round 2 Bidding Rules</h3>
+                    <ul class="text-yellow-700 space-y-2">
+                        <li>• <strong>Highest bid wins</strong> - The bid with the highest amount automatically wins</li>
+                        <li>• <strong>2-minute timer</strong> - Winner is selected automatically when time ends</li>
+                        <li>• <strong>One submission only</strong> - You can only submit your bid once in Round 2</li>
+                        <li>• <strong>No withdrawals</strong> - Once submitted, your bid is final</li>
+                        <li>• <strong>Contract process starts immediately</strong> after winner selection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Updates Section -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3">Real-time Updates</h3>
+            <div class="space-y-2 text-sm text-blue-700">
+                <p id="status-message">⏳ Waiting for your bid submission...</p>
+                <p id="auto-selection-message" class="hidden">
+                    🏆 <strong>Automatic winner selection</strong> will occur when the timer ends
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer for Round 2 with auto-submission check
+        function updateCountdown() {
+            const endDate = new Date('<%= project.biddingRounds.round2.endDate %>');
+            const now = new Date();
+            const timeLeft = endDate - now;
+
+            if (timeLeft <= 0) {
+                document.getElementById('time-left').textContent = 'ROUND ENDED';
+                document.getElementById('time-left').classList.add('text-red-600', 'font-bold');
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').classList.add('bg-gray-400', 'cursor-not-allowed');
+                document.getElementById('submit-btn').classList.remove('bg-green-600', 'hover:bg-green-700');
+                document.getElementById('submit-btn').innerHTML = '<i class="fas fa-ban mr-2"></i>Bidding Ended';
+                document.getElementById('auto-selection-message').classList.remove('hidden');
+                document.getElementById('status-message').textContent = '✅ Round 2 completed. Winner selection in progress...';
+                
+                // Auto-refresh to see results
+                setTimeout(() => {
+                    window.location.href = '/seller/dashboard';
+                }, 3000);
+                return;
+            }
+
+            const minutes = Math.floor(timeLeft / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            document.getElementById('time-left').textContent = `${minutes}m ${seconds}s`;
+            
+            // Show warning when less than 30 seconds
+            if (timeLeft < 30000) {
+                document.getElementById('time-left').classList.add('text-red-600', 'animate-pulse');
+            }
+        }
+
+        // Format and display end time
+        function displayEndTime() {
+            const endDate = new Date('<%= project.biddingRounds.round2.endDate %>');
+            document.getElementById('end-time').textContent = 
+                `Ends at: ${endDate.toLocaleTimeString()} on ${endDate.toLocaleDateString()}`;
+        }
+
+        // Form validation and submission
+        document.getElementById('round2-form').addEventListener('submit', function(e) {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const proposal = document.getElementById('proposal').value.trim();
+            const endDate = new Date('<%= project.biddingRounds.round2.endDate %>');
+            const now = new Date();
+
+            if (now >= endDate) {
+                e.preventDefault();
+                alert('Round 2 bidding has ended. You cannot submit bids anymore.');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                e.preventDefault();
+                alert('Please enter a valid bid amount greater than 0');
+                return;
+            }
+
+            if (!proposal) {
+                e.preventDefault();
+                alert('Please enter your proposal');
+                return;
+            }
+
+            const confirmed = confirm(`Are you sure you want to submit your final bid of $${amount.toLocaleString()}?\n\nThis is your only chance in Round 2!`);
+            if (!confirmed) {
+                e.preventDefault();
+            } else {
+                // Disable button to prevent double submission
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+                document.getElementById('status-message').textContent = '🔄 Submitting your bid...';
+            }
+        });
+
+        // Real-time countdown updates
+        displayEndTime();
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Auto-refresh countdown every 30 seconds to sync with server
+        setInterval(() => {
+            // This ensures the timer stays in sync with server time
+            location.reload();
+        }, 30000);
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

@@ -7,47 +7,6 @@ const CertificateService = require('../services/certificateService');
 const statusAutomation = require('../services/statusAutomation');
 const mongoose = require('mongoose');
 
-// Dashboard
-exports.getDashboard = async (req, res) => {
-    try {
-        const totalUsers = await User.countDocuments();
-        const totalProjects = await Project.countDocuments();
-        const totalBids = await Bid.countDocuments();
-        const pendingContracts = await Contract.countDocuments({ status: 'pending-admin' });
-        const activeProjects = await Project.countDocuments({ 'bidSettings.isActive': true });
-        const submittedBids = await Bid.countDocuments({ status: 'submitted' });
-        const autoWonBids = await Bid.countDocuments({ autoWon: true });
-
-        const recentProjects = await Project.find()
-            .populate('customer', 'name email')
-            .sort({ createdAt: -1 })
-            .limit(10);
-
-        const pendingVerifications = await Contract.find({ status: 'pending-admin' })
-            .populate('project', 'title')
-            .populate('customer', 'name')
-            .populate('seller', 'name companyName')
-            .populate('bid', 'amount');
-
-        res.render('admin/dashboard', {
-            user: req.user,
-            stats: {
-                totalUsers,
-                totalProjects,
-                totalBids,
-                pendingContracts,
-                activeProjects,
-                submittedBids,
-                autoWonBids
-            },
-            recentProjects,
-            pendingVerifications
-        });
-    } catch (error) {
-        console.error('Admin dashboard error:', error);
-        res.status(500).render('error', { message: 'Error loading admin dashboard' });
-    }
-};
 
 // User Management
 exports.getAllUsers = async (req, res) => {
@@ -159,45 +118,6 @@ exports.updateUserRole = async (req, res) => {
     }
 };
 
-// Project Management
-exports.getAllProjects = async (req, res) => {
-    try {
-        const projects = await Project.find()
-            .populate('customer', 'name email')
-            .populate('selectedBid')
-            .sort({ createdAt: -1 });
-
-        res.render('admin/all-projects', {
-            user: req.user,
-            currentPage: 'all-projects',
-            projects: projects || [],
-            moment: require('moment')
-        });
-    } catch (error) {
-        console.error('Get all projects error:', error);
-        req.flash('error', 'Error loading projects');
-        res.redirect('/admin/dashboard');
-    }
-};
-exports.verifyProject = async (req, res) => {
-    try {
-        const bid = await Project.findById(req.params.projectId);
-        console.log('Verifying bid:', bid);
-        if (!bid) {
-            req.flash('error', 'Bid not found');
-            return res.redirect('back');
-        }
-        bid.adminVerified = true;
-        await bid.save();
-        req.flash('success', 'Bid verified');
-        res.redirect('back');
-    } catch (err) {
-        console.error('Verify bid error:', err);
-        req.flash('error', 'Could not verify bid');
-        res.redirect('back');
-    }
-
-}
 exports.getProjectDetails = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id)
@@ -283,42 +203,363 @@ exports.getAllBids = async (req, res) => {
 
 
 
-// Contract Management - FIXED VERSION
 
-// Get Pending Contracts
-// Add to the existing adminController.js
 
-// Enhanced Contract Management Methods
 
-// Get Contract Details with enhanced information
-exports.getContractDetails = async (req, res) => {
+
+
+// NEW: Download Customer Certificate
+exports.downloadCustomerCertificate = async (req, res) => {
     try {
         const { contractId } = req.params;
 
+        const contract = await Contract.findById(contractId);
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        if (contract.customerCertificate && contract.customerCertificate.url) {
+            console.log('📥 Downloading customer certificate:', contract.customerCertificate.url);
+            res.redirect(contract.customerCertificate.url);
+        } else {
+            req.flash('error', 'Customer certificate not available');
+            res.redirect('/admin/pending-contracts');
+        }
+    } catch (error) {
+        console.error('❌ Download customer certificate error:', error);
+        req.flash('error', 'Error downloading customer certificate');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+// NEW: Download Seller Certificate
+exports.downloadSellerCertificate = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+
+        const contract = await Contract.findById(contractId);
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        if (contract.sellerCertificate && contract.sellerCertificate.url) {
+            console.log('📥 Downloading seller certificate:', contract.sellerCertificate.url);
+            res.redirect(contract.sellerCertificate.url);
+        } else {
+            req.flash('error', 'Seller certificate not available');
+            res.redirect('/admin/pending-contracts');
+        }
+    } catch (error) {
+        console.error('❌ Download seller certificate error:', error);
+        req.flash('error', 'Error downloading seller certificate');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+// NEW: Download Final Certificate
+exports.downloadFinalCertificate = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+
+        const contract = await Contract.findById(contractId);
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        if (contract.finalCertificate && contract.finalCertificate.url) {
+            console.log('📥 Downloading final certificate:', contract.finalCertificate.url);
+            res.redirect(contract.finalCertificate.url);
+        } else {
+            req.flash('error', 'Final certificate not available');
+            res.redirect('/admin/pending-contracts');
+        }
+    } catch (error) {
+        console.error('❌ Download final certificate error:', error);
+        req.flash('error', 'Error downloading final certificate');
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// // NEW: Reject Customer Contract Only
+// exports.rejectCustomerContract = async (req, res) => {
+//     try {
+//         const { contractId } = req.params;
+//         const { rejectionReason, deadlineHours } = req.body;
+
+//         console.log('🔄 Rejecting customer contract:', contractId);
+
+//         const contract = await Contract.findById(contractId)
+//             .populate('project')
+//             .populate('customer')
+//             .populate('seller');
+
+//         if (!contract) {
+//             req.flash('error', 'Contract not found');
+//             return res.redirect('/admin/pending-contracts');
+//         }
+
+//         // Reject only customer contract
+//         await contract.rejectContract(
+//             req.user._id, 
+//             rejectionReason, 
+//             'customer', 
+//             parseInt(deadlineHours) || 48
+//         );
+
+//         // Create rejection notice for customer
+//         const Notice = require('../models/Notice');
+//         await Notice.create({
+//             title: `Contract Requires Correction - ${contract.project.title}`,
+//             content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+//             targetAudience: 'customer',
+//             specificUser: contract.customer._id,
+//             noticeType: 'error',
+//             isActive: true,
+//             startDate: new Date(),
+//             endDate: contract.currentRejection.deadline,
+//         });
+
+//         req.flash('success', `Customer contract rejected successfully. Customer has ${deadlineHours || 48} hours to correct.`);
+//         res.redirect('/admin/pending-contracts');
+//     } catch (error) {
+//         console.error('❌ Reject customer contract error:', error);
+//         req.flash('error', 'Error rejecting customer contract: ' + error.message);
+//         res.redirect('/admin/pending-contracts');
+//     }
+// };
+
+// // NEW: Reject Seller Contract Only
+// exports.rejectSellerContract = async (req, res) => {
+//     try {
+//         const { contractId } = req.params;
+//         const { rejectionReason, deadlineHours } = req.body;
+
+//         console.log('🔄 Rejecting seller contract:', contractId);
+
+//         const contract = await Contract.findById(contractId)
+//             .populate('project')
+//             .populate('customer')
+//             .populate('seller');
+
+//         if (!contract) {
+//             req.flash('error', 'Contract not found');
+//             return res.redirect('/admin/pending-contracts');
+//         }
+
+//         // Reject only seller contract
+//         await contract.rejectContract(
+//             req.user._id, 
+//             rejectionReason, 
+//             'seller', 
+//             parseInt(deadlineHours) || 48
+//         );
+
+//         // Create rejection notice for seller
+//         const Notice = require('../models/Notice');
+//         await Notice.create({
+//             title: `Contract Requires Correction - ${contract.project.title}`,
+//             content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+//             targetAudience: 'seller',
+//             specificUser: contract.seller._id,
+//             noticeType: 'error',
+//             isActive: true,
+//             startDate: new Date(),
+//             endDate: contract.currentRejection.deadline,
+//         });
+
+//         req.flash('success', `Seller contract rejected successfully. Seller has ${deadlineHours || 48} hours to correct.`);
+//         res.redirect('/admin/pending-contracts');
+//     } catch (error) {
+//         console.error('❌ Reject seller contract error:', error);
+//         req.flash('error', 'Error rejecting seller contract: ' + error.message);
+//         res.redirect('/admin/pending-contracts');
+//     }
+// };
+
+
+
+// Reject Customer Contract
+exports.rejectCustomerContract = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        const { rejectionReason, deadlineHours } = req.body;
+
+        console.log('🔄 Rejecting customer contract:', contractId);
+
         const contract = await Contract.findById(contractId)
-            .populate('project', 'title description category timeline location')
-            .populate('customer', 'name email phone address')
-            .populate('seller', 'name companyName email phone taxId')
-            .populate('bid', 'amount proposal timeline')
-            .populate('approvedBy', 'name email');
+            .populate('project')
+            .populate('customer')
+            .populate('seller');
 
         if (!contract) {
             req.flash('error', 'Contract not found');
             return res.redirect('/admin/pending-contracts');
         }
 
-        res.render('admin/contract-details', {
-            user: req.user,
-            currentPage: 'pending-contracts',
-            contract: contract,
-            moment: require('moment')
+        // Reject only customer
+        await contract.rejectContract(
+            req.user._id, 
+            rejectionReason, 
+            'customer', 
+            parseInt(deadlineHours) || 48
+        );
+
+        // Create Notice
+        const Notice = require('../models/Notice');
+        await Notice.create({
+            title: `Contract Requires Correction - ${contract.project.title}`,
+            content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+            targetAudience: 'customer',
+            specificUser: contract.customer._id,
+            noticeType: 'error',
+            isActive: true,
+            startDate: new Date(),
+            endDate: contract.currentRejection.deadline,
         });
+
+        req.flash('success', `Customer contract rejected successfully. Customer has ${deadlineHours || 48} hours to correct.`);
+        res.redirect('/admin/pending-contracts');
     } catch (error) {
-        console.error('Get contract details error:', error);
-        req.flash('error', 'Error loading contract details');
+        console.error('❌ Reject customer contract error:', error);
+        req.flash('error', 'Error rejecting customer contract: ' + error.message);
         res.redirect('/admin/pending-contracts');
     }
 };
+
+// Reject Seller Contract
+exports.rejectSellerContract = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        const { rejectionReason, deadlineHours } = req.body;
+
+        console.log('🔄 Rejecting seller contract:', contractId);
+
+        const contract = await Contract.findById(contractId)
+            .populate('project')
+            .populate('customer')
+            .populate('seller');
+
+        if (!contract) {
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        // Reject only seller
+        await contract.rejectContract(
+            req.user._id, 
+            rejectionReason, 
+            'seller', 
+            parseInt(deadlineHours) || 48
+        );
+
+        // Create Notice
+        const Notice = require('../models/Notice');
+        await Notice.create({
+            title: `Contract Requires Correction - ${contract.project.title}`,
+            content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+            targetAudience: 'seller',
+            specificUser: contract.seller._id,
+            noticeType: 'error',
+            isActive: true,
+            startDate: new Date(),
+            endDate: contract.currentRejection.deadline,
+        });
+
+        req.flash('success', `Seller contract rejected successfully. Seller has ${deadlineHours || 48} hours to correct.`);
+        res.redirect('/admin/pending-contracts');
+    } catch (error) {
+        console.error('❌ Reject seller contract error:', error);
+        req.flash('error', 'Error rejecting seller contract: ' + error.message);
+        res.redirect('/admin/pending-contracts');
+    }
+};
+
+
+
+
+
+
+
+
+// NEW: Enhanced contract rejection with remarks and deadlines
+exports.rejectContractWithRemarks = async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { rejectionReason, partyRequired, deadlineHours } = req.body;
+
+    const contract = await Contract.findById(contractId)
+      .populate('project')
+      .populate('customer')
+      .populate('seller');
+
+    if (!contract) {
+      req.flash('error', 'Contract not found');
+      return res.redirect('/admin/pending-contracts');
+    }
+
+    // Reject contract with specific party requirements and deadline
+    await contract.rejectContract(
+      req.user._id, 
+      rejectionReason, 
+      partyRequired, 
+      parseInt(deadlineHours) || 48
+    );
+
+    // Create rejection notices
+    const Notice = require('../models/Notice');
+    
+    if (partyRequired === 'customer' || partyRequired === 'both') {
+      await Notice.create({
+        title: `Contract Requires Correction - ${contract.project.title}`,
+        content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+        targetAudience: 'customer',
+        specificUser: contract.customer._id,
+        noticeType: 'error',
+        isActive: true,
+        startDate: new Date(),
+        endDate: contract.currentRejection.deadline,
+      });
+    }
+
+    if (partyRequired === 'seller' || partyRequired === 'both') {
+      await Notice.create({
+        title: `Contract Requires Correction - ${contract.project.title}`,
+        content: `Your contract requires corrections. Reason: ${rejectionReason}. Please upload corrected contract within ${deadlineHours || 48} hours.`,
+        targetAudience: 'seller',
+        specificUser: contract.seller._id,
+        noticeType: 'error',
+        isActive: true,
+        startDate: new Date(),
+        endDate: contract.currentRejection.deadline,
+      });
+    }
+
+    req.flash('success', `Contract rejected successfully. ${partyRequired} has ${deadlineHours || 48} hours to correct.`);
+    res.redirect('/admin/pending-contracts');
+  } catch (error) {
+    console.error('Reject contract with remarks error:', error);
+    req.flash('error', 'Error rejecting contract: ' + error.message);
+    res.redirect('/admin/pending-contracts');
+  }
+};
+
+
+
+
 
 // Enhanced Approve Contract with PDF Generation
 exports.approveContract = async (req, res) => {
@@ -364,11 +605,11 @@ exports.approveContract = async (req, res) => {
 
         console.log('✅ Certificate generated:', certificate ? 'Yes' : 'No');
 
-        // Update contract with approval and certificate
+        // Update contract with approval and certificate - USING CORRECT FIELD NAMES
         contract.status = 'completed';
         contract.adminApproved = true;
         contract.adminApprovedAt = new Date();
-        contract.approvedBy = req.user._id;
+        contract.adminApprovedBy = req.user._id; // FIXED: adminApprovedBy instead of approvedBy
         contract.adminNotes = adminNotes;
 
         // Store the final certificate
@@ -446,7 +687,6 @@ exports.approveContract = async (req, res) => {
         res.redirect('/admin/pending-contracts');
     }
 };
-
 // Enhanced Reject Contract with detailed feedback
 exports.rejectContract = async (req, res) => {
     try {
@@ -527,57 +767,144 @@ exports.downloadCustomerContract = async (req, res) => {
         res.redirect('/admin/pending-contracts');
     }
 };
-// Add this function to your adminController.js
 exports.getPendingContracts = async (req, res) => {
     try {
+        console.log('🔄 Loading pending contracts...');
+        
+        // Get all contracts that need admin attention
         const pendingContracts = await Contract.find({
-            status: 'pending-admin'
+            status: { $in: ['pending-admin', 'correcting'] }
         })
-            .populate('project', 'title category featuredImage')
+            .populate('project', 'title category featuredImage biddingRounds adminStatus')
             .populate('customer', 'name email phone')
             .populate('seller', 'name companyName email')
             .populate('bid', 'amount proposal')
-            .populate('approvedBy', 'name')
+            .populate('adminApprovedBy', 'name') // FIXED: Changed from approvedBy to adminApprovedBy
             .sort({ updatedAt: -1 });
 
-        // Calculate statistics
+        console.log(`📋 Found ${pendingContracts.length} pending contracts`);
+
+        // Calculate dynamic status for each contract and overall statistics
         let readyCount = 0;
         let waitingCount = 0;
+        let correctingCount = 0;
         let autoCount = 0;
 
-        pendingContracts.forEach(contract => {
-            if (contract.customerSignedContract && contract.customerSignedContract.url &&
+        const contractsWithStatus = pendingContracts.map(contract => {
+            // Determine the dynamic status for filtering
+            let filterStatus = '';
+            
+            if (contract.status === 'correcting') {
+                filterStatus = 'correcting';
+                correctingCount++;
+            } else if (contract.customerSignedContract && contract.customerSignedContract.url &&
                 contract.sellerSignedContract && contract.sellerSignedContract.url) {
+                filterStatus = 'ready';
                 readyCount++;
             } else {
+                filterStatus = 'waiting';
                 waitingCount++;
             }
-            if (contract.autoGenerated) {
+
+            // Check if it's a round 3 winner for auto-generated count
+            if (contract.project.biddingRounds?.currentRound === 3) {
                 autoCount++;
             }
+
+            // Return contract with additional computed properties
+            return {
+                ...contract.toObject(),
+                filterStatus: filterStatus,
+                isReadyForApproval: filterStatus === 'ready',
+                isWaitingDocuments: filterStatus === 'waiting',
+                isNeedsCorrection: filterStatus === 'correcting'
+            };
         });
 
         const stats = {
             totalPending: pendingContracts.length,
             readyForApproval: readyCount,
             waitingDocuments: waitingCount,
+            needsCorrection: correctingCount,
             autoGenerated: autoCount,
             totalApproved: await Contract.countDocuments({ status: 'completed' }),
             totalRejected: await Contract.countDocuments({ status: 'rejected' }),
             totalContracts: await Contract.countDocuments()
         };
 
+        console.log('✅ Pending contracts loaded successfully');
+        
         res.render('admin/pending-contracts', {
             user: req.user,
             currentPage: 'pending-contracts',
-            contracts: pendingContracts || [],
+            contracts: contractsWithStatus,
             stats: stats,
             moment: require('moment')
         });
     } catch (error) {
-        console.error('Get pending contracts error:', error);
-        req.flash('error', 'Error loading pending contracts');
+        console.error('❌ Get pending contracts error:', error);
+        req.flash('error', 'Error loading pending contracts: ' + error.message);
         res.redirect('/admin/dashboard');
+    }
+};
+
+// FIXED: Enhanced contract details with correct field names
+exports.getContractDetails = async (req, res) => {
+    try {
+        const { contractId } = req.params;
+        
+        console.log('🔍 Loading contract details for:', contractId);
+
+        // Validate contract ID
+        if (!contractId || contractId === 'undefined' || contractId === 'null') {
+            console.error('❌ Invalid contract ID:', contractId);
+            req.flash('error', 'Invalid contract ID');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        // Check if it's a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(contractId)) {
+            console.error('❌ Invalid contract ID format:', contractId);
+            req.flash('error', 'Invalid contract ID format');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        const contract = await Contract.findById(contractId)
+            .populate('project', 'title description category timeline location biddingRounds adminStatus')
+            .populate('customer', 'name email phone address')
+            .populate('seller', 'name companyName email phone taxId')
+            .populate('bid', 'amount proposal timeline')
+            .populate('adminApprovedBy', 'name email') // FIXED: Changed from approvedBy to adminApprovedBy
+            .populate('rejectionHistory.rejectedBy', 'name email');
+
+        if (!contract) {
+            console.error('❌ Contract not found with ID:', contractId);
+            req.flash('error', 'Contract not found');
+            return res.redirect('/admin/pending-contracts');
+        }
+
+        console.log('✅ Contract details loaded successfully:', contract._id);
+
+        // Add computed properties for the view
+        const contractWithComputed = {
+            ...contract.toObject(),
+            filterStatus: contract.status === 'correcting' ? 'correcting' : 
+                         (contract.customerSignedContract && contract.sellerSignedContract ? 'ready' : 'waiting'),
+            isReadyForApproval: contract.customerSignedContract && contract.sellerSignedContract,
+            isWaitingDocuments: !contract.customerSignedContract || !contract.sellerSignedContract,
+            isNeedsCorrection: contract.status === 'correcting'
+        };
+
+        res.render('admin/contract-details', {
+            user: req.user,
+            currentPage: 'pending-contracts',
+            contract: contractWithComputed,
+            moment: require('moment')
+        });
+    } catch (error) {
+        console.error('❌ Get contract details error:', error);
+        req.flash('error', 'Error loading contract details: ' + error.message);
+        res.redirect('/admin/pending-contracts');
     }
 };
 // Download Seller Contract
@@ -912,6 +1239,212 @@ exports.generateCertificate = async (req, res) => {
         res.redirect('/admin/pending-contracts');
     }
 };
+// controllers/adminController.js - ADD THESE METHODS
+
+// NEW: Approve project
+// NEW: Approve project and start Round 1
+
+
+
+
+// NEW: Project verification workflow methods
+exports.verifyProject = async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    
+    const project = await Project.findById(projectId)
+      .populate('customer', 'name email')
+      .populate('bids');
+
+    if (!project) {
+      req.flash('error', 'Project not found');
+      return res.redirect('/admin/all-projects');
+    }
+
+    res.render('admin/project-verification', {
+      user: req.user,
+      project: project,
+      moment: require('moment')
+    });
+  } catch (error) {
+    console.error('Project verification error:', error);
+    req.flash('error', 'Error loading project verification page');
+    res.redirect('/admin/all-projects');
+  }
+};
+
+// NEW: Approve project and start bidding
+exports.approveProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { remarks } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash('error', 'Project not found');
+      return res.redirect('/admin/all-projects');
+    }
+
+    // Use the new method from Project model
+    await project.approveByAdmin(req.user._id);
+
+    // Notify customer
+    const Notice = require('../models/Notice');
+    await Notice.create({
+      title: `Project Approved - ${project.title}`,
+      content: `Your project "${project.title}" has been approved by admin and bidding is now active.${remarks ? ` Admin Remarks: ${remarks}` : ''}`,
+      targetAudience: 'customer',
+      specificUser: project.customer,
+      noticeType: 'success',
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    // Notify all sellers
+    await Notice.create({
+      title: `New Project Available - ${project.title}`,
+      content: `A new project "${project.title}" is now available for bidding in ${project.category}.`,
+      targetAudience: 'seller',
+      noticeType: 'info',
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    req.flash('success', 'Project approved successfully! Bidding is now active.');
+    res.redirect('/admin/all-projects');
+  } catch (error) {
+    console.error('Approve project error:', error);
+    req.flash('error', 'Error approving project');
+    res.redirect('/admin/all-projects');
+  }
+};
+
+// NEW: Reject project with remarks
+exports.rejectProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { remarks } = req.body;
+
+    if (!remarks) {
+      req.flash('error', 'Remarks are required for rejection');
+      return res.redirect('/admin/all-projects');
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash('error', 'Project not found');
+      return res.redirect('/admin/all-projects');
+    }
+
+    // Use the new method from Project model
+    await project.rejectByAdmin(req.user._id, remarks);
+
+    // Notify customer
+    const Notice = require('../models/Notice');
+    await Notice.create({
+      title: `Project Rejected - ${project.title}`,
+      content: `Your project "${project.title}" has been rejected by admin. Remarks: ${remarks}. Please edit and resubmit the project.`,
+      targetAudience: 'customer',
+      specificUser: project.customer,
+      noticeType: 'error',
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    req.flash('success', 'Project rejected successfully. Customer has been notified.');
+    res.redirect('/admin/all-projects');
+  } catch (error) {
+    console.error('Reject project error:', error);
+    req.flash('error', 'Error rejecting project');
+    res.redirect('/admin/all-projects');
+  }
+};
+
+// UPDATED: Dashboard to show pending projects
+exports.getDashboard = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalProjects = await Project.countDocuments();
+    const totalBids = await Bid.countDocuments();
+    const pendingContracts = await Contract.countDocuments({ status: 'pending-admin' });
+    const activeProjects = await Project.countDocuments({ status: 'active' });
+    const submittedBids = await Bid.countDocuments({ status: 'submitted' });
+
+    const recentProjects = await Project.find()
+      .populate('customer', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    const pendingVerifications = await Contract.find({ status: 'pending-admin' })
+      .populate('project', 'title')
+      .populate('customer', 'name')
+      .populate('seller', 'name companyName')
+      .populate('bid', 'amount');
+
+    // NEW: Get pending projects for verification
+    const pendingProjects = await Project.find({ 
+      adminStatus: 'pending' 
+    })
+    .populate('customer', 'name email')
+    .sort({ createdAt: -1 })
+    .limit(10);
+
+    res.render('admin/dashboard', {
+      user: req.user,
+      stats: {
+        totalUsers,
+        totalProjects, 
+        totalBids,
+        pendingContracts,
+        activeProjects,
+        submittedBids,
+        pendingProjects: pendingProjects.length
+      },
+      recentProjects,
+      pendingVerifications,
+      pendingProjects: pendingProjects || []
+    });
+  } catch (error) {
+    console.error('Admin dashboard error:', error);
+    res.status(500).render('error', { message: 'Error loading admin dashboard' });
+  }
+};
+
+// UPDATED: Get all projects with new statuses
+exports.getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.find()
+      .populate('customer', 'name email')
+      .populate('selectedBid')
+      .sort({ createdAt: -1 });
+
+    res.render('admin/all-projects', {
+      user: req.user,
+      currentPage: 'all-projects',
+      projects: projects || [],
+      moment: require('moment')
+    });
+  } catch (error) {
+    console.error('Get all projects error:', error);
+    req.flash('error', 'Error loading projects');
+    res.redirect('/admin/dashboard');
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

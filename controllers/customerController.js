@@ -122,72 +122,6 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
-// Get My Projects - ENHANCED with automatic processing
-exports.getMyProjects = async (req, res) => {
-  try {
-    const customerId = req.session.userId;
-
-    if (!customerId) {
-      req.flash("error", "Please log in to view your projects");
-      return res.redirect("/auth/login");
-    }
-
-    // ✅ Force status update before showing projects
-    await statusAutomation.updateAllProjectStatuses();
-
-    const projects = await Project.find({ customer: customerId })
-      .sort({ createdAt: -1 })
-      .populate("bids")
-      .populate({
-        path: "selectedBid",
-        populate: {
-          path: "seller",
-          select: "name companyName email phone rating profileImage",
-        },
-      })
-      .select(
-        "title description adminVerified category status location timeline bidSettings featuredImage images bids selectedBid createdAt "
-      );
-
-    // NEW: Get contract information for each project
-    const projectsWithContracts = [];
-    for (const project of projects) {
-      const contract = await Contract.findOne({
-        project: project._id,
-      }).populate("seller", "name companyName");
-
-      projectsWithContracts.push({
-        ...project.toObject(),
-        contract: contract,
-      });
-    }
-
-    const userData = req.session.user || { name: "Customer", email: "" };
-
-    const customerProjects = await Project.find({
-      customer: customerId,
-    }).select("_id");
-    const projectIds = customerProjects.map((p) => p._id);
-    const bidCount = await Bid.countDocuments({
-      project: { $in: projectIds },
-      status: "submitted",
-    });
-    console.log(projects[0].adminVerified)
-
-    res.render("customer/my-projects", {
-      user: userData,
-      currentPage: "projects",
-      projects: projectsWithContracts || [],
-      bidCount: bidCount,
-      messageCount: 0,
-      moment: moment,
-    });
-  } catch (error) {
-    console.error("Get my projects error:", error);
-    req.flash("error", "Error loading projects: " + error.message);
-    res.redirect("/customer/dashboard");
-  }
-};
 
 // Enhanced getProjectDetails - Add status update and contract info
 exports.getProjectDetails = async (req, res) => {
@@ -625,161 +559,6 @@ exports.postProjectStep2 = async (req, res) => {
   }
 };
 
-exports.postProjectStep3 = async (req, res) => {
-  try {
-    const { category } = req.params;
-    const customerId = req.session.userId;
-
-    console.log("=== PROJECT STEP 3 DEBUG ===");
-    console.log("Session projectData:", req.session.projectData);
-    console.log("Request body:", req.body);
-    console.log("Customer ID:", customerId);
-
-    if (!req.session.projectData) {
-      req.flash("error", "Project data not found. Please start over.");
-      return res.redirect("/customer/add-project");
-    }
-
-    // Validate required fields
-    const requiredFields = [
-      "startingBid",
-      "bidEndDate",
-      "startDate",
-      "endDate",
-    ];
-    const missingFields = requiredFields.filter((field) => !req.body[field]);
-
-    if (missingFields.length > 0) {
-      req.flash(
-        "error",
-        `Missing required fields: ${missingFields.join(", ")}`
-      );
-      return res.redirect(`/customer/project-form/${category}?step=3`);
-    }
-
-    // Parse datetime-local values
-    let bidEndDate = new Date(req.body.bidEndDate);
-    let startDate = new Date(req.body.startDate);
-    let endDate = new Date(req.body.endDate);
-
-    const now = new Date();
-
-    console.log("Date validation:", {
-      bidEndDate,
-      startDate,
-      endDate,
-      now,
-      bidEndDateValid: bidEndDate > now,
-      startDateValid: startDate > now,
-      endDateValid: endDate > startDate,
-    });
-
-    // Date validation
-    if (bidEndDate <= now) {
-      req.flash("error", "Bid end date must be in the future.");
-      return res.redirect(`/customer/project-form/${category}?step=3`);
-    }
-
-    if (startDate <= now) {
-      req.flash("error", "Project start date must be in the future.");
-      return res.redirect(`/customer/project-form/${category}?step=3`);
-    }
-
-    if (endDate <= startDate) {
-      req.flash("error", "Project end date must be after start date.");
-      return res.redirect(`/customer/project-form/${category}?step=3`);
-    }
-
-    // Calculate duration in days
-    const durationMs = endDate - startDate;
-    const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
-
-    // Convert specifications to Map
-    const specificationsMap = new Map();
-    if (req.session.projectData.specifications) {
-      Object.entries(req.session.projectData.specifications).forEach(
-        ([key, value]) => {
-          if (value && value.trim() !== "") {
-            specificationsMap.set(key, value.trim());
-          }
-        }
-      );
-    }
-
-    // Prepare project data with proper structure
-    const projectData = {
-      title: req.session.projectData.title?.trim(),
-      description: req.session.projectData.description?.trim(),
-      category: category,
-      customer: customerId,
-      status: "drafted",
-      timeline: {
-        startDate: startDate,
-        endDate: endDate,
-        duration: durationDays,
-      },
-      bidSettings: {
-        startingBid: parseFloat(req.body.startingBid),
-        bidEndDate: bidEndDate,
-        isActive: true,
-        autoSelectWinner: req.body.autoSelectWinner === "true",
-      },
-      location: {
-        address: req.session.projectData.address?.trim(),
-        city: req.session.projectData.city?.trim(),
-        state: req.session.projectData.state?.trim(),
-        zipCode: req.session.projectData.zipCode?.trim(),
-      },
-      contact: {
-        phone: req.session.projectData.phone?.trim(),
-        email: req.session.user?.email || "",
-      },
-      requirements: req.session.projectData.requirements?.trim(),
-      specifications: specificationsMap,
-      images: req.session.projectData.images || [],
-      documents: req.session.projectData.documents || [],
-      isPublic: true,
-    };
-
-    console.log("Final project data to save:", projectData);
-
-    // Validate project data before saving
-    if (!projectData.title || !projectData.description) {
-      req.flash("error", "Project title and description are required.");
-      return res.redirect(`/customer/project-form/${category}?step=3`);
-    }
-
-    // Create the project
-    const project = new Project(projectData);
-    await project.save();
-
-    console.log("Project created successfully:", project._id);
-
-    // Clear session data
-    delete req.session.projectData;
-
-    req.flash(
-      "success",
-      'Project created successfully! You can now view it in "My Projects".'
-    );
-    res.redirect("/customer/my-projects");
-  } catch (error) {
-    console.error("Project creation error:", error);
-
-    // More detailed error logging
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => err.message);
-      console.log("Validation errors:", errors);
-      req.flash("error", `Validation error: ${errors.join(", ")}`);
-    } else if (error.code === 11000) {
-      req.flash("error", "A project with similar details already exists.");
-    } else {
-      req.flash("error", "Error creating project: " + error.message);
-    }
-
-    res.redirect(`/customer/project-form/${category}?step=3`);
-  }
-};
 
 // Bid Management
 exports.selectBid = async (req, res) => {
@@ -836,7 +615,6 @@ exports.selectBid = async (req, res) => {
   }
 };
 
-// Project Editing
 exports.editProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -851,8 +629,9 @@ exports.editProject = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    if (project.status !== "drafted") {
-      req.flash("error", "Only drafted projects can be edited");
+    // FIXED: Allow both "drafted" AND "defected" projects to be edited
+    if (project.status !== "drafted" && project.status !== "defected") {
+      req.flash("error", "Only drafted or defected projects can be edited");
       return res.redirect("/customer/my-projects");
     }
 
@@ -863,6 +642,7 @@ exports.editProject = async (req, res) => {
       currentPage: "projects",
       project,
       category: project.category,
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
     });
   } catch (error) {
     console.error("Edit project error:", error);
@@ -870,7 +650,6 @@ exports.editProject = async (req, res) => {
     res.redirect("/customer/my-projects");
   }
 };
-
 exports.updateProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -885,51 +664,84 @@ exports.updateProject = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    if (project.status !== "drafted") {
-      req.flash("error", "Only drafted projects can be edited");
-      return res.redirect("/customer/my-projects");
-    }
+    console.log('Original project status:', project.status);
+    console.log('Original adminStatus:', project.adminStatus);
+    console.log('Resubmit value:', req.body.resubmit);
 
-    // Process new images if any
-    const newImages = req.files?.images || [];
-    const processedImages = newImages.map((file) => ({
-      public_id: file.filename,
-      url: file.path,
-      filename: file.originalname,
-      format: file.format,
-      bytes: file.size,
-      width: file.width,
-      height: file.height,
-    }));
-
-    const updateData = {
-      title: req.body.title,
-      description: req.body.description,
-      requirements: req.body.requirements,
-      "location.address": req.body.address,
-      "location.city": req.body.city,
-      "location.state": req.body.state,
-      "location.zipCode": req.body.zipCode,
-      "contact.phone": req.body.phone,
-      specifications: req.body.specifications || {},
+    // Update basic fields
+    project.title = req.body.title;
+    project.description = req.body.description;
+    project.requirements = req.body.requirements;
+    
+    // Update contact
+    project.contact.phone = req.body.phone;
+    
+    // Update location
+    project.location = {
+      address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
+      zipCode: req.body.zipCode
     };
 
-    // Add new images to existing ones
-    if (processedImages.length > 0) {
-      updateData.$push = { images: { $each: processedImages } };
+    // Update specifications
+    if (req.body.specifications) {
+      for (const [key, value] of Object.entries(req.body.specifications)) {
+        project.specifications.set(key, value);
+      }
     }
 
-    await Project.findByIdAndUpdate(req.params.id, updateData);
+    // Handle new image uploads (if using Cloudinary)
+    if (req.files && req.files.images) {
+      const images = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
+      
+      for (const image of images) {
+        // Upload to cloudinary or your storage service
+        const result = await cloudinary.uploader.upload(image.tempFilePath, {
+          folder: `projects/${project._id}`
+        });
+        
+        project.images.push({
+          url: result.secure_url,
+          public_id: result.public_id
+        });
+      }
+    }
 
-    req.flash("success", "Project updated successfully!");
+    // Handle resubmission - FIXED LOGIC
+    if (req.body.resubmit === 'true') {
+      console.log('Processing resubmission...');
+      project.adminStatus = 'pending';
+      project.status = 'submitted'; // Changed from 'in-progress' to 'submitted'
+      project.adminRemarks = ''; // Clear previous remarks
+      project.resubmittedAt = new Date();
+      req.flash("success", "Project updated and resubmitted for verification");
+    } else {
+      // Regular update - keep current status
+      console.log('Regular update, maintaining status:', project.status);
+      req.flash("success", "Project updated successfully");
+    }
+
+    console.log('Final project status after update:', project.status);
+    console.log('Final adminStatus after update:', project.adminStatus);
+
+    await project.save();
     res.redirect("/customer/my-projects");
+
   } catch (error) {
     console.error("Update project error:", error);
-    req.flash("error", "Error updating project");
-    res.redirect("back");
+    
+    // More detailed error logging
+    if (error.name === 'ValidationError') {
+      console.error('Validation errors:', error.errors);
+      req.flash("error", `Validation error: ${Object.values(error.errors).map(e => e.message).join(', ')}`);
+    } else {
+      req.flash("error", "Error updating project");
+    }
+    
+    res.redirect("/customer/my-projects");
   }
 };
-
 exports.deleteProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -944,66 +756,64 @@ exports.deleteProject = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    if (project.status !== "drafted") {
-      req.flash("error", "Only drafted projects can be deleted");
+    // Only allow deletion of drafted or defected projects
+    if (project.status !== "drafted" && project.status !== "defected") {
+      req.flash("error", "Only drafted or defected projects can be deleted");
       return res.redirect("/customer/my-projects");
     }
 
-    // Delete images from Cloudinary
-    if (project.images && project.images.length > 0) {
-      for (const image of project.images) {
-        try {
-          await cloudinary.uploader.destroy(image.public_id);
-        } catch (error) {
-          console.error("Error deleting image from Cloudinary:", error);
-        }
-      }
+    // Delete associated images from cloudinary
+    for (const image of project.images) {
+      await cloudinary.uploader.destroy(image.public_id);
     }
 
-    // Delete documents from Cloudinary
-    if (project.documents && project.documents.length > 0) {
-      for (const document of project.documents) {
-        try {
-          await cloudinary.uploader.destroy(document.public_id);
-        } catch (error) {
-          console.error("Error deleting document from Cloudinary:", error);
-        }
-      }
-    }
-
-    // Delete associated bids and their attachments
-    const bids = await Bid.find({ project: req.params.id });
-    for (const bid of bids) {
-      // Delete bid attachments from Cloudinary
-      if (bid.attachments && bid.attachments.length > 0) {
-        for (const attachment of bid.attachments) {
-          try {
-            await cloudinary.uploader.destroy(attachment.public_id);
-          } catch (error) {
-            console.error(
-              "Error deleting bid attachment from Cloudinary:",
-              error
-            );
-          }
-        }
-      }
-      await Bid.findByIdAndDelete(bid._id);
-    }
-
-    // Delete any associated contracts
-    await Contract.deleteMany({ project: req.params.id });
-
-    // Delete project
     await Project.findByIdAndDelete(req.params.id);
 
-    req.flash(
-      "success",
-      "Project and all associated files deleted successfully!"
-    );
+    req.flash("success", "Project deleted successfully");
     res.redirect("/customer/my-projects");
   } catch (error) {
     console.error("Delete project error:", error);
     req.flash("error", "Error deleting project");
+    res.redirect("/customer/my-projects");
+  }
+};
+
+exports.removeImage = async (req, res) => {
+  try {
+    const { projectId, imageId } = req.params;
+    
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      req.flash("error", "Project not found");
+      return res.redirect("/customer/my-projects");
+    }
+
+    if (project.customer.toString() !== req.session.userId.toString()) {
+      req.flash("error", "Unauthorized access");
+      return res.redirect("/customer/my-projects");
+    }
+
+    // Find the image to remove
+    const imageIndex = project.images.findIndex(img => img.public_id === imageId);
+    
+    if (imageIndex === -1) {
+      req.flash("error", "Image not found");
+      return res.redirect(`/customer/edit-project/${projectId}`);
+    }
+
+    // Remove from cloudinary
+    await cloudinary.uploader.destroy(imageId);
+    
+    // Remove from project
+    project.images.splice(imageIndex, 1);
+    await project.save();
+
+    req.flash("success", "Image removed successfully");
+    res.redirect(`/customer/edit-project/${projectId}`);
+  } catch (error) {
+    console.error("Remove image error:", error);
+    req.flash("error", "Error removing image");
     res.redirect("/customer/my-projects");
   }
 };
@@ -1385,51 +1195,6 @@ exports.downloadCertificate = async (req, res) => {
   }
 };
 
-exports.downloadFinalCertificate = async (req, res) => {
-  try {
-    const { bidId } = req.params;
-    const customerId = req.session.userId;
-
-    console.log("📥 Download final certificate request:", {
-      bidId,
-      customerId,
-    });
-
-    const bid = await Bid.findOne({ _id: bidId }).populate("project");
-    if (!bid || bid.project.customer.toString() !== customerId) {
-      req.flash("error", "Unauthorized access");
-      return res.redirect("/customer/my-projects");
-    }
-
-    const contract = await Contract.findOne({ bid: bidId });
-    if (!contract || contract.status !== "completed") {
-      req.flash("error", "Certificate not available yet");
-      return res.redirect("/customer/my-projects");
-    }
-
-    // Check for customer certificate first, then final contract
-    if (contract.customerCertificate && contract.customerCertificate.url) {
-      console.log(
-        "✅ Redirecting to customer certificate:",
-        contract.customerCertificate.url
-      );
-      res.redirect(contract.customerCertificate.url);
-    } else if (contract.finalContract && contract.finalContract.url) {
-      console.log(
-        "✅ Redirecting to final contract:",
-        contract.finalContract.url
-      );
-      res.redirect(contract.finalContract.url);
-    } else {
-      req.flash("error", "Certificate not generated yet");
-      res.redirect("/customer/my-projects");
-    }
-  } catch (error) {
-    console.error("❌ Download certificate error:", error);
-    req.flash("error", "Error downloading certificate");
-    res.redirect("/customer/my-projects");
-  }
-};
 // Update Profile Information
 exports.updateProfile = async (req, res) => {
   try {
@@ -1814,47 +1579,922 @@ exports.downloadContractTemplate = async (req, res) => {
 //   }
 // };
 
-exports.downloadSellerContract = async (req, res) => {
+
+
+
+
+// NEW: Submit project for admin verification
+exports.submitForVerification = async (req, res) => {
   try {
-    const { bidId } = req.params;
+    const { projectId } = req.params;
     const customerId = req.session.userId;
 
-    console.log("📥 Download seller contract request:", { bidId, customerId });
-
-    const bid = await Bid.findOne({ _id: bidId }).populate("project");
-    if (!bid || bid.project.customer.toString() !== customerId) {
-      req.flash("error", "Unauthorized access");
+    const project = await Project.findById(projectId);
+    
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
       return res.redirect("/customer/my-projects");
     }
 
-    const contract = await Contract.findOne({ bid: bidId });
-    if (
-      !contract ||
-      !contract.sellerSignedContract ||
-      !contract.sellerSignedContract.url
-    ) {
-      req.flash("error", "Seller contract not available yet");
+    if (project.adminStatus !== 'pending' && project.adminStatus !== 'rejected') {
+      req.flash("error", "Project cannot be submitted for verification");
       return res.redirect("/customer/my-projects");
     }
 
-    console.log("🔗 Seller contract URL:", contract.sellerSignedContract.url);
+    project.adminStatus = 'pending';
+    project.status = 'pending';
+    await project.save();
 
-    // ✅ FIX: Transform URL for download
-    let downloadUrl = contract.sellerSignedContract.url;
-    if (downloadUrl.includes("/upload/")) {
-      downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
-    }
+    // Notify admin
+    const Notice = require("../models/Notice");
+    await Notice.create({
+      title: `Project Submitted for Verification - ${project.title}`,
+      content: `Project "${project.title}" has been submitted for admin verification.`,
+      targetAudience: "admin",
+      noticeType: "info",
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="seller_contract_${bidId}.pdf"`
-    );
-    res.setHeader("Content-Type", "application/pdf");
-    res.redirect(downloadUrl);
+    req.flash("success", "Project submitted for admin verification successfully!");
+    res.redirect("/customer/my-projects");
   } catch (error) {
-    console.error("❌ Download seller contract error:", error);
-    req.flash("error", "Error downloading seller contract");
+    console.error("Submit for verification error:", error);
+    req.flash("error", "Error submitting project for verification");
     res.redirect("/customer/my-projects");
   }
 };
+
+// NEW: Get top 10 bids for round 1 selection
+
+// NEW: Get round 2 bids for winner selection
+exports.getRound2Bids = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const customerId = req.session.userId;
+
+    const project = await Project.findById(projectId);
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
+      return res.redirect("/customer/my-projects");
+    }
+
+    if (project.biddingRounds.currentRound !== 2.5) {
+      req.flash("error", "Round 2 not completed yet");
+      return res.redirect(`/customer/project/${projectId}`);
+    }
+
+    const round2Bids = await Bid.find({
+      project: projectId,
+      round: 2,
+      selectionStatus: 'top3'
+    })
+    .populate("seller", "name companyName email phone rating profileImage yearsOfExperience specialization companyDocuments")
+    .sort({ amount: -1 });
+
+    const userData = req.session.user || { name: "Customer", email: "" };
+
+    res.render("customer/round2-selection", {
+      user: userData,
+      currentPage: "projects",
+      project: project,
+      bids: round2Bids,
+      moment: require("moment")
+    });
+  } catch (error) {
+    console.error("Get round 2 bids error:", error);
+    req.flash("error", "Error loading round 2 bids");
+    res.redirect("/customer/my-projects");
+  }
+};
+
+
+
+
+// NEW: Manual status update
+exports.updateStatuses = async (req, res) => {
+  try {
+    const statusAutomation = require('../services/statusAutomation');
+    const result = await statusAutomation.updateAllProjectStatuses();
+    
+    req.flash('success', 'Status updates completed successfully!');
+    res.redirect('/customer/my-projects');
+  } catch (error) {
+    console.error('Status update error:', error);
+    req.flash('error', 'Error updating statuses: ' + error.message);
+    res.redirect('/customer/my-projects');
+  }
+};
+
+
+
+// UPDATED: Submit project for verification
+// exports.postProjectStep3 = async (req, res) => {
+//   try {
+//     const { category } = req.params;
+//     const customerId = req.session.userId;
+
+//     console.log("=== PROJECT STEP 3 DEBUG ===");
+//     console.log("Session projectData:", req.session.projectData);
+//     console.log("Request body:", req.body);
+//     console.log("Customer ID:", customerId);
+
+//     if (!req.session.projectData) {
+//       req.flash("error", "Project data not found. Please start over.");
+//       return res.redirect("/customer/add-project");
+//     }
+
+//     // Validate required fields
+//     const requiredFields = [
+//       "startingBid",
+//       "bidEndDate",
+//       "startDate",
+//       "endDate",
+//     ];
+//     const missingFields = requiredFields.filter((field) => !req.body[field]);
+
+//     if (missingFields.length > 0) {
+//       req.flash(
+//         "error",
+//         `Missing required fields: ${missingFields.join(", ")}`
+//       );
+//       return res.redirect(`/customer/project-form/${category}?step=3`);
+//     }
+
+//     // Parse datetime-local values
+//     let bidEndDate = new Date(req.body.bidEndDate);
+//     let startDate = new Date(req.body.startDate);
+//     let endDate = new Date(req.body.endDate);
+
+//     const now = new Date();
+
+//     console.log("Date validation:", {
+//       bidEndDate,
+//       startDate,
+//       endDate,
+//       now,
+//       bidEndDateValid: bidEndDate > now,
+//       startDateValid: startDate > now,
+//       endDateValid: endDate > startDate,
+//     });
+
+//     // Date validation
+//     if (bidEndDate <= now) {
+//       req.flash("error", "Bid end date must be in the future.");
+//       return res.redirect(`/customer/project-form/${category}?step=3`);
+//     }
+
+//     if (startDate <= now) {
+//       req.flash("error", "Project start date must be in the future.");
+
+//       console.log("category",category)
+//       return res.redirect(`/customer/project-form/${category}?step=3`);
+//     }
+
+//     if (endDate <= startDate) {
+//       req.flash("error", "Project end date must be after start date.");
+//       return res.redirect(`/customer/project-form/${category}?step=3`);
+//     }
+
+//     // Calculate duration in days
+//     const durationMs = endDate - startDate;
+//     const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+
+//     // Convert specifications to Map
+//     const specificationsMap = new Map();
+//     if (req.session.projectData.specifications) {
+//       Object.entries(req.session.projectData.specifications).forEach(
+//         ([key, value]) => {
+//           if (value && value.trim() !== "") {
+//             specificationsMap.set(key, value.trim());
+//           }
+//         }
+//       );
+//     }
+
+//     // Prepare project data with proper structure for new workflow
+//     const projectData = {
+//       title: req.session.projectData.title?.trim(),
+//       description: req.session.projectData.description?.trim(),
+//       category: category,
+//       customer: customerId,
+//       status: 'pending', // Set to pending for admin verification
+//       adminStatus: 'pending', // Explicitly set adminStatus
+//       timeline: {
+//         startDate: startDate,
+//         endDate: endDate,
+//         duration: durationDays,
+//       },
+//       bidSettings: {
+//         startingBid: parseFloat(req.body.startingBid),
+//         bidEndDate: bidEndDate,
+//         isActive: false, // Will be activated after admin approval
+//         autoSelectWinner: req.body.autoSelectWinner === "true",
+//       },
+//       location: {
+//         address: req.session.projectData.address?.trim(),
+//         city: req.session.projectData.city?.trim(),
+//         state: req.session.projectData.state?.trim(),
+//         zipCode: req.session.projectData.zipCode?.trim(),
+//       },
+//       contact: {
+//         phone: req.session.projectData.phone?.trim(),
+//         email: req.session.user?.email || "",
+//       },
+//       requirements: req.session.projectData.requirements?.trim(),
+//       specifications: specificationsMap,
+//       images: req.session.projectData.images || [],
+//       documents: req.session.projectData.documents || [],
+//       isPublic: false, // Will be made public after admin approval
+//       biddingRounds: {
+//         round1: {
+//           startDate: null, // Will be set after admin approval
+//           endDate: bidEndDate,
+//           status: 'pending',
+//           selectedBids: []
+//         },
+//         round2: {
+//           startDate: null,
+//           endDate: null,
+//           status: 'pending',
+//           selectedBids: []
+//         },
+//         currentRound: 1
+//       }
+//     };
+
+//     console.log("Final project data to save:", projectData);
+
+//     // Validate project data before saving
+//     if (!projectData.title || !projectData.description) {
+//       req.flash("error", "Project title and description are required.");
+//       return res.redirect(`/customer/project-form/${category}?step=3`);
+//     }
+
+//     // Create the project
+//     const project = new Project(projectData);
+//     await project.save();
+
+//     console.log("Project created successfully:", project._id);
+
+//     // Notify admin
+//     const Notice = require("../models/Notice");
+//     await Notice.create({
+//       title: `New Project Submitted - ${project.title}`,
+//       content: `A new project "${project.title}" has been submitted for verification.`,
+//       targetAudience: "admin",
+//       noticeType: "info",
+//       isActive: true,
+//       startDate: new Date(),
+//       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//     });
+
+//     // Clear session data
+//     delete req.session.projectData;
+
+//     req.flash(
+//       "success",
+//       'Project submitted successfully for admin verification! You will be notified once approved.'
+//     );
+//     res.redirect("/customer/my-projects");
+//   } catch (error) {
+//     console.error("Project creation error:", error);
+
+//     // More detailed error logging
+//     if (error.name === "ValidationError") {
+//       const errors = Object.values(error.errors).map((err) => err.message);
+//       console.log("Validation errors:", errors);
+//       req.flash("error", `Validation error: ${errors.join(", ")}`);
+//     } else if (error.code === 11000) {
+//       req.flash("error", "A project with similar details already exists.");
+//     } else {
+//       req.flash("error", "Error creating project: " + error.message);
+//     }
+
+//     res.redirect(`/customer/project-form/${category}?step=3`);
+//   }
+// };
+
+exports.postProjectStep3 = async (req, res) => {
+  // ✅ Make category accessible everywhere (even inside catch)
+  const category =
+    req.params.category ||
+    req.body.category ||
+    req.query.category ||
+    req.session.projectData?.category ||
+    "general"; // fallback if missing
+
+  try {
+    const customerId = req.session.userId;
+
+    console.log("=== PROJECT STEP 3 DEBUG ===");
+    console.log("Session projectData:", req.session.projectData);
+    console.log("Request body:", req.body);
+    console.log("Customer ID:", customerId);
+    console.log("Category:", category);
+
+    if (!req.session.projectData) {
+      req.flash("error", "Project data not found. Please start over.");
+      return res.redirect("/customer/add-project");
+    }
+
+    // Validate required fields
+    const requiredFields = ["startingBid", "bidEndDate", "startDate", "endDate"];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
+
+    if (missingFields.length > 0) {
+      req.flash("error", `Missing required fields: ${missingFields.join(", ")}`);
+      return res.redirect(`/customer/project-form/${category}?step=3`);
+    }
+
+    const bidEndDate = new Date(req.body.bidEndDate);
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    const now = new Date();
+
+    if (bidEndDate <= now) {
+      req.flash("error", "Bid end date must be in the future.");
+      return res.redirect(`/customer/project-form/${category}?step=3`);
+    }
+
+    if (startDate <= now) {
+      req.flash("error", "Project start date must be in the future.");
+      return res.redirect(`/customer/project-form/${category}?step=3`);
+    }
+
+    if (endDate <= startDate) {
+      req.flash("error", "Project end date must be after start date.");
+      return res.redirect(`/customer/project-form/${category}?step=3`);
+    }
+
+    const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+    const specificationsMap = new Map();
+    if (req.session.projectData.specifications) {
+      Object.entries(req.session.projectData.specifications).forEach(([key, value]) => {
+        if (value && value.trim() !== "") specificationsMap.set(key, value.trim());
+      });
+    }
+
+    // ✅ Use 'submitted' (valid enum value)
+    const projectData = {
+      title: req.session.projectData.title?.trim(),
+      description: req.session.projectData.description?.trim(),
+      category,
+      customer: customerId,
+      status: "submitted", // ✅ FIXED here
+      adminStatus: "pending", // ✅ still okay
+      timeline: { startDate, endDate, duration: durationDays },
+      bidSettings: {
+        startingBid: parseFloat(req.body.startingBid),
+        bidEndDate,
+        isActive: false,
+        autoSelectWinner: req.body.autoSelectWinner === "true",
+      },
+      location: {
+        address: req.session.projectData.address?.trim(),
+        city: req.session.projectData.city?.trim(),
+        state: req.session.projectData.state?.trim(),
+        zipCode: req.session.projectData.zipCode?.trim(),
+      },
+      contact: {
+        phone: req.session.projectData.phone?.trim(),
+        email: req.session.user?.email || "",
+      },
+      requirements: req.session.projectData.requirements?.trim(),
+      specifications: specificationsMap,
+      images: req.session.projectData.images || [],
+      documents: req.session.projectData.documents || [],
+      isPublic: false,
+      biddingRounds: {
+        round1: { startDate: null, endDate: bidEndDate, status: "pending", selectedBids: [] },
+        round2: { startDate: null, endDate: null, status: "pending", selectedBids: [] },
+        currentRound: 1,
+      },
+    };
+
+    if (!projectData.title || !projectData.description) {
+      req.flash("error", "Project title and description are required.");
+      return res.redirect(`/customer/project-form/${category}?step=3`);
+    }
+
+    const project = new Project(projectData);
+    await project.save();
+
+    console.log("✅ Project created successfully:", project._id);
+
+    const Notice = require("../models/Notice");
+    await Notice.create({
+      title: `New Project Submitted - ${project.title}`,
+      content: `A new project "${project.title}" has been submitted for verification.`,
+      targetAudience: "admin",
+      noticeType: "info",
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    delete req.session.projectData;
+    req.flash("success", "Project submitted successfully for admin verification!");
+    res.redirect("/customer/my-projects");
+  } catch (error) {
+    console.error("❌ Project creation error:", error);
+
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      req.flash("error", `Validation error: ${errors.join(", ")}`);
+    } else if (error.code === 11000) {
+      req.flash("error", "A project with similar details already exists.");
+    } else {
+      req.flash("error", "Error creating project: " + error.message);
+    }
+
+    // ✅ No crash here because category always defined
+    res.redirect(`/customer/project-form/${category}?step=3`);
+  }
+};
+
+
+// NEW: Edit and resubmit rejected project
+exports.editAndResubmitProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const customerId = req.session.userId;
+
+    const project = await Project.findById(projectId);
+    
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
+      return res.redirect("/customer/my-projects");
+    }
+
+    if (project.adminStatus !== 'rejected') {
+      req.flash("error", "Only rejected projects can be edited and resubmitted");
+      return res.redirect("/customer/my-projects");
+    }
+
+    // Use the new method from Project model to resubmit
+    await project.resubmitForVerification();
+
+    // Notify admin
+    const Notice = require("../models/Notice");
+    await Notice.create({
+      title: `Project Resubmitted - ${project.title}`,
+      content: `Project "${project.title}" has been edited and resubmitted for verification.`,
+      targetAudience: "admin",
+      noticeType: "info",
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    req.flash("success", "Project edited and resubmitted for verification successfully!");
+    res.redirect("/customer/my-projects");
+  } catch (error) {
+    console.error("Edit and resubmit project error:", error);
+    req.flash("error", "Error resubmitting project for verification");
+    res.redirect("/customer/my-projects");
+  }
+};
+
+// // UPDATED: Get my projects with new statuses
+// exports.getMyProjects = async (req, res) => {
+//   try {
+//     const customerId = req.session.userId;
+    
+//     if (!customerId) {
+//       req.flash("error", "Please log in to view your projects");
+//       return res.redirect("/auth/login");
+//     }
+
+//     const projects = await Project.find({ customer: customerId })
+//       .sort({ createdAt: -1 })
+//       .populate("bids")
+//       .populate({
+//         path: "selectedBid",
+//         populate: {
+//           path: "seller",
+//           select: "name companyName email phone rating profileImage",
+//         },
+//       })
+//       .select("title description adminStatus adminRemarks category status location timeline bidSettings featuredImage images bids selectedBid createdAt biddingRounds");
+
+//     // Get contracts for projects
+//     const projectsWithContracts = [];
+//     for (const project of projects) {
+//       const contract = await Contract.findOne({
+//         project: project._id,
+//       }).populate("seller", "name companyName");
+
+//       projectsWithContracts.push({
+//         ...project.toObject(),
+//         contract: contract,
+//       });
+//     }
+
+//     const userData = req.session.user || { name: "Customer", email: "" };
+
+//     const customerProjects = await Project.find({
+//       customer: customerId,
+//     }).select("_id");
+//     const projectIds = customerProjects.map((p) => p._id);
+//     const bidCount = await Bid.countDocuments({
+//       project: { $in: projectIds },
+//       status: "submitted",
+//     });
+
+//     res.render("customer/my-projects", {
+//       user: userData,
+//       currentPage: "projects",
+//       projects: projectsWithContracts || [],
+//       bidCount: bidCount,
+//       messageCount: 0,
+//       moment: require("moment"),
+//     });
+//   } catch (error) {
+//     console.error("Get my projects error:", error);
+//     req.flash("error", "Error loading projects: " + error.message);
+//     res.redirect("/customer/dashboard");
+//   }
+// };
+
+
+exports.getMyProjects = async (req, res) => {
+    try {
+        const customerId = req.session.userId;
+        console.log('🔍 Loading projects for customer:', customerId);
+
+        // ✅ Fetch all non-deleted projects for this customer
+        const projects = await Project.find({ 
+            customer: customerId,
+            status: { $ne: 'deleted' }  // optional safeguard
+        })
+            .populate('selectedBid')
+            .populate('bids')
+            .sort({ createdAt: -1 });
+
+        console.log(`📋 Found ${projects.length} projects for customer`);
+
+        const projectsWithContracts = await Promise.all(
+            projects.map(async (project) => {
+                let contract = null;
+                let projectStatus = project.status;
+
+                if (project.selectedBid) {
+                    contract = await Contract.findOne({ bid: project.selectedBid._id })
+                        .populate('customer', 'name email')
+                        .populate('seller', 'name companyName email')
+                        .populate('bid', 'amount proposal');
+
+                    if (contract && contract.status === 'completed') {
+                        projectStatus = 'completed';
+                    }
+                }
+
+                return {
+                    ...project.toObject(),
+                    contract,
+                    displayStatus: projectStatus,
+                    isCompleted: projectStatus === 'completed',
+                    hasContract: !!contract
+                };
+            })
+        );
+
+        const stats = {
+            total: projects.length,
+            active: projectsWithContracts.filter(p => p.displayStatus === 'active' || p.displayStatus === 'in-progress').length,
+            pending: projectsWithContracts.filter(p => p.displayStatus === 'pending').length,
+            completed: projectsWithContracts.filter(p => p.displayStatus === 'completed').length
+        };
+
+        const userData = req.session.user || { name: "Customer", email: "" };
+
+        res.render('customer/my-projects', {
+            user: userData,
+            currentPage: 'my-projects',
+            projects: projectsWithContracts,
+            stats,
+            moment: require('moment')
+        });
+
+    } catch (error) {
+        console.error('❌ Get my projects error:', error);
+        req.flash('error', 'Error loading projects: ' + error.message);
+        res.redirect('/customer/dashboard');
+    }
+};
+
+
+
+// NEW: Get round 1 selection page
+// NEW: Get round 1 selection page
+exports.getRound1Selection = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const customerId = req.session.userId;
+
+    const project = await Project.findById(projectId);
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
+      return res.redirect("/customer/my-projects");
+    }
+
+    // Check if round 1 is completed and we're in selection phase
+    if (project.biddingRounds.currentRound !== 1.5) {
+      req.flash("error", "Round 1 bidding not completed yet");
+      return res.redirect(`/customer/project/${projectId}`);
+    }
+
+    // FIXED: Get bids that were selected in round 1 (top 10)
+    const topBids = await Bid.find({ 
+      project: projectId,
+      round: 1,
+      selectionStatus: 'selected-round1' // CHANGED: from 'submitted' to 'selected-round1'
+    })
+    .populate("seller", "name companyName email phone rating profileImage yearsOfExperience specialization companyDocuments")
+    .sort({ amount: -1 });
+
+    console.log(`🔍 Found ${topBids.length} selected bids for project ${projectId}`);
+
+    // Debug: Check what bids are available
+    const allBids = await Bid.find({ project: projectId });
+    console.log(`🔍 All bids for project ${projectId}:`, allBids.map(bid => ({
+      id: bid._id,
+      seller: bid.seller,
+      amount: bid.amount,
+      round: bid.round,
+      selectionStatus: bid.selectionStatus,
+      status: bid.status
+    })));
+
+    const userData = req.session.user || { name: "Customer", email: "" };
+
+    res.render("customer/round1-selection", {
+      user: userData,
+      currentPage: "projects",
+      project: project,
+      bids: topBids,
+      moment: require("moment")
+    });
+  } catch (error) {
+    console.error("Get round 1 selection error:", error);
+    req.flash("error", "Error loading round 1 selection");
+    res.redirect("/customer/my-projects");
+  }
+};
+
+// NEW: Select top 3 for round 2
+exports.selectTop3 = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { selectedBids } = req.body;
+    const customerId = req.session.userId;
+
+    console.log(`🎯 Selecting top 3 for project ${projectId}:`, selectedBids);
+
+    const project = await Project.findById(projectId);
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
+      return res.redirect("/customer/my-projects");
+    }
+
+    if (!selectedBids || !Array.isArray(selectedBids) || selectedBids.length !== 3) {
+      req.flash("error", "Please select exactly 3 bids");
+      return res.redirect(`/customer/project/${projectId}/round1-selection`);
+    }
+
+    // Validate that the selected bids are actually from the top 10
+    const validBids = await Bid.find({
+      _id: { $in: selectedBids },
+      project: projectId,
+      selectionStatus: 'selected-round1'
+    });
+
+    if (validBids.length !== 3) {
+      req.flash("error", "Invalid bid selection. Please select from the available top 10 bids.");
+      return res.redirect(`/customer/project/${projectId}/round1-selection`);
+    }
+
+    // FIXED: Use the project method to select top 3
+    await project.selectTop3(selectedBids);
+
+    // FIXED: Update bids status using the Bid model methods
+    for (const bidId of selectedBids) {
+      const bid = await Bid.findById(bidId);
+      if (bid) {
+        await bid.markAsSelectedRound2();
+      }
+    }
+
+    // Notify selected sellers
+    const Notice = require("../models/Notice");
+    for (const bidId of selectedBids) {
+      const bid = await Bid.findById(bidId).populate('seller');
+      if (bid && bid.seller) {
+        await Notice.create({
+          title: `Selected for Round 2 - ${project.title}`,
+          content: `Congratulations! Your bid has been selected for Round 2. You can update your bid within the next 24 hours.`,
+          targetAudience: "seller",
+          specificUser: bid.seller._id,
+          noticeType: "success",
+          isActive: true,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        });
+        console.log(`📢 Notification sent to seller: ${bid.seller.name || bid.seller.companyName}`);
+      }
+    }
+
+    req.flash("success", "Top 3 bids selected successfully! Round 2 has started for 24 hours.");
+    res.redirect(`/customer/project/${projectId}`);
+  } catch (error) {
+    console.error("Select top 3 error:", error);
+    req.flash("error", "Error selecting top 3 bids: " + error.message);
+    res.redirect("/customer/my-projects");
+  }
+};
+// NEW: Select winning bid
+exports.selectWinner = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { winningBidId } = req.body;
+    const customerId = req.session.userId;
+
+    const project = await Project.findById(projectId);
+    if (!project || project.customer.toString() !== customerId) {
+      req.flash("error", "Project not found or unauthorized");
+      return res.redirect("/customer/my-projects");
+    }
+
+    // Validate winning bid
+    const winningBid = await Bid.findOne({
+      _id: winningBidId,
+      project: projectId,
+      round: 2,
+      selectionStatus: 'selected-round2'
+    });
+
+    if (!winningBid) {
+      req.flash("error", "Invalid winning bid selection");
+      return res.redirect(`/customer/project/${projectId}/round2-selection`);
+    }
+
+    // Use the new method from Project model
+    await project.completeRound2(winningBidId);
+
+    // Update winning bid
+    await winningBid.markAsWon();
+
+    // Mark other bids as lost
+    await Bid.updateMany(
+      {
+        project: projectId,
+        round: 2,
+        _id: { $ne: winningBidId },
+        selectionStatus: 'selected-round2'
+      },
+      { selectionStatus: 'lost' }
+    );
+
+    // Initialize contract using statusAutomation
+    const statusAutomation = require('../services/statusAutomation');
+    await statusAutomation.initializeContractForWinner(project, winningBid, {});
+
+    req.flash("success", `Winning bid selected successfully! Contract process has started with ${winningBid.seller.companyName || winningBid.seller.name}`);
+    res.redirect(`/customer/project/${projectId}`);
+  } catch (error) {
+    console.error("Select winner error:", error);
+    req.flash("error", "Error selecting winning bid");
+    res.redirect("/customer/my-projects");
+  }
+};
+
+
+
+
+// Download Customer Contract
+exports.downloadCustomerContract = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+        const bid = await Bid.findOne({ _id: bidId }).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || !contract.customerSignedContract?.url) {
+            req.flash('error', 'Customer contract not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.customerSignedContract.url);
+    } catch (error) {
+        console.error('❌ Download customer contract error:', error);
+        req.flash('error', 'Error downloading customer contract');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+// Download Seller Contract
+exports.downloadSellerContract = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+        const bid = await Bid.findOne({ _id: bidId }).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || !contract.sellerSignedContract?.url) {
+            req.flash('error', 'Seller contract not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.sellerSignedContract.url);
+    } catch (error) {
+        console.error('❌ Download seller contract error:', error);
+        req.flash('error', 'Error downloading seller contract');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+// Download Customer Certificate
+exports.downloadCustomerCertificate = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+        const bid = await Bid.findOne({ _id: bidId }).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || !contract.customerCertificate?.url) {
+            req.flash('error', 'Customer certificate not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.customerCertificate.url);
+    } catch (error) {
+        console.error('❌ Download customer certificate error:', error);
+        req.flash('error', 'Error downloading customer certificate');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+// Download Final Certificate
+exports.downloadFinalCertificate = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+        const bid = await Bid.findOne({ _id: bidId }).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract || !contract.finalCertificate?.url) {
+            req.flash('error', 'Final certificate not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.finalCertificate.url);
+    } catch (error) {
+        console.error('❌ Download final certificate error:', error);
+        req.flash('error', 'Error downloading final certificate');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+
+
+
+
+
 module.exports = exports;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

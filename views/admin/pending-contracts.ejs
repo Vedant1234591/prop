@@ -12,7 +12,7 @@
     <%- include('../partials/header1') %>
     
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <%- include('../partials/flash-messages') %>
+        <%- include('../partials/flash-messages1') %>
         
         <div class="mb-8 flex justify-between items-center">
             <div>
@@ -21,7 +21,7 @@
             </div>
             
             <% if (contracts.length > 0) { %>
-            <form action="/admin/contracts/bulk-approve" method="POST">
+            <form action="/admin/bulk-approve-contracts" method="POST">
                 <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                 <button type="submit" 
                     class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center font-medium"
@@ -31,56 +31,57 @@
             </form>
             <% } %>
         </div>
-<!-- Replace the Statistics section with this: -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-            <div class="p-2 bg-blue-100 rounded-lg">
-                <i class="fas fa-file-contract text-blue-600 text-xl"></i>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-file-contract text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Pending</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.totalPending || 0 %></p>
+                    </div>
+                </div>
             </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Total Pending</p>
-                <p class="text-2xl font-bold text-gray-900"><%= stats.totalPending || 0 %></p>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Ready for Approval</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.readyForApproval || 0 %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Waiting Documents</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.waitingDocuments || 0 %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Needs Correction</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.needsCorrection || 0 %></p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-            <div class="p-2 bg-green-100 rounded-lg">
-                <i class="fas fa-check-circle text-green-600 text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Ready for Approval</p>
-                <p class="text-2xl font-bold text-gray-900"><%= stats.readyForApproval || 0 %></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-            <div class="p-2 bg-yellow-100 rounded-lg">
-                <i class="fas fa-clock text-yellow-600 text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Waiting Documents</p>
-                <p class="text-2xl font-bold text-gray-900"><%= stats.waitingDocuments || 0 %></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-            <div class="p-2 bg-purple-100 rounded-lg">
-                <i class="fas fa-robot text-purple-600 text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Auto-Generated</p>
-                <p class="text-2xl font-bold text-gray-900"><%= stats.autoGenerated || 0 %></p>
-            </div>
-        </div>
-    </div>
-</div>
 
         <!-- 3-Step Process Overview -->
         <div class="bg-white shadow rounded-lg p-6 mb-8">
@@ -110,292 +111,495 @@
             </div>
         </div>
 
+        <!-- Search and Filter -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1">
+                    <input type="text" 
+                           id="searchContracts" 
+                           placeholder="Search by project title, customer, or seller..."
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex space-x-2">
+                    <select id="statusFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Status</option>
+                        <option value="ready">Ready for Approval</option>
+                        <option value="waiting">Waiting Documents</option>
+                        <option value="correcting">Needs Correction</option>
+                    </select>
+                    <button onclick="filterContracts()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                    <button onclick="clearFilters()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visible Count Display -->
+        <div id="visibleCount" class="text-sm text-gray-600 mb-4 hidden">
+            Showing <span id="visibleCountNumber">0</span> of <%= contracts.length %> contracts
+        </div>
+
         <% if (contracts.length > 0) { %>
-            <div class="grid gap-6">
+            <div class="grid gap-6" id="contractsContainer">
                 <% contracts.forEach(contract => { %>
-                <div class="bg-white shadow rounded-lg p-6 border-l-4 
-                    <%= contract.customerSignedContract && contract.sellerSignedContract ? 'border-green-500' : 'border-yellow-500' %>">
+                <div class="contract-card bg-white shadow rounded-lg p-6 border-l-4 
+                    <%= contract.filterStatus === 'ready' ? 'border-green-500' : 'border-yellow-500' %>
+                    <%= contract.filterStatus === 'correcting' ? 'border-red-500' : '' %>"
+                    data-status="<%= contract.filterStatus %>"
+                    data-search="<%= contract.project.title.toLowerCase() %> <%= contract.customer.name.toLowerCase() %> <%= contract.seller.name.toLowerCase() %>">
                     
-                    <!-- Header -->
-                    <div class="flex justify-between items-start mb-4">
+                    <!-- Header with Clickable Title -->
+                    <div class="flex justify-between items-start mb-4 cursor-pointer" onclick="toggleContractDetails('<%= contract._id %>')">
                         <div class="flex-1">
-                            <h2 class="text-xl font-semibold text-gray-900"><%= contract.project.title %></h2>
+                            <h2 class="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200">
+                                <%= contract.project.title %>
+                            </h2>
                             <p class="text-gray-600 capitalize"><%= contract.project.category.replace('-', ' ') %></p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <% if (contract.customerSignedContract && contract.sellerSignedContract) { %>
+                            <!-- Dynamic Status Badge based on computed filterStatus -->
+                            <% if (contract.filterStatus === 'ready') { %>
                             <span class="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
                                 READY FOR APPROVAL
                             </span>
-                            <% } else { %>
+                            <% } else if (contract.filterStatus === 'waiting') { %>
                             <span class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded-full">
                                 WAITING DOCUMENTS
                             </span>
+                            <% } else if (contract.filterStatus === 'correcting') { %>
+                            <span class="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-full">
+                                NEEDS CORRECTION
+                            </span>
                             <% } %>
-                            <% if (contract.autoGenerated) { %>
-                            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                AUTO-GENERATED
+
+                            <!-- Contract Status Badge (from model) -->
+                            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full capitalize">
+                                <%= contract.status.replace('-', ' ') %>
+                            </span>
+
+                            <!-- Round Information Badge -->
+                            <% if (contract.project.biddingRounds && contract.project.biddingRounds.currentRound === 3) { %>
+                            <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                                <i class="fas fa-trophy mr-1"></i>Round 3 Winner
                             </span>
                             <% } %>
                         </div>
                     </div>
 
-                    <!-- Contract Documents Status -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                        <h3 class="font-semibold text-gray-800 mb-3">Contract Documents Status</h3>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <!-- Customer Document Status -->
-                            <div class="flex items-center justify-between p-3 <%= contract.customerSignedContract ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200' %> rounded">
-                                <div class="flex items-center">
-                                    <i class="fas <%= contract.customerSignedContract ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600' %> mr-3 text-lg"></i>
-                                    <div>
-                                        <p class="font-medium <%= contract.customerSignedContract ? 'text-green-800' : 'text-red-800' %>">
-                                            Customer Contract
-                                        </p>
-                                        <p class="text-sm <%= contract.customerSignedContract ? 'text-green-700' : 'text-red-700' %>">
-                                            <%= contract.customerSignedContract ? 'Uploaded ✓' : 'Not Uploaded ✗' %>
-                                        </p>
-                                        <% if (contract.customerSignedContract) { %>
-                                        <p class="text-xs text-green-600 mt-1">
-                                            <%= moment(contract.customerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
-                                        </p>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <div class="flex space-x-1">
-                                    <% if (contract.customerTemplate && contract.customerTemplate.url) { %>
-                                    <a href="/admin/contracts/<%= contract._id %>/template/customer" 
-                                       target="_blank"
-                                       class="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700 transition duration-300"
-                                       title="Download Template">
-                                        <i class="fas fa-file-download"></i>
-                                    </a>
-                                    <% } %>
-                                    <% if (contract.customerSignedContract && contract.customerSignedContract.url) { %>
-                                    <a href="/admin/contracts/<%= contract._id %>/download-customer" 
-                                       target="_blank"
-                                       class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition duration-300"
-                                       title="View Signed Contract">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <% } %>
-                                </div>
-                            </div>
-
-                            <!-- Seller Document Status -->
-                            <div class="flex items-center justify-between p-3 <%= contract.sellerSignedContract ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200' %> rounded">
-                                <div class="flex items-center">
-                                    <i class="fas <%= contract.sellerSignedContract ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600' %> mr-3 text-lg"></i>
-                                    <div>
-                                        <p class="font-medium <%= contract.sellerSignedContract ? 'text-green-800' : 'text-red-800' %>">
-                                            Seller Contract
-                                        </p>
-                                        <p class="text-sm <%= contract.sellerSignedContract ? 'text-green-700' : 'text-red-700' %>">
-                                            <%= contract.sellerSignedContract ? 'Uploaded ✓' : 'Not Uploaded ✗' %>
-                                        </p>
-                                        <% if (contract.sellerSignedContract) { %>
-                                        <p class="text-xs text-green-600 mt-1">
-                                            <%= moment(contract.sellerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
-                                        </p>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <div class="flex space-x-1">
-                                    <% if (contract.sellerTemplate && contract.sellerTemplate.url) { %>
-                                    <a href="/admin/contracts/<%= contract._id %>/template/seller" 
-                                       target="_blank"
-                                       class="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700 transition duration-300"
-                                       title="Download Template">
-                                        <i class="fas fa-file-download"></i>
-                                    </a>
-                                    <% } %>
-                                    <% if (contract.sellerSignedContract && contract.sellerSignedContract.url) { %>
-                                    <a href="/admin/contracts/<%= contract._id %>/download-seller" 
-                                       target="_blank"
-                                       class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition duration-300"
-                                       title="View Signed Contract">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <% } %>
-                                </div>
-                            </div>
+                    <!-- Quick Info Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
+                        <div class="flex items-center">
+                            <i class="fas fa-user text-gray-400 mr-2"></i>
+                            <span class="text-gray-600">Customer:</span>
+                            <span class="font-medium ml-1"><%= contract.customer.name %></span>
                         </div>
-
-                        <!-- Ready for Approval Indicator -->
-                        <% if (contract.customerSignedContract && contract.sellerSignedContract) { %>
-                        <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-                            <div class="flex items-center">
-                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                <span class="text-green-800 font-medium">Ready for Approval</span>
-                                <span class="text-green-700 text-sm ml-2">Both parties have uploaded signed contracts</span>
-                            </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-user-tie text-gray-400 mr-2"></i>
+                            <span class="text-gray-600">Seller:</span>
+                            <span class="font-medium ml-1"><%= contract.seller.name %></span>
                         </div>
-                        <% } else { %>
-                        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                            <div class="flex items-center">
-                                <i class="fas fa-clock text-yellow-600 mr-2"></i>
-                                <span class="text-yellow-800 font-medium">Waiting for Documents</span>
-                                <span class="text-yellow-700 text-sm ml-2">
-                                    <% if (!contract.customerSignedContract && !contract.sellerSignedContract) { %>
-                                    Customer and seller need to upload contracts
-                                    <% } else if (!contract.customerSignedContract) { %>
-                                    Customer needs to upload contract
-                                    <% } else if (!contract.sellerSignedContract) { %>
-                                    Seller needs to upload contract
-                                    <% } %>
-                                </span>
-                            </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-dollar-sign text-gray-400 mr-2"></i>
+                            <span class="text-gray-600">Value:</span>
+                            <span class="font-bold text-green-600 ml-1">$<%= contract.contractValue.toLocaleString() %></span>
+                        </div>
+                    </div>
+
+                    <!-- Document Status Quick View -->
+                    <div class="flex items-center space-x-4 mb-4 text-sm">
+                        <div class="flex items-center">
+                            <i class="fas <%= contract.customerSignedContract ? 'fa-check-circle text-green-500' : 'fa-times-circle text-red-500' %> mr-1"></i>
+                            <span class="<%= contract.customerSignedContract ? 'text-green-700' : 'text-red-700' %>">Customer Contract</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas <%= contract.sellerSignedContract ? 'fa-check-circle text-green-500' : 'fa-times-circle text-red-500' %> mr-1"></i>
+                            <span class="<%= contract.sellerSignedContract ? 'text-green-700' : 'text-red-700' %>">Seller Contract</span>
+                        </div>
+                        <% if (contract.status === 'correcting' && contract.currentRejection) { %>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-red-500 mr-1"></i>
+                            <span class="text-red-700">
+                                <%= contract.getRemainingCorrectionTime ? contract.getRemainingCorrectionTime() : 'Deadline pending' %>
+                            </span>
                         </div>
                         <% } %>
                     </div>
 
-                    <!-- Contract Details -->
-                    <div class="grid md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <h3 class="font-medium text-gray-700 mb-2">Customer Information</h3>
-                            <div class="bg-gray-50 rounded-lg p-3">
-                                <p class="font-medium"><%= contract.customer.name %></p>
-                                <p class="text-sm text-gray-600"><%= contract.customer.email %></p>
-                                <% if (contract.customer.phone) { %>
-                                <p class="text-sm text-gray-600"><%= contract.customer.phone %></p>
-                                <% } %>
+                    <!-- Expandable Details -->
+                    <div id="contractDetails-<%= contract._id %>" class="hidden">
+                        <!-- Bidding Round Information -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                            <h4 class="font-semibold text-blue-800 mb-2">Project & Bidding Information</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-600">Project Status:</span>
+                                    <span class="font-medium capitalize ml-2">
+                                        <%= contract.project.adminStatus %>
+                                        <% if (contract.project.adminStatus === 'approved') { %>
+                                        <i class="fas fa-check-circle text-green-500 ml-1"></i>
+                                        <% } else if (contract.project.adminStatus === 'rejected') { %>
+                                        <i class="fas fa-times-circle text-red-500 ml-1"></i>
+                                        <% } else { %>
+                                        <i class="fas fa-clock text-yellow-500 ml-1"></i>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Bidding Round:</span>
+                                    <span class="font-medium ml-2">
+                                        Round <%= contract.project.biddingRounds?.currentRound || 1 %>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Final Bid Amount:</span>
+                                    <span class="font-bold text-green-600 ml-2">
+                                        $<%= contract.contractValue.toLocaleString() %>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Selection Method:</span>
+                                    <span class="font-medium ml-2">
+                                        <% if (contract.project.biddingRounds?.currentRound === 3) { %>
+                                        Three-Round Bidding
+                                        <% } else { %>
+                                        Direct Selection
+                                        <% } %>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <h3 class="font-medium text-gray-700 mb-2">Seller Information</h3>
-                            <div class="bg-gray-50 rounded-lg p-3">
-                                <p class="font-medium"><%= contract.seller.name %></p>
-                                <p class="text-sm text-gray-600">
-                                    <%= contract.seller.companyName || 'No Company' %>
-                                </p>
-                                <p class="text-sm text-gray-600"><%= contract.seller.email %></p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Contract Value & Timeline -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h3 class="font-bold text-blue-900 text-lg">
-                                    $<%= contract.contractValue.toLocaleString() %>
-                                </h3>
-                                <p class="text-blue-700">Contract Value</p>
+                        <!-- Contract Documents Status -->
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                            <h3 class="font-semibold text-gray-800 mb-3">Contract Documents Status</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <!-- Customer Document Status -->
+                                <div class="flex items-center justify-between p-3 <%= contract.customerSignedContract ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200' %> rounded">
+                                    <div class="flex items-center">
+                                        <i class="fas <%= contract.customerSignedContract ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600' %> mr-3 text-lg"></i>
+                                        <div>
+                                            <p class="font-medium <%= contract.customerSignedContract ? 'text-green-800' : 'text-red-800' %>">
+                                                Customer Contract
+                                            </p>
+                                            <p class="text-sm <%= contract.customerSignedContract ? 'text-green-700' : 'text-red-700' %>">
+                                                <%= contract.customerSignedContract ? 'Uploaded ✓' : 'Not Uploaded ✗' %>
+                                            </p>
+                                            <% if (contract.customerSignedContract) { %>
+                                            <p class="text-xs text-green-600 mt-1">
+                                                <%= moment(contract.customerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
+                                            </p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <% if (contract.customerTemplate && contract.customerTemplate.url) { %>
+                                        <a href="/admin/contracts/<%= contract._id %>/download-template/customer" 
+                                           target="_blank"
+                                           class="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700 transition duration-300"
+                                           title="Download Template">
+                                            <i class="fas fa-file-download"></i>
+                                        </a>
+                                        <% } %>
+                                        <% if (contract.customerSignedContract && contract.customerSignedContract.url) { %>
+                                        <a href="/admin/contracts/<%= contract._id %>/download-customer" 
+                                           target="_blank"
+                                           class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition duration-300"
+                                           title="View Signed Contract">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Seller Document Status -->
+                                <div class="flex items-center justify-between p-3 <%= contract.sellerSignedContract ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200' %> rounded">
+                                    <div class="flex items-center">
+                                        <i class="fas <%= contract.sellerSignedContract ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600' %> mr-3 text-lg"></i>
+                                        <div>
+                                            <p class="font-medium <%= contract.sellerSignedContract ? 'text-green-800' : 'text-red-800' %>">
+                                                Seller Contract
+                                            </p>
+                                            <p class="text-sm <%= contract.sellerSignedContract ? 'text-green-700' : 'text-red-700' %>">
+                                                <%= contract.sellerSignedContract ? 'Uploaded ✓' : 'Not Uploaded ✗' %>
+                                            </p>
+                                            <% if (contract.sellerSignedContract) { %>
+                                            <p class="text-xs text-green-600 mt-1">
+                                                <%= moment(contract.sellerSignedContract.uploadedAt).format('MMM D, YYYY h:mm A') %>
+                                            </p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <% if (contract.sellerTemplate && contract.sellerTemplate.url) { %>
+                                        <a href="/admin/contracts/<%= contract._id %>/download-template/seller" 
+                                           target="_blank"
+                                           class="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700 transition duration-300"
+                                           title="Download Template">
+                                            <i class="fas fa-file-download"></i>
+                                        </a>
+                                        <% } %>
+                                        <% if (contract.sellerSignedContract && contract.sellerSignedContract.url) { %>
+                                        <a href="/admin/contracts/<%= contract._id %>/download-seller" 
+                                           target="_blank"
+                                           class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition duration-300"
+                                           title="View Signed Contract">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <% } %>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm text-blue-600">
-                                    Created: <%= moment(contract.createdAt).format('MMM D, YYYY h:mm A') %>
-                                </p>
-                                <p class="text-sm text-blue-600">
-                                    Updated: <%= moment(contract.updatedAt).fromNow() %>
-                                </p>
+
+                            <!-- Ready for Approval Indicator -->
+                            <% if (contract.customerSignedContract && contract.sellerSignedContract) { %>
+                            <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    <span class="text-green-800 font-medium">Ready for Approval</span>
+                                    <span class="text-green-700 text-sm ml-2">Both parties have uploaded signed contracts</span>
+                                </div>
+                            </div>
+                            <% } else { %>
+                            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock text-yellow-600 mr-2"></i>
+                                    <span class="text-yellow-800 font-medium">Waiting for Documents</span>
+                                    <span class="text-yellow-700 text-sm ml-2">
+                                        <% if (!contract.customerSignedContract && !contract.sellerSignedContract) { %>
+                                        Customer and seller need to upload contracts
+                                        <% } else if (!contract.customerSignedContract) { %>
+                                        Customer needs to upload contract
+                                        <% } else if (!contract.sellerSignedContract) { %>
+                                        Seller needs to upload contract
+                                        <% } %>
+                                    </span>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Current Rejection Warning -->
+                        <% if (contract.status === 'correcting' && contract.currentRejection) { %>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-red-500 mt-1 mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-red-800 mb-2">Correction Required</h4>
+                                    <p class="text-red-700 mb-2"><%= contract.currentRejection.reason %></p>
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span class="font-medium text-red-800">Party Required:</span>
+                                            <span class="ml-2 capitalize text-red-700"><%= contract.currentRejection.partyRequired %></span>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium text-red-800">Deadline:</span>
+                                            <span class="ml-2 text-red-700">
+                                                <%= moment(contract.currentRejection.deadline).format('MMM D, YYYY h:mm A') %>
+                                                (<%= contract.getRemainingCorrectionTime ? contract.getRemainingCorrectionTime() : 'Calculating...' %>)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <!-- Contract Timeline -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-gray-800 mb-3">Contract Progress</h4>
+                            <div class="flex items-center justify-between">
+                                <% const steps = [
+                                    { number: 1, title: 'Customer Upload', icon: 'fa-user', status: contract.customerSignedContract ? 'completed' : 'pending' },
+                                    { number: 2, title: 'Seller Upload', icon: 'fa-user-tie', status: contract.sellerSignedContract ? 'completed' : 'pending' },
+                                    { number: 3, title: 'Admin Review', icon: 'fa-shield-alt', status: (contract.customerSignedContract && contract.sellerSignedContract) ? 'current' : 'pending' }
+                                ] %>
+                                
+                                <% steps.forEach((step, index) => { %>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="w-10 h-10 rounded-full 
+                                        <%= step.status === 'completed' ? 'bg-green-500' : step.status === 'current' ? 'bg-blue-500' : 'bg-gray-300' %> 
+                                        text-white flex items-center justify-center mb-2">
+                                        <% if (step.status === 'completed') { %>
+                                        <i class="fas fa-check text-sm"></i>
+                                        <% } else { %>
+                                        <i class="fas <%= step.icon %> text-sm"></i>
+                                        <% } %>
+                                    </div>
+                                    <p class="text-xs font-medium text-gray-700 text-center"><%= step.title %></p>
+                                    <% if (index < steps.length - 1) { %>
+                                    <div class="hidden md:block w-full h-1 mt-4 
+                                        <%= step.status === 'completed' ? 'bg-green-500' : 'bg-gray-300' %>">
+                                    </div>
+                                    <% } %>
+                                </div>
+                                <% }); %>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <!-- Approve Button (only enabled when both contracts uploaded) -->
-                        <% if (contract.customerSignedContract && contract.sellerSignedContract) { %>
-                        <form action="/admin/contracts/<%= contract._id %>/approve" method="POST" class="flex items-center">
-                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                            <input type="text" 
-                                   name="adminNotes" 
-                                   placeholder="Optional approval notes..."
-                                   class="mr-2 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                                   style="min-width: 200px;">
-                            <button type="submit" 
-                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center transition duration-300"
-                                onclick="return confirm('Approve this contract? This will generate a completion certificate.')">
-                                <i class="fas fa-check mr-2"></i>Approve & Generate Certificate
+                    <div class="flex flex-wrap gap-3 items-center justify-between pt-4 border-t border-gray-200">
+                        <div class="flex flex-wrap gap-3">
+                            <!-- View Details Button (Primary Action) -->
+                            <a href="/admin/contracts/<%= contract._id %>"
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center transition duration-300">
+                                <i class="fas fa-eye mr-2"></i>View Details & Verify
+                            </a>
+
+                            <!-- Quick Actions based on filterStatus -->
+                            <% if (contract.filterStatus === 'ready') { %>
+                            <!-- Quick Approve for ready contracts -->
+                            <form action="/admin/contracts/<%= contract._id %>/approve" method="POST" class="flex items-center">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <input type="hidden" name="adminNotes" value="Approved via quick action">
+                                <button type="submit" 
+                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center transition duration-300"
+                                    onclick="return confirm('Approve this contract? This will generate completion certificates.')">
+                                    <i class="fas fa-check mr-2"></i>Quick Approve
+                                </button>
+                            </form>
+                            <% } else if (contract.filterStatus === 'correcting') { %>
+                            <!-- Send Reminder for correction contracts -->
+                            <button type="button" 
+                                onclick="sendReminder('<%= contract._id %>')"
+                                class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center transition duration-300">
+                                <i class="fas fa-bell mr-2"></i>Send Reminder
                             </button>
-                        </form>
-                        <% else %>
-                        <button disabled
-                            class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center cursor-not-allowed"
-                            title="Cannot approve - waiting for both parties to upload signed contracts">
-                            <i class="fas fa-check mr-2"></i>Approve (Waiting for Documents)
-                        </button>
-                        <% } %>
+                            <% } %>
 
-                        <!-- Reject Button -->
-                        <button type="button" 
-                            onclick="showRejectForm('<%= contract._id %>')"
-                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center transition duration-300">
-                            <i class="fas fa-times mr-2"></i>Reject Contract
-                        </button>
+                            <!-- Expand/Collapse Details Button -->
+                            <button type="button" 
+                                onclick="toggleContractDetails('<%= contract._id %>')"
+                                class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center transition duration-300">
+                                <i class="fas fa-info-circle mr-2"></i>Details
+                            </button>
+                        </div>
 
-                        <!-- View Details Button -->
-                        <a href="/admin/contracts/<%= contract._id %>"
-                           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center transition duration-300">
-                            <i class="fas fa-eye mr-2"></i>View Details
-                        </a>
-
-                        <!-- Download All Button -->
+                        <!-- Status-specific quick actions -->
+                        <% if (contract.filterStatus === 'correcting') { %>
+                        <div class="flex space-x-2">
+                            <form action="/admin/contracts/<%= contract._id %>/reject-customer" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <input type="hidden" name="rejectionReason" value="Contract requires corrections - follow up">
+                                <input type="hidden" name="deadlineHours" value="24">
+                                <button type="submit" 
+                                        class="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 flex items-center"
+                                        onclick="return confirm('Send follow-up rejection to customer?')">
+                                    <i class="fas fa-user-times mr-1"></i>Follow-up Customer
+                                </button>
+                            </form>
+                            <form action="/admin/contracts/<%= contract._id %>/reject-seller" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <input type="hidden" name="rejectionReason" value="Contract requires corrections - follow up">
+                                <input type="hidden" name="deadlineHours" value="24">
+                                <button type="submit" 
+                                        class="bg-orange-600 text-white px-3 py-2 rounded text-sm hover:bg-orange-700 flex items-center"
+                                        onclick="return confirm('Send follow-up rejection to seller?')">
+                                    <i class="fas fa-user-tie-times mr-1"></i>Follow-up Seller
+                                </button>
+                            </form>
+                        </div>
+                        <% } else { %>
+                        <!-- Quick Download Options -->
                         <% if (contract.customerSignedContract || contract.sellerSignedContract) { %>
                         <div class="relative group">
                             <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center transition duration-300">
-                                <i class="fas fa-download mr-2"></i>Download All
+                                <i class="fas fa-download mr-2"></i>Download
                             </button>
-                            <div class="absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                            <div class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                                 <% if (contract.customerSignedContract) { %>
                                 <a href="/admin/contracts/<%= contract._id %>/download-customer" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user mr-2"></i>Customer Contract
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-user mr-2 text-green-600"></i>Customer Contract
                                 </a>
                                 <% } %>
                                 <% if (contract.sellerSignedContract) { %>
                                 <a href="/admin/contracts/<%= contract._id %>/download-seller" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user-tie mr-2"></i>Seller Contract
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-user-tie mr-2 text-blue-600"></i>Seller Contract
                                 </a>
                                 <% } %>
                                 <% if (contract.customerTemplate) { %>
-                                <a href="/admin/contracts/<%= contract._id %>/template/customer" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-file-download mr-2"></i>Customer Template
+                                <a href="/admin/contracts/<%= contract._id %>/download-template/customer" 
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-file-download mr-2 text-gray-600"></i>Customer Template
                                 </a>
                                 <% } %>
                                 <% if (contract.sellerTemplate) { %>
-                                <a href="/admin/contracts/<%= contract._id %>/template/seller" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-file-download mr-2"></i>Seller Template
+                                <a href="/admin/contracts/<%= contract._id %>/download-template/seller" 
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-file-download mr-2 text-gray-600"></i>Seller Template
                                 </a>
                                 <% } %>
                             </div>
                         </div>
                         <% } %>
+                        <% } %>
+                    </div>
 
-                        <!-- Reject Form (Hidden by default) -->
-                        <form id="rejectForm-<%= contract._id %>" 
-                              action="/admin/contracts/<%= contract._id %>/reject" 
-                              method="POST" 
-                              class="hidden flex-1">
-                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                            <div class="flex space-x-2">
-                                <input type="text" 
-                                       name="rejectionReason" 
-                                       placeholder="Reason for rejection..."
-                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                       required>
-                                <input type="text"
-                                       name="correctiveAction"
-                                       placeholder="Corrective action required..."
-                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <!-- Quick Rejection Section -->
+                    <div id="quickReject-<%= contract._id %>" class="hidden mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-red-800 mb-3">Quick Rejection</h4>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <!-- Reject Customer Only -->
+                            <form action="/admin/contracts/<%= contract._id %>/reject-customer" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <input type="hidden" name="rejectionReason" value="Contract requires corrections">
+                                <input type="hidden" name="deadlineHours" value="48">
+                                
                                 <button type="submit" 
-                                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300">
-                                    Submit Rejection
+                                        class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center text-sm"
+                                        onclick="return confirm('Reject customer contract? Customer will need to re-upload within 48 hours.')">
+                                    <i class="fas fa-user-times mr-2"></i>
+                                    Reject Customer Only
                                 </button>
-                                <button type="button" 
-                                        onclick="hideRejectForm('<%= contract._id %>')"
-                                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300">
-                                    Cancel
+                            </form>
+
+                            <!-- Reject Seller Only -->
+                            <form action="/admin/contracts/<%= contract._id %>/reject-seller" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <input type="hidden" name="rejectionReason" value="Contract requires corrections">
+                                <input type="hidden" name="deadlineHours" value="48">
+                                
+                                <button type="submit" 
+                                        class="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center justify-center text-sm"
+                                        onclick="return confirm('Reject seller contract? Seller will need to re-upload within 48 hours.')">
+                                    <i class="fas fa-user-tie-times mr-2"></i>
+                                    Reject Seller Only
                                 </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
+
+                        <p class="text-red-700 text-xs mt-2 text-center">
+                            For detailed rejection with custom reasons, use the "View Details" page.
+                        </p>
+                    </div>
+
+                    <!-- Quick Reject Toggle -->
+                    <div class="flex justify-center mt-3">
+                        <button type="button" 
+                            onclick="toggleQuickReject('<%= contract._id %>')"
+                            class="text-red-600 hover:text-red-800 text-sm flex items-center">
+                            <i class="fas fa-times mr-1"></i>
+                            Quick Reject Options
+                        </button>
                     </div>
                 </div>
                 <% }); %>
+            </div>
+
+            <!-- No Results Message (Hidden by default) -->
+            <div id="noResults" class="hidden bg-white shadow rounded-lg p-8 text-center">
+                <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Contracts Found</h3>
+                <p class="text-gray-500">Try adjusting your search or filter criteria.</p>
+                <button onclick="clearFilters()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    Clear Filters
+                </button>
             </div>
         <% } else { %>
             <div class="bg-white shadow rounded-lg p-8 text-center">
@@ -407,46 +611,60 @@
     </div>
 
     <script>
-        function showRejectForm(contractId) {
-            document.getElementById('rejectForm-' + contractId).classList.remove('hidden');
-            event.target.style.display = 'none';
+        // Toggle contract details
+        function toggleContractDetails(contractId) {
+            const details = document.getElementById('contractDetails-' + contractId);
+            details.classList.toggle('hidden');
         }
 
-        function hideRejectForm(contractId) {
-            document.getElementById('rejectForm-' + contractId).classList.add('hidden');
-            const rejectButton = document.querySelector(`[onclick="showRejectForm('${contractId}')"]`);
-            if (rejectButton) {
-                rejectButton.style.display = 'flex';
-            }
+        // Toggle quick reject options
+        function toggleQuickReject(contractId) {
+            const rejectSection = document.getElementById('quickReject-' + contractId);
+            rejectSection.classList.toggle('hidden');
         }
 
-        // Calculate statistics
-        document.addEventListener('DOMContentLoaded', function() {
-            const contracts = document.querySelectorAll('.bg-white.shadow.rounded-lg');
-            let readyCount = 0;
-            let waitingCount = 0;
-            let autoCount = 0;
+        // Search and filter functionality
+        function filterContracts() {
+            const searchTerm = document.getElementById('searchContracts').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const contracts = document.querySelectorAll('.contract-card');
+            let visibleCount = 0;
 
             contracts.forEach(contract => {
-                const hasCustomerContract = contract.querySelector('[class*="bg-green-50"]:first-child');
-                const hasSellerContract = contract.querySelector('[class*="bg-green-50"]:last-child');
-                const isAutoGenerated = contract.textContent.includes('AUTO-GENERATED');
+                const searchData = contract.getAttribute('data-search');
+                const status = contract.getAttribute('data-status');
+                
+                let matchesSearch = searchData.includes(searchTerm);
+                let matchesStatus = statusFilter === 'all' || status === statusFilter;
 
-                if (hasCustomerContract && hasSellerContract) {
-                    readyCount++;
+                if (matchesSearch && matchesStatus) {
+                    contract.style.display = 'block';
+                    visibleCount++;
                 } else {
-                    waitingCount++;
-                }
-
-                if (isAutoGenerated) {
-                    autoCount++;
+                    contract.style.display = 'none';
                 }
             });
 
-            document.getElementById('ready-count').textContent = readyCount;
-            document.getElementById('waiting-count').textContent = waitingCount;
-            document.getElementById('auto-count').textContent = autoCount;
-        });
+            // Show/hide no results message
+            const noResults = document.getElementById('noResults');
+            const visibleCountElement = document.getElementById('visibleCount');
+            
+            if (visibleCount === 0 && contracts.length > 0) {
+                noResults.classList.remove('hidden');
+                visibleCountElement.classList.add('hidden');
+            } else {
+                noResults.classList.add('hidden');
+                visibleCountElement.classList.remove('hidden');
+                document.getElementById('visibleCountNumber').textContent = visibleCount;
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchContracts').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            filterContracts();
+        }
 
         // Auto-hide flash messages after 5 seconds
         setTimeout(() => {
@@ -457,6 +675,75 @@
                 setTimeout(() => message.remove(), 500);
             });
         }, 5000);
+
+        // Initialize search on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchContracts');
+            if (searchInput) {
+                searchInput.addEventListener('input', filterContracts);
+            }
+            
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', filterContracts);
+            }
+
+            // Show initial count
+            const initialCount = document.querySelectorAll('.contract-card').length;
+            if (initialCount > 0) {
+                document.getElementById('visibleCount').classList.remove('hidden');
+                document.getElementById('visibleCountNumber').textContent = initialCount;
+            }
+        });
+
+        // Send reminder function
+        function sendReminder(contractId) {
+            if (confirm('Send reminder to the required parties about the correction deadline?')) {
+                // In real implementation, this would call an API endpoint
+                console.log('Sending reminder for contract:', contractId);
+                // Show loading state
+                const button = document.querySelector(`[onclick="sendReminder('${contractId}')"]`);
+                if (button) {
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+                    button.disabled = true;
+                    
+                    // Simulate API call
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        alert('Reminder sent successfully!');
+                    }, 1500);
+                }
+            }
+        }
+
+        // Quick status update functions
+        function quickApprove(contractId) {
+            if (confirm('Are you sure you want to approve this contract? This will generate completion certificates.')) {
+                // In a real implementation, this would submit a form or make an API call
+                console.log('Quick approving contract:', contractId);
+                // Show loading state
+                const button = document.querySelector(`[onclick="quickApprove('${contractId}')"]`);
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Approving...';
+                    button.disabled = true;
+                }
+            }
+        }
+
+        function quickReject(contractId, party) {
+            if (confirm(`Are you sure you want to reject the ${party} contract? They will need to re-upload within 48 hours.`)) {
+                // In a real implementation, this would submit a form or make an API call
+                console.log('Quick rejecting', party, 'contract:', contractId);
+                // Show loading state
+                const button = document.querySelector(`[onclick="quickReject('${contractId}', '${party}')"]`);
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rejecting...';
+                    button.disabled = true;
+                }
+            }
+        }
     </script>
 </body>
 </html>
