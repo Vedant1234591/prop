@@ -1,0 +1,33 @@
+<section id="documents" class="bg-white rounded-2xl shadow p-6">
+  <h2 class="text-xl font-semibold text-[rgb(49,94,113)] mb-4">
+    🧾 Uploaded Documents
+  </h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-gray-50 p-4 rounded-lg border text-center">
+      <h3 class="font-medium text-[rgb(49,94,113)] mb-2">Aadhaar</h3>
+      <% if (seller?.Aadhaar?.secure_url) { %>
+      <img
+        src="<%= seller.Aadhaar.secure_url %>"
+        alt="Aadhaar"
+        class="mx-auto w-40 rounded shadow"
+      />
+      <% } else { %>
+      <p class="text-gray-500 text-sm">Not uploaded</p>
+      <% } %>
+    </div>
+
+    <div class="bg-gray-50 p-4 rounded-lg border text-center">
+      <h3 class="font-medium text-[rgb(49,94,113)] mb-2">Pancard</h3>
+      <% if (seller?.Pancard?.secure_url) { %>
+      <img
+        src="<%= seller.Pancard.secure_url %>"
+        alt="PAN"
+        class="mx-auto w-40 rounded shadow"
+      />
+      <% } else { %>
+      <p class="text-gray-500 text-sm">Not uploaded</p>
+      <% } %>
+    </div>
+  </div>
+</section>

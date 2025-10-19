@@ -15,16 +15,15 @@ const statusAutomation = require("../services/statusAutomation");
 
 // Seller Dashboard - Enhanced with real-time updates
 exports.pendingPage = async (req, res) => {
-  return res.render('seller/pending')
- 
-}
+  res.render("seller/pending");
+};
 exports.getDashboard = async (req, res) => {
   try {
     const sellerId = req.session.userId;
-const seller = await Seller.findOne({ userId: sellerId })
-if(!seller||!seller.adminVerified){
- return res.redirect('/seller/pending-Approval')
-}
+    const seller = await Seller.findOne({ userId: sellerId });
+    if (!seller || !seller.adminVerified) {
+      return res.redirect("/seller/pending-Approval");
+    }
     console.log("=== SELLER DASHBOARD DEBUG ===");
     console.log("Seller ID:", sellerId);
 
@@ -382,38 +381,75 @@ exports.withdrawBid = async (req, res) => {
 };
 
 // Seller Profile
+// exports.getProfile = async (req, res) => {
+//   try {
+//     const sellerId = req.session.userId;
+
+//     if (!sellerId) {
+//       req.flash("error", "Please log in to view profile");
+//       return res.redirect("/auth/login");
+//     }
+
+//     const user = await User.findById(sellerId);
+
+//     if (!user) {
+//       req.flash("error", "User not found");
+//       return res.redirect("/seller/dashboard");
+//     }
+
+//     const userData = req.session.user || { name: "Seller", email: "" };
+
+//     // Get bid count for notifications
+//     const bidCount = await Bid.countDocuments({
+//       seller: sellerId,
+//       status: "submitted",
+//     });
+
+//     res.render("seller/profile", {
+//       user: userData,
+//       currentPage: "profile",
+//       profile: user,
+//       bidCount: bidCount,
+//     });
+//   } catch (error) {
+//     console.error("Seller profile error:", error);
+//     req.flash("error", "Error loading profile: " + error.message);
+//     res.redirect("/seller/dashboard");
+//   }
+// };
+
 exports.getProfile = async (req, res) => {
   try {
     const sellerId = req.session.userId;
 
     if (!sellerId) {
-      req.flash("error", "Please log in to view profile");
+      req.flash("error", "Please log in to view your profile");
       return res.redirect("/auth/login");
     }
 
     const user = await User.findById(sellerId);
-
     if (!user) {
       req.flash("error", "User not found");
       return res.redirect("/seller/dashboard");
     }
 
-    const userData = req.session.user || { name: "Seller", email: "" };
+    // Fetch Seller details if applicable
+    const seller = await Seller.findOne({ userId: sellerId });
 
-    // Get bid count for notifications
+    // Fetch bid count for top bar
     const bidCount = await Bid.countDocuments({
       seller: sellerId,
       status: "submitted",
     });
 
-    res.render("seller/profile", {
-      user: userData,
-      currentPage: "profile",
-      profile: user,
-      bidCount: bidCount,
+    res.render("seller/profile/profile", {
+      user, // Base user data
+      seller, // Extended seller details (optional)
+      bidCount, // For notifications
+      currentPage: "profile", // Sidebar active page
     });
   } catch (error) {
-    console.error("Seller profile error:", error);
+    console.error("❌ Error loading seller profile:", error);
     req.flash("error", "Error loading profile: " + error.message);
     res.redirect("/seller/dashboard");
   }

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= user.name %> | Seller Profile | Propload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <%- include('../../partials/header') %>
+    <div class="bg-gray-50 min-h-screen text-gray-800 flex mt-4">
+      <!-- Sidebar -->
+      <%- include("./_sidebar") %>
+
+      <!-- Main content -->
+      <div class="flex-1 p-8 overflow-y-auto">
+        <!-- Dynamic Sections -->
+        <div id="content-sections" class="space-y-8">
+          <section id="overview" class="section active">
+            <%- include("./_overview", { user }) %>
+          </section>
+
+          <section id="business" class="section hidden">
+            <%- include("./_business", { seller }) %>
+          </section>
+
+          <section id="offices" class="section hidden">
+            <%- include("./_offices", { seller }) %>
+          </section>
+
+          <section id="tax" class="section hidden">
+            <%- include("./_tax", { seller }) %>
+          </section>
+
+          <section id="documents" class="section hidden">
+            <%- include("./_documents", { seller }) %>
+          </section>
+        </div>
+      </div>
+
+      <!-- Section Toggle Script -->
+      <script>
+        const sidebarLinks = document.querySelectorAll("[data-section]");
+        const sections = document.querySelectorAll(".section");
+
+        sidebarLinks.forEach((link) => {
+          link.addEventListener("click", () => {
+            const target = link.dataset.section;
+
+            // Highlight active link
+            sidebarLinks.forEach((l) =>
+              l.classList.remove("bg-[rgb(49,94,113)]", "text-white")
+            );
+            link.classList.add("bg-[rgb(49,94,113)]", "text-white");
+
+            // Hide all sections
+            sections.forEach((s) => s.classList.add("hidden"));
+            sections.forEach((s) =>
+              s.classList.remove("opacity-100", "translate-y-0")
+            );
+
+            // Show target section with animation
+            const activeSection = document.getElementById(target);
+            activeSection.classList.remove("hidden");
+            activeSection.classList.add("opacity-100", "translate-y-0");
+          });
+        });
+      </script>
+
+      <!-- Smooth Animations -->
+      <style>
+        .section {
+          transition: all 0.3s ease;
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        .section:not(.hidden) {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      </style>
+    </div>
+  </body>
+</html>

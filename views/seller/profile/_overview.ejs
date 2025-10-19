@@ -1,0 +1,30 @@
+<section id="overview" class="bg-white rounded-2xl shadow p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-[rgb(49,94,113)]">
+      👤 Profile Overview
+    </h2>
+    <a
+      href="/seller/edit-profile"
+      class="text-sm text-[rgb(49,94,113)] hover:underline"
+      >Edit</a
+    >
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+    <div><strong>Name:</strong> <%= user?.name || "-" %></div>
+    <div><strong>Email:</strong> <%= user?.email || "-" %></div>
+    <div><strong>Phone:</strong> <%= user?.phone || "-" %></div>
+    <div><strong>Company:</strong> <%= user?.companyName || "-" %></div>
+    <div><strong>Role:</strong> <%= user?.role || "Seller" %></div>
+    <div>
+      <strong>Verified:</strong> <%= user?.isVerified ? "✅ Yes" : "❌ No" %>
+    </div>
+  </div>
+
+  <% if (user?.bio) { %>
+  <div class="mt-4">
+    <strong>Bio:</strong>
+    <p class="text-gray-600 mt-1 text-sm"><%= user.bio %></p>
+  </div>
+  <% } %>
+</section>

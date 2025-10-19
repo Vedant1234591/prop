@@ -4,12 +4,20 @@ const bcrypt = require("bcrypt");
 const qs = require("qs");
 
 exports.getLogin = (req, res) => {
+  // const seller = req.session.userRole;
+  // console.log(Seller);
+  // console.log(seller);
+
+  // req.session.userRole && console.log("debug::", req.session.userRole);
+  // console.log("debug::", Seller.adminVerified);
   // If already logged in, redirect to dashboard
   if (req.session.userId) {
     if (req.session.userRole === "customer") {
       return res.redirect("/customer/dashboard");
-    } else {
+    } else if (req.session.userRole === "seller") {
       return res.redirect("/seller/dashboard");
+    } else {
+      res.render("auth/login");
     }
   }
   res.render("auth/login");
@@ -140,6 +148,7 @@ exports.postLogin = async (req, res) => {
 exports.getLandingPage = (req, res) => {
   if (req.session.userId) {
     const role = req.session.userRole;
+    console.log("new debug", role.adminVerified);
     if (role === "customer") {
       return res.redirect("/customer/dashboard");
     } else if (role === "seller") {
@@ -394,15 +403,15 @@ exports.postSellerData = async (req, res) => {
     // ✅ 3️⃣ Create user first (if not already)
     let user;
     if (!req.session.userId) {
-      const hashedPassword = await bcrypt.hash(sessionSeller.password, 10);
       user = await User.create({
         name: sessionSeller.name,
         email: sessionSeller.email,
-        password: hashedPassword,
+        password: sessionSeller.password, // ✅ plain password
         role: "seller",
         phone: sessionSeller.phone,
         companyName: sessionSeller.companyName,
       });
+
       req.session.userId = user._id;
       req.session.userRole = "seller";
       console.log("✅ New user created:", user.email);

@@ -1,0 +1,38 @@
+<section id="tax" class="bg-white rounded-2xl shadow p-6">
+  <h2 class="text-xl font-semibold text-[rgb(49,94,113)] mb-4">
+    📄 Tax Assessments
+  </h2>
+
+  <% if (seller?.taxAssessments?.length) { %>
+  <div class="space-y-4">
+    <% seller.taxAssessments.forEach(tax => { %>
+    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+      <div class="font-medium text-[rgb(49,94,113)] mb-1">
+        PAN: <%= tax.pan || '—' %>
+      </div>
+      <p class="text-sm text-gray-600">
+        Assessment Year: <%= tax.assessmentYear || '—' %> | ITR Type: <%=
+        tax.itrType || '—' %>
+      </p>
+      <p class="text-xs text-gray-500 mt-1">
+        Ack No: <%= tax.ackNumber || '—' %>
+      </p>
+      <% if (tax.documents?.length) { %>
+      <div class="mt-2 flex flex-wrap gap-3">
+        <% tax.documents.forEach(doc => { %>
+        <a
+          href="<%= doc.secure_url %>"
+          target="_blank"
+          class="text-[rgb(49,94,113)] text-xs underline"
+          >View Document</a
+        >
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+    <% }) %>
+  </div>
+  <% } else { %>
+  <p class="text-gray-500 text-sm">No tax assessments uploaded yet.</p>
+  <% } %>
+</section>

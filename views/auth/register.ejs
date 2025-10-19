@@ -56,7 +56,7 @@
 
           <%- include('../partials/flash-messages') %>
 
-          <div class="bg-white shadow rounded-lg p-8">
+          <div class="bg-white shadow rounded-lg p-8 w-50%">
             <form action="/auth/register" method="POST" class="space-y-6">
               <input type="hidden" name="role" value="<%= role %>" />
 
@@ -156,25 +156,55 @@
                 </div>
               </div>
 
-              <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <!-- <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <p class="text-sm text-blue-700">
+                  <dialog>a</dialog>
                   By registering, you agree to our Terms of Service and Privacy
                   Policy.
                 </p>
-              </div>
+              </div> -->
 
+              <style>
+                .Sign {
+                  /* color: #dcd3bf; */
+                  /* color: rgb(49, 94, 113); */
+                }
+                .Sign:hover {
+                  color: rgb(49, 94, 113);
+                }
+              </style>
+
+              <div class="flex items-start space-x-2 text-sm text-blue-700">
+                <input
+                  required
+                  id="terms"
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label for="terms" class="leading-tight">
+                  By registering, you agree to our
+                  <a href="#" class="underline hover:text-blue-800"
+                    >Terms of Service</a
+                  >
+                  and
+                  <a href="#" class="underline hover:text-blue-800"
+                    >Privacy Policy</a
+                  >.
+                </label>
+              </div>
               <div class="flex items-center justify-between">
-                <a
-                  href="/auth/login"
-                  class="text-indigo-600 hover:text-indigo-500 text-sm"
-                >
-                  Already have an account? Sign in
-                </a>
+                <div>
+                  Already have an account?
+                  <a href="/auth/login" class="text-gray-600 text-md Sign">
+                    Sign in
+                  </a>
+                </div>
+
                 <button
                   type="submit"
                   class="bg-propload text-gray-900 px-6 py-2 rounded-md hover:bg-indigo-700 hover:text-white transition duration-300"
                 >
-                  Create Account
+                  <%= role === 'seller' ? 'Next' : 'Create Account' %>
                 </button>
               </div>
             </form>
