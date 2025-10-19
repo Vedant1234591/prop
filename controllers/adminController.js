@@ -33,11 +33,13 @@ exports.VerifySeller = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
+    
      
 
     const sellers = await Seller.find().populate('userId');
      
-
+    console.log("debug",req.user)
+    console.log("debug",sellers)
     return res.render('admin/all-users', {
       user: req.user,
       currentPage: 'all-users',

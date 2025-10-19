@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 // ✅ Reusable sub-schema for uploaded Cloudinary files
+
 const CloudinaryFileSchema = new mongoose.Schema(
   {
     public_id: { type: String, required: true },

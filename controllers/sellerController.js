@@ -17,25 +17,37 @@ const statusAutomation = require("../services/statusAutomation");
 exports.pendingPage = async (req, res) => {
   res.render("seller/pending");
 };
+// const mongoose = require("mongoose");
+// const moment = require("moment");
+// const Seller = require("../../models/seller");
+// const Project = require("../../models/project");
+// const Bid = require("../../models/bid");
+// const Contract = require("../../models/contract");
+// const Notice = require("../../models/notice");
+// const statusAutomation = require("../../utils/statusAutomation");
+
+// ======================== SELLER DASHBOARD ========================
 exports.getDashboard = async (req, res) => {
   try {
     const sellerId = req.session.userId;
-    const seller = await Seller.findOne({ userId: sellerId });
-    if (!seller || !seller.adminVerified) {
-      return res.redirect("/seller/pending-Approval");
-    }
-    console.log("=== SELLER DASHBOARD DEBUG ===");
-    console.log("Seller ID:", sellerId);
 
     if (!sellerId) {
       req.flash("error", "Please log in to access the dashboard");
       return res.redirect("/auth/login");
     }
 
-    // Force status update before showing dashboard
+    const seller = await Seller.findOne({ userId: sellerId });
+    if (!seller || !seller.adminVerified) {
+      return res.redirect("/seller/pending-approval");
+    }
+
+    console.log("=== SELLER DASHBOARD DEBUG ===");
+    console.log("Seller ID:", sellerId);
+
+    // ✅ Update all project statuses before rendering dashboard
     await statusAutomation.updateAllProjectStatuses();
 
-    // Get comprehensive bid statistics
+    // ✅ Bid statistics aggregation
     const bidStats = await Bid.aggregate([
       { $match: { seller: new mongoose.Types.ObjectId(sellerId) } },
       {
@@ -49,7 +61,7 @@ exports.getDashboard = async (req, res) => {
 
     console.log("Bid stats:", bidStats);
 
-    // Convert array to object for easier access
+    // ✅ Initialize default stats object
     const stats = {
       submitted: { count: 0, amount: 0 },
       won: { count: 0, amount: 0 },
@@ -65,21 +77,18 @@ exports.getDashboard = async (req, res) => {
       }
     });
 
-    // Calculate total stats
+    // ✅ Totals and derived metrics
     const totalBids = bidStats.reduce((sum, stat) => sum + stat.count, 0);
     const totalStats = {
-      totalBids: totalBids,
-      totalAmount: bidStats.reduce(
-        (sum, stat) => sum + (stat.totalAmount || 0),
-        0
-      ),
+      totalBids,
+      totalAmount: bidStats.reduce((sum, stat) => sum + (stat.totalAmount || 0), 0),
       successRate:
         stats.won.count > 0
           ? Math.round((stats.won.count / (stats.submitted.count || 1)) * 100)
           : 0,
     };
 
-    // Get active projects for bidding
+    // ✅ Get active projects for seller
     const activeProjects = await Project.find({
       status: { $in: ["drafted", "in-progress"] },
       "bidSettings.bidEndDate": { $gt: new Date() },
@@ -89,13 +98,13 @@ exports.getDashboard = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Get seller's latest bids with real-time status
+    // ✅ Seller’s latest bids
     const latestBids = await Bid.find({ seller: sellerId })
       .populate("project", "title category status bidSettings")
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Get won bids with pending contracts
+    // ✅ Find pending contracts
     const wonBidsWithContracts = await Bid.find({
       seller: sellerId,
       status: "won",
@@ -109,15 +118,10 @@ exports.getDashboard = async (req, res) => {
         bid: bid._id,
         status: { $in: ["pending-seller", "pending-admin"] },
       });
-      if (contract) {
-        pendingContracts.push({
-          bid: bid,
-          contract: contract,
-        });
-      }
+      if (contract) pendingContracts.push({ bid, contract });
     }
 
-    // Get latest notices for seller
+    // ✅ Active notices
     const latestNotices = await Notice.find({
       $or: [{ targetAudience: "all" }, { targetAudience: "seller" }],
       isActive: true,
@@ -129,23 +133,24 @@ exports.getDashboard = async (req, res) => {
 
     const userData = req.session.user || { name: "Seller", email: "" };
 
-    // Get bid count for notifications
+    // ✅ Unread bid count for notification badge
     const bidCount = await Bid.countDocuments({
       seller: sellerId,
       status: "submitted",
     });
 
+    // ✅ Render page
     res.render("seller/dashboard", {
       user: userData,
       currentPage: "dashboard",
-      stats: stats,
-      totalStats: totalStats,
-      activeProjects: activeProjects || [],
-      latestBids: latestBids || [],
-      latestNotices: latestNotices || [],
-      pendingContracts: pendingContracts || [],
-      bidCount: bidCount,
-      moment: require("moment"),
+      stats,
+      totalStats,
+      activeProjects,
+      latestBids,
+      latestNotices,
+      pendingContracts,
+      bidCount,
+      // moment,
     });
   } catch (error) {
     console.error("Seller dashboard error:", error);
@@ -154,9 +159,11 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
+// ======================== FIND BIDS PAGE ========================
+exports.getFindBids = async (req, res) => {
+  try {
+    const sellerId = req.session.userId;
 
-<<<<<<< HEAD
-=======
     if (!sellerId) {
       req.flash("error", "Please log in to view projects");
       return res.redirect("/auth/login");
@@ -169,7 +176,7 @@ exports.getDashboard = async (req, res) => {
     if (city) filters["location.city"] = new RegExp(city, "i");
     if (category) filters.category = category;
 
-    // Force status update before showing projects
+    // ✅ Always update project statuses before listing
     await statusAutomation.updateAllProjectStatuses();
 
     const activeProjects = await Project.find({
@@ -184,19 +191,20 @@ exports.getDashboard = async (req, res) => {
 
     const userData = req.session.user || { name: "Seller", email: "" };
 
-    // Get bid count for notifications
+    // ✅ Bid count for notification
     const bidCount = await Bid.countDocuments({
       seller: sellerId,
       status: "submitted",
     });
 
+    // ✅ Render find-bids page
     res.render("seller/find-bids", {
       user: userData,
       currentPage: "find-bids",
       projects: activeProjects || [],
       filters: { state, city, category },
-      bidCount: bidCount,
-      moment: require("moment"),
+      bidCount,
+      moment,
     });
   } catch (error) {
     console.error("Find bids error:", error);
@@ -204,7 +212,7 @@ exports.getDashboard = async (req, res) => {
     res.redirect("/seller/dashboard");
   }
 };
->>>>>>> origin/main
+
 
 // Bid Details - Enhanced with real-time updates
 exports.getBidDetails = async (req, res) => {
