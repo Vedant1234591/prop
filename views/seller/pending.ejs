@@ -103,19 +103,24 @@
       }
 
       .contact-btn {
-        margin-top: 1.8rem;
+        /* margin-top: 1.8rem; */
         background-color: var(--propload-secondary);
         color: white;
-        padding: 0.65rem 1.6rem;
-        border-radius: 0.5rem;
+        /* padding: 0.65rem 1.6rem; */
+        /* border-radius: 0.5rem; */
         text-decoration: none;
         font-weight: 500;
-        display: inline-block;
+        /* display: inline-block; */
         transition: background-color 0.3s ease;
       }
 
       .contact-btn:hover {
         background-color: rgb(42, 81, 97);
+      }
+
+      .logout{
+
+
       }
     </style>
   </head>
@@ -155,7 +160,26 @@
           dashboard. We’ll notify you via email when your account is approved.
         </p>
 
-        <a href="/support" class="contact-btn">Contact Support</a>
+        <div class="m-5 flex items-center space-x-4 pl-5">
+  <a 
+    href="/support" 
+    class="ml-5 contact-btn text-white font-semibold px-4 py-2 rounded-lg shadow"
+  >
+    Contact Support
+  </a>
+
+  <form action="/auth/logout" method="post">
+    <button 
+      type="submit" 
+      class="logout bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg shadow"
+    >
+      Logout
+    </button>
+  </form>
+</div>
+
+
+        
       </div>
     </div>
   </body>
