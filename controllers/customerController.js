@@ -2260,7 +2260,7 @@ exports.selectTop3 = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    if (!selectedBids || !Array.isArray(selectedBids) || selectedBids.length !== 3) {
+    if (!selectedBids || !Array.isArray(selectedBids) || selectedBids.length > 3) {
       req.flash("error", "Please select exactly 3 bids");
       return res.redirect(`/customer/project/${projectId}/round1-selection`);
     }
@@ -2272,7 +2272,7 @@ exports.selectTop3 = async (req, res) => {
       selectionStatus: 'selected-round1'
     });
 
-    if (validBids.length !== 3) {
+    if (validBids.length > 3) {
       req.flash("error", "Invalid bid selection. Please select from the available top 10 bids.");
       return res.redirect(`/customer/project/${projectId}/round1-selection`);
     }

@@ -299,7 +299,7 @@
                 });
 
                 // Show/hide selection actions
-                if (selectedBids.length === 3) {
+                if (selectedBids.length <= 3 && selectedBids.length != 0 ) {
                     selectionActions.classList.remove('hidden');
                     selectionWarning.classList.add('hidden');
                 } else {
@@ -318,7 +318,7 @@
             selectionForm.addEventListener('submit', function(e) {
                 console.log('Submitting form with selected bids:', selectedBids);
                 
-                if (selectedBids.length !== 3) {
+                if (selectedBids.length > 3) {
                     e.preventDefault();
                     showAlert('Please select exactly 3 bids before proceeding.', 'error');
                     return false;
