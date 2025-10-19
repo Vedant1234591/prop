@@ -7,8 +7,9 @@ const { ensureAuthenticated, ensureAdmin } = require("../middleware/auth");
 router.use(ensureAuthenticated, ensureAdmin);
 
 // Dashboard
-router.get('/dashboard', adminController.getDashboard);
-
+router.get("/dashboard", adminController.getDashboard);
+// verify seller
+router.post("/users/:id/verify-seller", adminController.VerifySeller);
 // User Management
 router.get('/all-users', adminController.getAllUsers);
 router.get('/users/:userId', adminController.getUserDetails);

@@ -4,6 +4,7 @@ const Bid = require("../models/Bid");
 const User = require("../models/User");
 const Notice = require("../models/Notice");
 const Contract = require("../models/Contract");
+const Seller = require("../models/Seller");
 const cloudinary = require("../config/cloudinary");
 
 // const cloudinary = require("../config/cloudinary");
@@ -13,10 +14,17 @@ const mongoose = require("mongoose");
 const statusAutomation = require("../services/statusAutomation");
 
 // Seller Dashboard - Enhanced with real-time updates
+exports.pendingPage = async (req, res) => {
+  return res.render('seller/pending')
+ 
+}
 exports.getDashboard = async (req, res) => {
   try {
     const sellerId = req.session.userId;
-
+const seller = await Seller.findOne({ userId: sellerId })
+if(!seller||!seller.adminVerified){
+ return res.redirect('/seller/pending-Approval')
+}
     console.log("=== SELLER DASHBOARD DEBUG ===");
     console.log("Seller ID:", sellerId);
 
@@ -148,6 +156,56 @@ exports.getDashboard = async (req, res) => {
 };
 
 
+<<<<<<< HEAD
+=======
+    if (!sellerId) {
+      req.flash("error", "Please log in to view projects");
+      return res.redirect("/auth/login");
+    }
+
+    const { state, city, category } = req.query;
+    const filters = {};
+
+    if (state) filters["location.state"] = new RegExp(state, "i");
+    if (city) filters["location.city"] = new RegExp(city, "i");
+    if (category) filters.category = category;
+
+    // Force status update before showing projects
+    await statusAutomation.updateAllProjectStatuses();
+
+    const activeProjects = await Project.find({
+      ...filters,
+      status: { $in: ["drafted", "in-progress"] },
+      "bidSettings.bidEndDate": { $gt: new Date() },
+      "bidSettings.isActive": true,
+    })
+      .populate("customer", "name companyName")
+      .populate("bids")
+      .sort({ createdAt: -1 });
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    // Get bid count for notifications
+    const bidCount = await Bid.countDocuments({
+      seller: sellerId,
+      status: "submitted",
+    });
+
+    res.render("seller/find-bids", {
+      user: userData,
+      currentPage: "find-bids",
+      projects: activeProjects || [],
+      filters: { state, city, category },
+      bidCount: bidCount,
+      moment: require("moment"),
+    });
+  } catch (error) {
+    console.error("Find bids error:", error);
+    req.flash("error", "Error loading projects: " + error.message);
+    res.redirect("/seller/dashboard");
+  }
+};
+>>>>>>> origin/main
 
 // Bid Details - Enhanced with real-time updates
 exports.getBidDetails = async (req, res) => {

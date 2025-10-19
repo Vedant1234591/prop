@@ -9,7 +9,8 @@ const { upload, uploadProfileImage, uploadContracts, uploadDocuments } = require
 router.use(ensureAuthenticated);
 router.use(ensureSeller);
 
-// Dashboard and Navigation
+// Dashboard routes
+router.get('/pending-Approval', sellerController.pendingPage);
 router.get('/dashboard', sellerController.getDashboard);
 router.get('/find-bids', sellerController.getFindBids);
 router.get('/my-bids', sellerController.getMyBids);

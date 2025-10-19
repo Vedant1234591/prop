@@ -1,4 +1,7 @@
 const User = require("../models/User");
+const Seller = require("../models/Seller");
+const bcrypt = require("bcrypt");
+const qs = require("qs");
 
 exports.getLogin = (req, res) => {
   // If already logged in, redirect to dashboard
@@ -11,6 +14,7 @@ exports.getLogin = (req, res) => {
   }
   res.render("auth/login");
 };
+
 // In your auth controller - update postLogin function
 exports.postLogin = async (req, res) => {
   try {
@@ -299,19 +303,24 @@ exports.postRegister = async (req, res) => {
     if (role === "seller" && companyName) {
       userData.companyName = companyName;
     }
+    if (role !== "seller") {
+      const user = await User.create(userData);
+      console.log("User created successfully:", user.email);
 
-    const user = await User.create(userData);
-    console.log("User created successfully:", user.email);
+      req.session.userId = user._id;
+      req.session.userRole = user.role;
+      req.session.user = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      };
+    }
 
-    // Set session
-    req.session.userId = user._id;
-    req.session.userRole = user.role;
-    req.session.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    };
+    if (role === "seller") {
+      req.session.seller = userData;
+      console.log("Seller session ID set:", req.session.sellerId);
+    }
 
     console.log(
       "Registration successful, redirecting to:",
@@ -322,7 +331,7 @@ exports.postRegister = async (req, res) => {
     if (role === "customer") {
       res.redirect("/customer/dashboard");
     } else {
-      res.redirect("/seller/dashboard");
+      res.render("auth/seller-register");
     }
   } catch (error) {
     console.error("Registration error:", error);
@@ -338,6 +347,175 @@ exports.postRegister = async (req, res) => {
     }
 
     res.redirect(`/auth/register?role=${req.body.role}`);
+  }
+};
+
+exports.sellerRegisterForm = async (req, res) => {
+  res.render("auth/seller-register");
+};
+
+exports.postSellerData = async (req, res) => {
+  try {
+    console.log("=== 🧾 SELLER REGISTRATION STEP 2 ===");
+
+    // ✅ 1️⃣ Check session
+    if (!req.session.seller) {
+      console.log("❌ No seller session found");
+      req.flash("error", "Session expired. Please register again.");
+      return res.redirect("/auth/register?role=seller");
+    }
+
+    const sessionSeller = req.session.seller;
+
+    // ✅ 2️⃣ Extract flat fields from form
+    const {
+      BusinessType,
+      BusinessName,
+      BusinessDetails,
+      PersonalDetails,
+      officeName,
+      state,
+      district,
+      city,
+      pinCode,
+      fullAddress,
+      gstin,
+      primary,
+      pan,
+      itrType,
+      assessmentYear,
+      ackNumber,
+      profitGainFromBusiness,
+      grossReceipts,
+    } = req.body;
+
+    console.log("📦 Received seller form data:", req.body);
+
+    // ✅ 3️⃣ Create user first (if not already)
+    let user;
+    if (!req.session.userId) {
+      const hashedPassword = await bcrypt.hash(sessionSeller.password, 10);
+      user = await User.create({
+        name: sessionSeller.name,
+        email: sessionSeller.email,
+        password: hashedPassword,
+        role: "seller",
+        phone: sessionSeller.phone,
+        companyName: sessionSeller.companyName,
+      });
+      req.session.userId = user._id;
+      req.session.userRole = "seller";
+      console.log("✅ New user created:", user.email);
+    } else {
+      user = await User.findById(req.session.userId);
+      console.log("ℹ️ Existing user found:", user?.email);
+    }
+
+    // ✅ 4️⃣ Handle uploads (Cloudinary)
+    const AadhaarFile = req.files?.Aadhaar?.[0];
+    const PancardFile = req.files?.Pancard?.[0];
+
+    if (!AadhaarFile || !PancardFile) {
+      req.flash("error", "Aadhaar and PAN card are required.");
+      return res.redirect("/auth/seller-register");
+    }
+
+    const Aadhaar = {
+      public_id: AadhaarFile.filename,
+      secure_url: AadhaarFile.path,
+      format: AadhaarFile.format,
+      resource_type: AadhaarFile.resource_type,
+      bytes: AadhaarFile.size,
+      created_at: new Date(),
+    };
+
+    const Pancard = {
+      public_id: PancardFile.filename,
+      secure_url: PancardFile.path,
+      format: PancardFile.format,
+      resource_type: PancardFile.resource_type,
+      bytes: PancardFile.size,
+      created_at: new Date(),
+    };
+
+    // ✅ 5️⃣ Tax document uploads (optional)
+    let taxDocs = [];
+    if (req.files?.taxDocuments) {
+      taxDocs = req.files.taxDocuments.map((doc) => ({
+        public_id: doc.filename,
+        secure_url: doc.path,
+        format: doc.format,
+        resource_type: doc.resource_type,
+        bytes: doc.size,
+        created_at: new Date(),
+      }));
+    }
+
+    // ✅ 6️⃣ Fix assessment year format (auto convert)
+    let formattedYear = (assessmentYear || "").trim();
+    if (/^\d{2}-\d{2}$/.test(formattedYear)) {
+      formattedYear = `20${formattedYear}`; // e.g., 23-24 → 2023-24
+    }
+
+    // ✅ 7️⃣ Build data objects manually
+    const officeLocations = [
+      {
+        officeName,
+        address: { state, district, city, pinCode, fullAddress },
+        gstin,
+        primary: primary === "on" || primary === true,
+      },
+    ];
+
+    const taxAssessments = [
+      {
+        pan,
+        itrType,
+        assessmentYear: formattedYear,
+        ackNumber,
+        profitGainFromBusiness: Number(profitGainFromBusiness) || 0,
+        grossReceipts: Number(grossReceipts) || 0,
+        documents: taxDocs,
+      },
+    ];
+
+    // ✅ 8️⃣ Create Seller record
+    const seller = await Seller.create({
+      userId: user._id,
+      BusinessType,
+      BusinessName,
+      BusinessDetails: Array.isArray(BusinessDetails)
+        ? BusinessDetails
+        : [BusinessDetails],
+      PersonalDetails: Array.isArray(PersonalDetails)
+        ? PersonalDetails
+        : [PersonalDetails],
+      Aadhaar,
+      Pancard,
+      officeLocations,
+      taxAssessments,
+    });
+
+    console.log("✅ Seller registered successfully:", seller._id);
+
+    // ✅ 9️⃣ Save session and redirect
+
+    console.log(user._id);
+    req.session.userId = user._id;
+    req.session.user = user;
+
+    req.session.save();
+    console.log(user._id);
+
+    req.flash("success", "Seller registration completed successfully!");
+    return res.redirect("/seller/dashboard");
+  } catch (error) {
+    console.error("❌ Seller registration error:", error);
+    req.flash(
+      "error",
+      `Error during seller registration: ${error.message || error}`
+    );
+    return res.redirect("/auth/seller-register");
   }
 };
 
