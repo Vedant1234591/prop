@@ -1,9 +1,8 @@
-<!-- //uttkarsh -->
-
+<!-- views/auth/login-otp.ejs -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Login - Propload</title>
+    <title>Login using OTP - Propload</title>
 
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -22,7 +21,6 @@
       .bg-propload {
         background-color: #e9e2b3;
       }
-
       .bg-propload:hover {
         background-color: #dcd39e;
       }
@@ -41,23 +39,26 @@
       <div class="max-h-full md:w-1/2 flex justify-center mb-10 md:mb-0">
         <img
           src="/images/login/login.webp"
-          alt="Construction Crane"
+          alt="Login Illustration"
           class="w-[40rem] h-[35rem] object-contain"
         />
       </div>
 
-      <!-- Right Side: Login Form -->
+      <!-- Right Side: OTP Login Form -->
       <div
         class="mr-20 md:w-1/2 max-w-md bg-white p-8 rounded-lg border border-gray-100"
       >
         <h2 class="text-3xl font-semibold text-gray-800 mb-6 text-center">
-          Login to Your Account
+          Login using Email OTP
         </h2>
 
         <%- include('../partials/flash-messages') %>
 
-        <!-- Standard login -->
-        <form action="/auth/login" method="POST" class="space-y-5">
+        <form
+          action="/auth/send-otp"
+          method="POST"
+          class="space-y-5"
+        >
           <div>
             <label for="email" class="block text-gray-700 font-medium mb-2"
               >Email Address</label
@@ -66,49 +67,32 @@
               id="email"
               name="email"
               type="email"
+              required
               autocomplete="email"
-              required
               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label for="password" class="block text-gray-700 font-medium mb-2"
-              >Password</label
-            >
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autocomplete="current-password"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
-              placeholder="Enter your password"
+              placeholder="Enter your registered email"
             />
           </div>
 
           <button
             class="w-full bg-propload text-gray-800 font-semibold py-2 rounded-md transition duration-200"
           >
-            Sign In
+            Send OTP
           </button>
         </form>
 
-        <!-- OR separator -->
         <div class="flex items-center justify-center my-6">
           <div class="border-t border-gray-300 w-1/3"></div>
           <span class="px-3 text-gray-500 text-sm">or</span>
           <div class="border-t border-gray-300 w-1/3"></div>
         </div>
 
-        <!-- OTP login button -->
         <div class="text-center">
           <a
-            href="/auth/login-otp"
+            href="/auth/login"
             class="w-full inline-block bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-200"
           >
-            Login using Email OTP
+            Login using Password
           </a>
         </div>
 
