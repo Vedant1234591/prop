@@ -2374,11 +2374,200 @@ exports.selectWinner = async (req, res) => {
 
 
 
-// Download Customer Contract
-exports.downloadCustomerContract = async (req, res) => {
+
+// Download Customer Certificate
+// exports.downloadCustomerCertificate = async (req, res) => {
+//     try {
+//         const { bidId } = req.params;
+//         const customerId = req.session.userId;
+
+//         const bid = await Bid.findById(bidId).populate('project');
+//         if (!bid || bid.project.customer.toString() !== customerId) {
+//             req.flash('error', 'Unauthorized access');
+//             return res.redirect('/customer/my-projects');
+//         }
+
+//         const contract = await Contract.findOne({ bid: bidId });
+//         if (!contract?.customerCertificate?.url) {
+//             req.flash('error', 'Customer certificate not available');
+//             return res.redirect('/customer/my-projects');
+//         }
+
+//         res.redirect(contract.customerCertificate.url);
+//     } catch (err) {
+//         console.error(err);
+//         req.flash('error', 'Error downloading customer certificate');
+//         res.redirect('/customer/my-projects');
+//     }
+// };
+
+
+// const axios = require('axios');
+
+// exports.downloadCustomerCertificate = async (req, res) => {
+//   try {
+//     const { bidId } = req.params;
+//     const customerId = req.session.userId;
+
+//     const bid = await Bid.findById(bidId).populate('project');
+//     if (!bid || bid.project.customer.toString() !== customerId) {
+//       req.flash('error', 'Unauthorized access');
+//       return res.redirect('/seller/my-bids');
+//     }
+
+//     const contract = await Contract.findOne({ bid: bidId });
+//     if (!contract?.customerCertificate?.url) {
+//       req.flash('error', 'Certificate not available');
+//       return res.redirect('/seller/my-bids');
+//     }
+
+//     // Convert to raw URL if uploaded via image/upload
+//     const fileUrl = contract.customerCertificate.url.replace('/image/upload/', '/raw/upload/');
+//     console.log("Streaming from:", fileUrl);
+
+//     const response = await axios.get(fileUrl, { responseType: 'stream' });
+//     res.setHeader('Content-Disposition', `attachment; filename="${contract.customerCertificate.filename}"`);
+//     res.setHeader('Content-Type', 'application/pdf');
+//     response.data.pipe(res);
+
+//   } catch (err) {
+//     console.error('Download error:', err);
+//     req.flash('error', 'Failed to download certificate');
+//     res.redirect('/seller/my-bids');
+//   }
+// };
+
+exports.downloadCustomerCertificate = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const customerId = req.session.userId;
+    console.log("📌 Starting downloadCustomerCertificate");
+    console.log("Bid ID:", bidId);
+    console.log("Customer ID (session):", customerId);
+
+    const bid = await Bid.findById(bidId).populate('project');
+    console.log("Bid fetched:", bid ? "✅ Found" : "❌ Not found");
+
+    if (!bid || !bid.project) {
+      console.error("❌ Bid or project not found");
+      req.flash('error', 'Bid or project not found');
+      return res.redirect('/seller/my-bids');
+    }
+
+    if (bid.project.customer.toString() !== customerId) {
+      console.error("❌ Unauthorized access: Project customer mismatch");
+      req.flash('error', 'Unauthorized access');
+      return res.redirect('/seller/my-bids');
+    }
+
+    const contract = await Contract.findOne({ bid: bidId });
+    console.log("Contract fetched:", contract ? "✅ Found" : "❌ Not found");
+
+    if (!contract?.customerCertificate?.url) {
+      console.error("❌ Customer certificate not available");
+      req.flash('error', 'Certificate not available');
+      return res.redirect('/seller/my-bids');
+    }
+
+    // Convert to raw URL if uploaded via image/upload
+    // const fileUrl = contract.customerCertificate.url.replace('/image/upload/', '/raw/upload/');
+    // console.log("Streaming file from URL:", fileUrl);
+    // console.log("Expected filename:", contract.customerCertificate.filename);
+ const fileUrl = contract.customerSignedContract.url.replace('/image/upload/', '/raw/upload/');
+    console.log("Streaming from raw URL:", fileUrl);
+    const axios = require('axios');
+    const response = await axios.get(fileUrl, { responseType: 'stream' });
+    console.log("✅ Cloudinary stream response received");
+
+    res.setHeader('Content-Disposition', `attachment; filename="${contract.customerCertificate.filename}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+
+    response.data.on('error', (streamErr) => {
+      console.error("❌ Error while streaming PDF:", streamErr);
+      req.flash('error', 'Error streaming certificate');
+      return res.redirect('/seller/my-bids');
+    });
+
+    response.data.pipe(res);
+    console.log("📌 Streaming started successfully");
+
+  } catch (err) {
+    console.error('❌ Download error caught in catch block:', err);
+    req.flash('error', 'Failed to download certificate');
+    res.redirect('/seller/my-bids');
+  }
+};
+
+
+
+// Download Seller Certificate
+exports.downloadSellerCertificate = async (req, res) => {
     try {
         const { bidId } = req.params;
         const customerId = req.session.userId;
+
+        const bid = await Bid.findById(bidId).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract?.sellerCertificate?.url) {
+            req.flash('error', 'Seller certificate not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.sellerCertificate.url);
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Error downloading seller certificate');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+// Download Final Certificate
+exports.downloadFinalCertificate = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+        const bid = await Bid.findById(bidId).populate('project');
+        if (!bid || bid.project.customer.toString() !== customerId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/customer/my-projects');
+        }
+
+        const contract = await Contract.findOne({ bid: bidId });
+        if (!contract?.finalCertificate?.url) {
+            req.flash('error', 'Final certificate not available');
+            return res.redirect('/customer/my-projects');
+        }
+
+        res.redirect(contract.finalCertificate.url);
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Error downloading final certificate');
+        res.redirect('/customer/my-projects');
+    }
+};
+
+
+
+
+
+
+
+// Download Customer Contract
+exports.downloadCustomerContract = async (req, res) => {
+
+  console.log("Debugging downloading customer contract")
+    try {
+        const { bidId } = req.params;
+        const customerId = req.session.userId;
+
+  console.log("Debugging downloading customer contract 1")
+
 
         const bid = await Bid.findOne({ _id: bidId }).populate('project');
         if (!bid || bid.project.customer.toString() !== customerId) {
@@ -2392,10 +2581,14 @@ exports.downloadCustomerContract = async (req, res) => {
             return res.redirect('/customer/my-projects');
         }
 
+        console.log("The url",contract.customerSignedContract.url)
+
         res.redirect(contract.customerSignedContract.url);
     } catch (error) {
         console.error('❌ Download customer contract error:', error);
         req.flash('error', 'Error downloading customer contract');
+  console.log("Debugging downloading customer contract 2")
+
         res.redirect('/customer/my-projects');
     }
 };
@@ -2426,57 +2619,33 @@ exports.downloadSellerContract = async (req, res) => {
     }
 };
 
-// Download Customer Certificate
-exports.downloadCustomerCertificate = async (req, res) => {
-    try {
-        const { bidId } = req.params;
-        const customerId = req.session.userId;
 
-        const bid = await Bid.findOne({ _id: bidId }).populate('project');
-        if (!bid || bid.project.customer.toString() !== customerId) {
-            req.flash('error', 'Unauthorized access');
-            return res.redirect('/customer/my-projects');
-        }
-
-        const contract = await Contract.findOne({ bid: bidId });
-        if (!contract || !contract.customerCertificate?.url) {
-            req.flash('error', 'Customer certificate not available');
-            return res.redirect('/customer/my-projects');
-        }
-
-        res.redirect(contract.customerCertificate.url);
-    } catch (error) {
-        console.error('❌ Download customer certificate error:', error);
-        req.flash('error', 'Error downloading customer certificate');
-        res.redirect('/customer/my-projects');
-    }
-};
 
 // Download Final Certificate
-exports.downloadFinalCertificate = async (req, res) => {
-    try {
-        const { bidId } = req.params;
-        const customerId = req.session.userId;
+// exports.downloadFinalCertificate = async (req, res) => {
+//     try {
+//         const { bidId } = req.params;
+//         const customerId = req.session.userId;
 
-        const bid = await Bid.findOne({ _id: bidId }).populate('project');
-        if (!bid || bid.project.customer.toString() !== customerId) {
-            req.flash('error', 'Unauthorized access');
-            return res.redirect('/customer/my-projects');
-        }
+//         const bid = await Bid.findOne({ _id: bidId }).populate('project');
+//         if (!bid || bid.project.customer.toString() !== customerId) {
+//             req.flash('error', 'Unauthorized access');
+//             return res.redirect('/customer/my-projects');
+//         }
 
-        const contract = await Contract.findOne({ bid: bidId });
-        if (!contract || !contract.finalCertificate?.url) {
-            req.flash('error', 'Final certificate not available');
-            return res.redirect('/customer/my-projects');
-        }
+//         const contract = await Contract.findOne({ bid: bidId });
+//         if (!contract || !contract.finalCertificate?.url) {
+//             req.flash('error', 'Final certificate not available');
+//             return res.redirect('/customer/my-projects');
+//         }
 
-        res.redirect(contract.finalCertificate.url);
-    } catch (error) {
-        console.error('❌ Download final certificate error:', error);
-        req.flash('error', 'Error downloading final certificate');
-        res.redirect('/customer/my-projects');
-    }
-};
+//         res.redirect(contract.finalCertificate.url);
+//     } catch (error) {
+//         console.error('❌ Download final certificate error:', error);
+//         req.flash('error', 'Error downloading final certificate');
+//         res.redirect('/customer/my-projects');
+//     }
+// };
 
 
 

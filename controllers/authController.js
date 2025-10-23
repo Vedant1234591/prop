@@ -2,6 +2,8 @@ const User = require("../models/User");
 const Seller = require("../models/Seller");
 const bcrypt = require("bcrypt");
 const qs = require("qs");
+// import { sendEmail } from "../services/emailService.js";
+const {sendEmail} = require("../services/emailService.js")
 
 exports.getLogin = (req, res) => {
   // const seller = req.session.userRole;
@@ -22,6 +24,147 @@ exports.getLogin = (req, res) => {
   }
   res.render("auth/login");
 };
+
+
+//uttkarsh 23 oct 
+
+
+// Temporary OTP store (in-memory)
+const otpStore = new Map();
+exports.getLogin_otp = (req,res) => {
+  res.render("auth/login-otp")
+}
+
+// controllers/authController.js
+
+exports.getVerify_otp = (req, res) => {
+  const email = req.query.email; // Get email from query param
+  if (!email) {
+    req.flash("error", "Please enter your email first.");
+    return res.redirect("/auth/login-otp");
+  }
+  res.render("auth/verify-otp", { email });
+};
+
+exports.postSend_otp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      req.flash("error", "Please enter your email.");
+      return res.redirect("/auth/login-otp");
+    }
+
+    // ✅ Check if user exists in DB
+    const user = await User.findOne({ email }); // replace with your ORM / DB query
+    if (!user) {
+      req.flash("error", "Invalid Email");
+      return res.redirect("/auth/login-otp");
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP with 5-minute expiry
+    otpStore.set(email, { otp, expires: Date.now() + 5 * 60 * 1000 });
+
+    // Email HTML content
+    const html = `
+      <div style="font-family:Arial,sans-serif;padding:20px;">
+        <h2>🔐 Propload Login OTP</h2>
+        <p>Your one-time password (OTP) is:</p>
+        <h1 style="letter-spacing:2px;">${otp}</h1>
+        <p>This code will expire in <b>5 minutes</b>.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <hr>
+        <small>© ${new Date().getFullYear()} Propload</small>
+      </div>
+    `;
+
+    // Send OTP email
+    await sendEmail(email, "Your Propload Login OTP", html);
+
+    req.flash("success", "OTP sent successfully! Check your email.");
+    return res.redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}`);
+  } catch (error) {
+    console.error("❌ Error in send-otp:", error);
+    req.flash("error", "Something went wrong while sending OTP.");
+    res.redirect("/auth/login-otp");
+  }
+};
+
+
+
+exports.postVerify_otp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      req.flash("error", "Please enter the OTP.");
+      return res.redirect(`/auth/verify-otp?email=${encodeURIComponent(email || "")}`);
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      req.flash("error", "This email is not registered with us.");
+      return res.redirect("/auth/login-otp");
+    }
+
+    // Get OTP record
+    const record = otpStore.get(email);
+    if (!record) {
+      req.flash("error", "No OTP found for this email. Please request a new one.");
+      return res.redirect("/auth/login-otp");
+    }
+
+    // Check expiry
+    if (Date.now() > record.expires) {
+      otpStore.delete(email);
+      req.flash("error", "OTP has expired. Please request a new one.");
+      return res.redirect("/auth/login-otp");
+    }
+
+    // Check OTP match
+    if (record.otp !== otp) {
+      req.flash("error", "Invalid OTP. Please try again.");
+      return res.redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}`);
+    }
+
+    // ✅ OTP verified, delete from store
+    otpStore.delete(email);
+
+    // ✅ Set session like in normal login
+    req.session.userId = user._id;
+    req.session.userRole = user.role;
+    req.session.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    // 🔄 Redirect based on role
+    if (user.role === "customer") {
+      return res.redirect("/customer/dashboard");
+    } else if (user.role === "seller") {
+      return res.redirect("/seller/dashboard");
+    } else if (user.role === "admin") {
+      return res.redirect("/admin/dashboard");
+    } else {
+      return res.redirect("/dashboard");
+    }
+  } catch (error) {
+    console.error("❌ Error in verify-otp:", error);
+    req.flash("error", "Something went wrong while verifying OTP.");
+    return res.redirect(`/auth/verify-otp?email=${encodeURIComponent(req.body.email || "")}`);
+  }
+};
+
+
+
+
+
 
 // In your auth controller - update postLogin function
 exports.postLogin = async (req, res) => {
@@ -537,5 +680,8 @@ exports.logout = (req, res) => {
     res.redirect("/");
   });
 };
+
+
+
 
 module.exports = exports;

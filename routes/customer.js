@@ -68,14 +68,20 @@ router.post('/upload-customer-contract', uploadContracts.single('contract'), cus
 
 // Document Downloads
 router.get('/download-contract-template/:bidId', customerController.downloadContractTemplate);
-router.get('/download-seller-certificate/:bidId', customerController.downloadSellerContract);
-router.get('/download-final-certificate/:bidId', customerController.downloadFinalCertificate);
+
 router.get('/download-certificate/:bidId', customerController.downloadCertificate);
-router.get('/download-customer-certificate/:bidId', customerController.downloadCustomerContract);
+
 // NEW: Status Updates
 router.get('/update-statuses', customerController.updateStatuses);
 
+// Contracts
+router.get('/download-customer-contract/:bidId', customerController.downloadCustomerContract);
+router.get('/download-seller-contract/:bidId', customerController.downloadSellerContract);
 
+// Certificates
+router.get('/download-customer-certificate/:bidId', customerController.downloadCustomerCertificate);
+router.get('/download-seller-certificate/:bidId', customerController.downloadSellerCertificate);
+router.get('/download-final-certificate/:bidId', customerController.downloadFinalCertificate);
 
 
 

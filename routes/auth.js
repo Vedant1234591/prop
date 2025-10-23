@@ -6,6 +6,15 @@ const { upload } = require("../middleware/upload");
 
 router.get("/", authController.getLandingPage);
 router.get("/login", authController.getLogin);
+
+//otp for login
+router.get("/login-otp", authController.getLogin_otp);
+router.post("/send-otp", authController.postSend_otp);
+router.get("/verify-otp", authController.getVerify_otp);
+router.post("/verify-otp", authController.postVerify_otp);
+
+
+
 router.post("/login", authController.postLogin);
 router.get("/register", authController.getRegister);
 router.post("/register", authController.postRegister);
@@ -20,5 +29,9 @@ router.post(
   authController.postSellerData
 );
 router.post("/logout", authController.logout);
+
+
+
+
 
 module.exports = router;
