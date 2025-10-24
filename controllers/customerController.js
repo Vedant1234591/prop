@@ -70,9 +70,14 @@ exports.getDashboard = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
+
+
+
+  const userData = req.session.user || { name: "Customer", email: "" };
+
     // Get latest notices for customers
     const latestNotices = await Notice.find({
-      $or: [{ targetAudience: "all" }, { targetAudience: "customer" }],
+      targetId :userData._id ,
       isActive: true,
       startDate: { $lte: new Date() },
       $or: [{ endDate: { $gte: new Date() } }, { endDate: null }],
@@ -104,7 +109,7 @@ exports.getDashboard = async (req, res) => {
     }
 
     // Use session user data for the template
-    const userData = req.session.user || { name: "Customer", email: "" };
+  
 
     res.render("customer/dashboard", {
       user: userData,
