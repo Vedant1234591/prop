@@ -166,7 +166,7 @@
                 </div>
             </div>
             <% } %>
-
+<% if(project.adminStatus != "approved") { %>
             <!-- Verification Actions -->
             <div class="bg-white border border-gray-200 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Verification Decision</h3>
@@ -224,6 +224,7 @@
                     </div>
                 </div>
             </div>
+            <% } %>
         </div>
     </div>
 

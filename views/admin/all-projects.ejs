@@ -144,8 +144,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <% if (project.adminStatus === 'pending') { %>
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span>
-                                    <a href="/admin/projects/<%= project._id %>/verify" 
-                                       class="ml-2 text-blue-600 hover:text-blue-900 text-xs">Review</a>
+                                 
                                 <% } else if (project.adminStatus === 'approved') { %>
                                     <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Approved</span>
                                     <div class="text-xs text-green-600">
@@ -164,7 +163,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex flex-col space-y-1">
-                                    <a href="/admin/projects/<%= project._id %>" class="text-indigo-600 hover:text-indigo-900 text-xs">
+                                   <a href="/admin/projects/<%= project._id %>/verify"  class="text-indigo-600 hover:text-indigo-900 text-xs">
                                         <i class="fas fa-eye"></i> View Details
                                     </a>
                                     <% if (project.adminStatus === 'pending') { %>
