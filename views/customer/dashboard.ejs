@@ -1,433 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Dashboard - Propload</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-</head>
-<body class="bg-gray-50">
-    <%- include('../partials/header') %>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Customer Dashboard - Propload</title>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+  <!-- Tailwind (original) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+
+  <style>
+    /* Brand colors provided by you */
+    :root {
+      --propload-primary: #e9e2b3;
+      --propload-secondary: #2f6c7b;
+      --surface: #ffffff;
+      --muted: #6b7280;
+      --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+    }
+
+
+.logout-btn {
+  background: #ffffff; /* keep white background */
+  color: var(--propload-secondary); /* text uses primary color */
+  border: 1px solid rgba(15,23,42,0.04);
+  transition: background .2s, color .2s;
+}
+
+.logout-btn:hover {
+  background: var(--propload-primary); /* hover background uses primary */
+  color: #1f2937; /* text color switches to dark for contrast */
+}
+
+
+    /* Layout */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-right: 1px solid rgba(15, 23, 42, 0.04);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 40;
+      padding: 1.25rem;
+    }
+
+    .content-area {
+      margin-left: 280px;
+      transition: margin-left .25s ease;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(0); position: fixed; left: 0; top: 0; bottom: 0; }
+      .content-area { margin-left: 0; }
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(15, 23, 42, 0.03);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(47,76,86,0.08);
+    }
+
+    /* Sidebar menu */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: .875rem;
+      padding: .625rem .75rem;
+      border-radius: .75rem;
+      color: var(--propload-secondary);
+      font-weight: 600;
+      transition: background .18s ease, transform .12s ease, color .12s ease;
+    }
+    .menu-item:hover {
+      background: var(--propload-primary);
+      color: var(--propload-secondary);
+      transform: translateY(-2px);
+    }
+    .menu-item.active {
+      background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03));
+      color: var(--propload-secondary);
+      box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04);
+    }
+    .menu-item i {
+      width: 1.25rem;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+
+    /* small helpers */
+    .muted { color: var(--muted); }
+    .status-badge { font-weight:700; font-size:.75rem; padding:.25rem .5rem; border-radius:999px; display:inline-block; }
+
+    /* table row hover */
+    .table-row-hover tbody tr:hover { background: #fbfdff; }
+
+    /* responsive stats grid tweak */
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    /* mobile drawer overlay */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 30;
+      display: none;
+    }
+    .drawer-backdrop.show { display:block; }
+
+    /* Latest notices hover */
+    .notice-item {
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+    .notice-item:hover {
+      background: #f9fafb;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800 antialiased">
         <%- include('../partials/flash-messages') %>
 
-        <!-- Hidden data container for chart data -->
-        <div id="chartData" 
-             data-drafted="<%= stats.drafted || 0 %>"
-             data-in-progress="<%= stats['in-progress'] || 0 %>"
-             data-half-partial="<%= stats['half-partial'] || 0 %>"
-             data-full-partial="<%= stats['full-partial'] || 0 %>"
-             data-half-completed="<%= stats['half-completed'] || 0 %>"
-             data-completed="<%= stats.completed || 0 %>"
-             data-failed="<%= stats.failed || 0 %>"
-             style="display: none;">
+
+  <!-- Hidden chart data -->
+  <div id="chartData" 
+       data-drafted="<%= stats.drafted || 0 %>"
+       data-in-progress="<%= stats['in-progress'] || 0 %>"
+       data-half-partial="<%= stats['half-partial'] || 0 %>"
+       data-full-partial="<%= stats['full-partial'] || 0 %>"
+       data-half-completed="<%= stats['half-completed'] || 0 %>"
+       data-completed="<%= stats.completed || 0 %>"
+       data-failed="<%= stats.failed || 0 %>"
+       style="display:none;"></div>
+
+
+
+
+
+
+
+  <!-- SIDEBAR -->
+<button id="openSidebarBtn" class="lg:hidden p-2 rounded-md text-slate-500" aria-label="Open menu">
+  <i class="fas fa-bars"></i>
+</button>
+
+<div id="drawerBackdrop" class="fixed inset-0 bg-black bg-opacity-30 hidden z-40"></div>
+
+  <!-- <aside id="sidebar" class="sidebar"> -->
+   <aside id="sidebar" class="sidebar -translate-x-full fixed top-0 left-0 h-full w-64 bg-white shadow-lg transition-transform duration-300 z-50" aria-hidden="true">
+
+
+    <div class="flex flex-col h-full">
+      <!-- Logo + Profile clickable -->
+      <div class="flex items-center justify-between mb-6">
+        <div class=" items-center cursor-pointer" onclick="window.location.href='/customer/profile'">
+          <img src="/images/landing/logo.png" alt="Propload" class="h-12 w-auto object-contain" onerror="this.style.display='none'">
+         
+         <div class="flex items-center gap-2">
+  <div class="ml-3 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
+    <i class="fas fa-user" style="color: var(--propload-secondary);"></i>
+  </div>
+  <div class="text-s muted">Customer</div>
+</div>
+
         </div>
+        <button id="sidebarCloseBtn" class="lg:hidden p-2 rounded-md text-slate-500" aria-label="Close menu" title="Close menu">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h2>
-                <p class="text-gray-600 mt-2">Welcome back, <%= user.name %>! Here's your project overview.</p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <a href="/customer/update-statuses" 
-                   class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition duration-300 flex items-center justify-center">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Update Statuses
-                </a>
-                <a href="/customer/add-project" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center shadow-lg hover:shadow-xl w-full sm:w-auto justify-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    Add Project
-                </a>
-            </div>
-        </div>
+      <!-- Navigation -->
+      <nav class="flex-1 overflow-y-auto">
+        <ul class="space-y-1">
+          <li><a href="/customer/dashboard" class="menu-item <%= (typeof active !== 'undefined' && active==='dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+          <li><a href="/customer/my-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='my-projects') ? 'active' : '' %>"><i class="fas fa-folder-open"></i><span>My Projects</span></a></li>
+          <li><a href="/customer/won-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='won-projects') ? 'active' : '' %>"><i class="fas fa-trophy"></i><span>Won Projects</span></a></li>
+          <li><a href="/customer/add-project" class="menu-item <%= (typeof active !== 'undefined' && active==='add-project') ? 'active' : '' %>"><i class="fas fa-plus-circle"></i><span>Add Project</span></a></li>
+          <li><a href="/customer/notices" class="menu-item <%= (typeof active !== 'undefined' && active==='notices') ? 'active' : '' %>"><i class="fas fa-bell"></i><span>Notices</span></a></li>
+          <li class="mt-4"><a href="/support" class="menu-item"><i class="fas fa-headset"></i><span>Support</span></a></li>
+        </ul>
+      </nav>
 
-        <!-- Real-time Status Header -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
-                    <span class="text-sm text-blue-700">Automatic status updates active • Projects activate automatically on start date</span>
-                </div>
-                <div class="flex space-x-2">
-                    <a href="/customer/update-statuses" 
-                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center">
-                        <i class="fas fa-sync-alt mr-1"></i>
-                        Update Now
-                    </a>
-                    <span class="text-xs text-blue-600" id="last-updated">
-                        Updated just now
-                    </span>
-                </div>
-            </div>
-        </div>
+      <!-- Footer actions (logout) -->
+      <div class="mt-6">
+<form action="/auth/logout" method="post" class="inline-block w-full">
+  <button type="submit" class="w-full text-left px-3 py-2 rounded-md font-semibold logout-btn">
+    <i class="fas fa-sign-out-alt mr-3"></i>
+    <span>Logout</span>
+  </button>
+</form>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-blue-500 hover:shadow-lg transition duration-300">
-                <div class="flex items-center">
-                    <div class="p-2 sm:p-3 bg-blue-100 rounded-lg">
-                        <i class="fas fa-file-alt text-blue-600 text-lg sm:text-xl"></i>
-                    </div>
-                    <div class="ml-3 sm:ml-4">
-                        <h3 class="text-xs sm:text-sm font-medium text-gray-500">Total Projects</h3>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                            <%= typeof stats === 'object' ? Object.values(stats).reduce((a, b) => a + b, 0) : 0 %>
-                        </p>
-                    </div>
-                </div>
-            </div>
 
-            <div class="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-green-500 hover:shadow-lg transition duration-300">
-                <div class="flex items-center">
-                    <div class="p-2 sm:p-3 bg-green-100 rounded-lg">
-                        <i class="fas fa-play-circle text-green-600 text-lg sm:text-xl"></i>
-                    </div>
-                    <div class="ml-3 sm:ml-4">
-                        <h3 class="text-xs sm:text-sm font-medium text-gray-500">In Progress</h3>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                            <%= stats['in-progress'] || 0 %>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-yellow-500 hover:shadow-lg transition duration-300">
-                <div class="flex items-center">
-                    <div class="p-2 sm:p-3 bg-yellow-100 rounded-lg">
-                        <i class="fas fa-tasks text-yellow-600 text-lg sm:text-xl"></i>
-                    </div>
-                    <div class="ml-3 sm:ml-4">
-                        <h3 class="text-xs sm:text-sm font-medium text-gray-500">Completed</h3>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                            <%= stats.completed || 0 %>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-red-500 hover:shadow-lg transition duration-300">
-                <div class="flex items-center">
-                    <div class="p-2 sm:p-3 bg-red-100 rounded-lg">
-                        <i class="fas fa-times-circle text-red-600 text-lg sm:text-xl"></i>
-                    </div>
-                    <div class="ml-3 sm:ml-4">
-                        <h3 class="text-xs sm:text-sm font-medium text-gray-500">Failed</h3>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                            <%= stats.failed || 0 %>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NEW: Pending Contracts Section -->
-        <% if (pendingContracts && pendingContracts.length > 0) { %>
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <i class="fas fa-file-contract text-yellow-600 mr-2"></i>
-                    <span class="text-sm text-yellow-700">
-                        You have <%= pendingContracts.length %> pending contract(s) waiting for action
-                    </span>
-                </div>
-                <a href="/customer/won-projects" 
-                   class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition duration-300 flex items-center">
-                    <i class="fas fa-eye mr-1"></i>
-                    View Contracts
-                </a>
-            </div>
-        </div>
-        <% } %>
-
-        <!-- Detailed Stats and Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            <!-- Left Side - Latest Bids -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                            <i class="fas fa-gavel mr-2 text-indigo-600"></i>
-                            Latest Bids
-                        </h3>
-                    </div>
-                    <div class="p-4 sm:p-6">
-                        <% if (latestBids && latestBids.length > 0) { %>
-                            <div class="space-y-3 sm:space-y-4">
-                                <% latestBids.forEach(bid => { %>
-                                <div class="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition duration-300">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-semibold text-gray-800 truncate text-xs sm:text-sm flex-1 mr-2">
-                                            <%= bid.project && bid.project.title ? bid.project.title : 'Project' %>
-                                        </h4>
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded whitespace-nowrap">
-                                            $<%= bid.amount ? bid.amount.toLocaleString() : '0' %>
-                                        </span>
-                                    </div>
-                                    
-                                    <!-- Seller info with profile image -->
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <% if (bid.seller && bid.seller.profileImage && bid.seller.profileImage.url) { %>
-                                        <img src="<%= bid.seller.profileImage.url %>" 
-                                             alt="<%= bid.seller.companyName || bid.seller.name %>"
-                                             class="w-6 h-6 rounded-full object-cover">
-                                        <% } else { %>
-                                        <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-user text-gray-600 text-xs"></i>
-                                        </div>
-                                        <% } %>
-                                        <p class="text-xs text-gray-600">
-                                            By: <%= bid.seller ? (bid.seller.companyName || bid.seller.name || 'Unknown Seller') : 'Unknown Seller' %>
-                                        </p>
-                                    </div>
-                                    
-                                    <p class="text-xs text-gray-500">
-                                        <%= bid.createdAt ? new Date(bid.createdAt).toLocaleDateString() : 'Unknown date' %>
-                                    </p>
-                                    <div class="bid-status mt-2">
-                                        <% if (bid.status === 'submitted') { %>
-                                            <span class="text-xs text-blue-600">Pending</span>
-                                        <% } else if (bid.status === 'won') { %>
-                                            <span class="text-xs text-green-600 font-semibold">Won</span>
-                                        <% } else if (bid.status === 'lost') { %>
-                                            <span class="text-xs text-red-600">Lost</span>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <% }) %>
-                            </div>
-                            <div class="mt-4 text-center">
-                                <a href="/customer/my-projects" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                                    View All Projects <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        <% } else { %>
-                            <div class="text-center py-6">
-                                <i class="fas fa-gavel text-4xl text-gray-300 mb-3"></i>
-                                <p class="text-gray-500">No bids yet</p>
-                                <p class="text-sm text-gray-400 mt-1">Bids will appear here when sellers respond to your projects</p>
-                            </div>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Middle - Status Breakdown -->
-            <div class="lg:col-span-1 space-y-6">
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                            <i class="fas fa-chart-pie mr-2 text-indigo-600"></i>
-                            Project Status
-                        </h3>
-                    </div>
-                    <div class="p-4 sm:p-6">
-                        <div class="h-64">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                            <i class="fas fa-bolt mr-2 text-indigo-600"></i>
-                            Quick Actions
-                        </h3>
-                    </div>
-                    <div class="p-4 sm:p-6 grid grid-cols-2 gap-3 sm:gap-4">
-                        <a href="/customer/add-project" 
-                           class="bg-indigo-50 text-indigo-700 p-3 sm:p-4 rounded-lg text-center hover:bg-indigo-100 transition duration-300 group">
-                            <i class="fas fa-plus text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
-                            <span class="text-xs sm:text-sm font-medium">New Project</span>
-                        </a>
-                        <a href="/customer/my-projects" 
-                           class="bg-green-50 text-green-700 p-3 sm:p-4 rounded-lg text-center hover:bg-green-100 transition duration-300 group">
-                            <i class="fas fa-list text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
-                            <span class="text-xs sm:text-sm font-medium">My Projects</span>
-                        </a>
-                        <a href="/customer/won-projects" 
-                           class="bg-blue-50 text-blue-700 p-3 sm:p-4 rounded-lg text-center hover:bg-blue-100 transition duration-300 group">
-                            <i class="fas fa-trophy text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
-                            <span class="text-xs sm:text-sm font-medium">Won Projects</span>
-                        </a>
-                        <a href="/customer/notices" 
-                           class="bg-purple-50 text-purple-700 p-3 sm:p-4 rounded-lg text-center hover:bg-purple-100 transition duration-300 group">
-                            <i class="fas fa-bell text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
-                            <span class="text-xs sm:text-sm font-medium">Notices</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Side - Latest Notices -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                            <i class="fas fa-bell mr-2 text-indigo-600"></i>
-                            Latest Notices
-                        </h3>
-                    </div>
-                    <div class="p-4 sm:p-6">
-                        <% if (latestNotices && latestNotices.length > 0) { %>
-                            <div class="space-y-3 sm:space-y-4">
-                                <% latestNotices.forEach(notice => { %>
-                                <div class="border-l-4 border-indigo-500 pl-3 sm:pl-4 py-2 hover:bg-gray-50 transition duration-300 cursor-pointer" 
-                                     onclick="window.location.href='/customer/notices'">
-                                    <h4 class="font-semibold text-gray-800 text-xs sm:text-sm mb-1">
-                                        <%= notice.title %>
-                                    </h4>
-                                    <p class="text-xs text-gray-600 mb-2">
-                                        <%= notice.content ? notice.content.substring(0, 80) + (notice.content.length > 80 ? '...' : '') : 'No content' %>
-                                    </p>
-                                    <p class="text-xs text-gray-500 flex items-center">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        <%= notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : 'Unknown date' %>
-                                    </p>
-                                </div>
-                                <% }) %>
-                            </div>
-                            <div class="mt-4 text-center">
-                                <a href="/customer/notices" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                                    View All Notices <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        <% } else { %>
-                            <div class="text-center py-6">
-                                <i class="fas fa-bell-slash text-4xl text-gray-300 mb-3"></i>
-                                <p class="text-gray-500">No notices</p>
-                                <p class="text-sm text-gray-400 mt-1">Important updates will appear here</p>
-                            </div>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+  </aside>
 
-    <script>
-        // Status Chart
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('statusChart');
-            if (ctx) {
-                const dataElement = document.getElementById('chartData');
-                
-                const statusData = {
-                    'Drafted': parseInt(dataElement.getAttribute('data-drafted')) || 0,
-                    'In Progress': parseInt(dataElement.getAttribute('data-in-progress')) || 0,
-                    'Half Partial': parseInt(dataElement.getAttribute('data-half-partial')) || 0,
-                    'Full Partial': parseInt(dataElement.getAttribute('data-full-partial')) || 0,
-                    'Half Completed': parseInt(dataElement.getAttribute('data-half-completed')) || 0,
-                    'Completed': parseInt(dataElement.getAttribute('data-completed')) || 0,
-                    'Failed': parseInt(dataElement.getAttribute('data-failed')) || 0
-                };
+  <!-- Drawer backdrop -->
+  <!-- <div id="drawerBackdrop" class="drawer-backdrop" tabindex="-1" aria-hidden="true"></div> -->
 
-                console.log('Chart Data loaded:', statusData);
 
-                // Filter out statuses with 0 values for cleaner chart
-                const filteredLabels = [];
-                const filteredData = [];
-                const filteredColors = [
-                    '#fbbf24', // yellow - Drafted
-                    '#3b82f6', // blue - In Progress  
-                    '#8b5cf6', // purple - Half Partial
-                    '#ec4899', // pink - Full Partial
-                    '#10b981', // emerald - Half Completed
-                    '#059669', // green - Completed
-                    '#ef4444'  // red - Failed
-                ];
 
-                Object.keys(statusData).forEach((key, index) => {
-                    if (statusData[key] > 0) {
-                        filteredLabels.push(key);
-                        filteredData.push(statusData[key]);
-                    }
-                });
 
-                // If no data, show empty state
-                if (filteredData.length === 0) {
-                    filteredLabels.push('No Projects');
-                    filteredData.push(1);
-                    filteredColors.length = 0;
-                    filteredColors.push('#9ca3af'); // gray for empty state
-                }
 
-                // Create the chart
-                const statusChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: filteredLabels,
-                        datasets: [{
-                            data: filteredData,
-                            backgroundColor: filteredColors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff',
-                            hoverOffset: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 15,
-                                    usePointStyle: true,
-                                    font: {
-                                        size: 11
-                                    },
-                                    color: '#374151'
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.raw || 0;
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                        return `${label}: ${value} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '60%',
-                        animation: {
-                            animateScale: true,
-                            animateRotate: true
-                        }
-                    }
-                });
 
-                // Add resize observer to handle chart resizing
-                const resizeObserver = new ResizeObserver(entries => {
-                    statusChart.resize();
-                });
-                resizeObserver.observe(ctx.parentElement);
-            }
 
-            // Update last updated timestamp
-            setInterval(() => {
-                const now = new Date();
-                const lastUpdated = document.getElementById('last-updated');
-                if (lastUpdated) {
-                    lastUpdated.textContent = 'Updated ' + moment(now).fromNow();
-                }
-            }, 60000);
-        });
 
-        // Auto-refresh page every 30 seconds for real-time updates
-        setInterval(() => {
-            location.reload();
-        }, 30000);
-    </script>
 
-    <%- include('../partials/footer') %>
+
+
+  <!-- MAIN CONTENT -->
+  <main id="mainContent" class="content-area min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <%- include('../partials/flash-messages') %>
+
+      <!-- Top header -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div class="min-w-0">
+<h1 class="text-2xl md:text-3xl font-bold" style="color: var(--muted);">Dashboard</h1>
+          <p class="text-sm text-slate-500 mt-1">Welcome back, <span class="font-semibold text-slate-700"><%= user.name %></span>. Here's your project overview.</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <button id="openSidebarBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-100 shadow-sm lg:hidden">
+            <i class="fas fa-bars" style="color:var(--propload-secondary)"></i>
+          </button>
+         <a href="/customer/update-statuses" 
+   class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-white text-sm shadow-sm" 
+   style="background-color: var(--propload-secondary);">
+   <i class="fas fa-sync-alt"></i> Update Statuses
+</a>
+
+          <a href="/customer/add-project" 
+   class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-slate-800 text-sm font-semibold shadow" 
+   style="background-color: var(--propload-primary);">
+   <i class="fas fa-plus"></i> Add Project
+</a>
+
+        </div>
+      </div>
+
+      <!-- Real-time Status Header -->
+      <div class="card p-4 mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="rounded-md p-2" style="background: rgba(47,108,123,0.08)"><i class="fas fa-sync-alt" style="color:var(--propload-secondary)"></i></div>
+            <div>
+              <p class="text-sm text-slate-600">Automatic status updates active</p>
+              <p class="text-xs muted">Projects activate automatically on start date</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+
+            <span id="last-updated" class="text-xs muted">Updated just now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stats-grid">
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(47,108,123,0.12);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(47,108,123,0.06)"><i class="fas fa-file-alt" style="color:var(--propload-secondary)"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Total Projects</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                <%= typeof stats === 'object' ? Object.values(stats).reduce((a, b) => a + b, 0) : 0 %>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(34,197,94,0.08);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(34,197,94,0.06)"><i class="fas fa-play-circle" style="color:#16a34a"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">In Progress</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats['in-progress'] || 0 %></p>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(250,204,21,0.12);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(250,204,21,0.06)"><i class="fas fa-tasks" style="color:#b45309"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Completed</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.completed || 0 %></p>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(239,68,68,0.08);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(239,68,68,0.06)"><i class="fas fa-times-circle" style="color:#ef4444"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Failed</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.failed || 0 %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Contracts -->
+      <% if (pendingContracts && pendingContracts.length > 0) { %>
+        <div class="card p-4 mb-6" style="background: linear-gradient(90deg, rgba(233,226,179,0.18), rgba(47,108,123,0.02))">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="rounded-md p-2" style="background: rgba(47,108,123,0.06)">
+                <i class="fas fa-file-contract" style="color:var(--propload-secondary)"></i>
+              </div>
+              <div>
+                <p class="text-sm text-slate-700">You have <strong><%= pendingContracts.length %></strong> pending contract(s)</p>
+                <p class="text-xs muted">Action required to move forward</p>
+              </div>
+            </div>
+
+            <a href="/customer/won-projects" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--propload-secondary)] text-white text-sm">
+              <i class="fas fa-eye"></i> View Contracts
+            </a>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Detailed Stats and Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+       <!-- Left - Top 3 Notices -->
+<div class="lg:col-span-1">
+  <div class="card overflow-hidden">
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+      <h3 class="text-base sm:text-lg font-semibold text-slate-800 flex items-center gap-2">
+        <i class="fas fa-bell" style="color:var(--propload-secondary)"></i>
+        Top Notices
+      </h3>
+    </div>
+    <div class="p-4 sm:p-6 space-y-3">
+      <% if (notices && notices.length > 0) { %>
+        <% notices.slice(0,5).forEach(notice => { %>
+          <div class="notice-item border border-gray-100 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/customer/notices'">
+            <div class="flex justify-between items-start mb-1">
+              <h4 class="font-semibold text-slate-800 truncate text-sm sm:text-base flex-1 mr-2"><%= notice.title %></h4>
+              <span class="text-xs muted"><%= new Date(notice.createdAt).toLocaleDateString() %></span>
+            </div>
+            <p class="text-xs muted truncate"><%= notice.description %></p>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="text-sm muted">No notices available</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+
+        <!-- Center - Stats Chart -->
+        <div class="lg:col-span-2 card p-4 sm:p-6">
+          <canvas id="projectsChart" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+  // Elements
+  const sidebar = document.getElementById('sidebar');
+  const openBtn = document.getElementById('openSidebarBtn'); // Hamburger icon
+  const closeBtn = document.getElementById('sidebarCloseBtn'); // X icon
+  const backdrop = document.getElementById('drawerBackdrop');
+
+  console.log("Sidebar script loaded");
+  console.log({ sidebar, openBtn, closeBtn, backdrop });
+
+  // Function to open sidebar (mobile)
+  function openSidebar() {
+    console.log("Opening sidebar...");
+    if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
+
+    sidebar.classList.remove('-translate-x-full');
+    sidebar.classList.add('translate-x-0');
+    backdrop.classList.add('show');
+    if (closeBtn) closeBtn.focus(); // move focus to close button
+
+    console.log("Sidebar should be visible now", sidebar.classList.value);
+  }
+
+  // Function to close sidebar
+  function closeSidebar() {
+    console.log("Closing sidebar...");
+    if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
+
+    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('translate-x-0');
+    backdrop.classList.remove('show');
+    if (openBtn) openBtn.focus(); // return focus to hamburger button
+
+    console.log("Sidebar should be hidden now", sidebar.classList.value);
+  }
+
+  // Event listeners
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      console.log("Hamburger clicked");
+      openSidebar();
+    });
+  } else {
+    console.warn("Open button not found!");
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      console.log("Close button clicked");
+      closeSidebar();
+    });
+  } else {
+    console.warn("Close button not found!");
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      console.log("Backdrop clicked");
+      closeSidebar();
+    });
+  } else {
+    console.warn("Backdrop element not found!");
+  }
+
+  // Initialize sidebar based on screen width
+  function initSidebar() {
+    console.log("Initializing sidebar, screen width:", window.innerWidth);
+    if (!sidebar) return console.warn("Sidebar element missing!");
+
+    if (window.innerWidth >= 1024) { // desktop
+      sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.add('translate-x-0');
+      if (backdrop) backdrop.classList.remove('show');
+      sidebar.removeAttribute('inert');
+      console.log("Desktop mode: sidebar visible");
+    } else { // mobile
+      sidebar.classList.add('-translate-x-full');
+      sidebar.classList.remove('translate-x-0');
+      sidebar.setAttribute('inert', '');
+      if (backdrop) backdrop.classList.remove('show');
+      console.log("Mobile mode: sidebar hidden");
+    }
+  }
+
+  initSidebar();
+  window.addEventListener('resize', initSidebar);
+
+  // --- Chart.js code remains the same ---
+  console.log("Initializing Chart.js");
+  const chartData = document.getElementById('chartData')?.dataset;
+  if (!chartData) {
+    console.warn("Chart data element not found!");
+  } else {
+    const ctx = document.getElementById('projectsChart')?.getContext('2d');
+    if (!ctx) {
+      console.warn("Chart canvas not found!");
+    } else {
+      const projectsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Drafted','In Progress','Half Partial','Full Partial','Half Completed','Completed','Failed'],
+          datasets: [{
+            label: 'Projects',
+            data: [
+              parseInt(chartData.drafted) || 0,
+              parseInt(chartData['in-progress']) || 0,
+              parseInt(chartData['half-partial']) || 0,
+              parseInt(chartData['full-partial']) || 0,
+              parseInt(chartData['half-completed']) || 0,
+              parseInt(chartData.completed) || 0,
+              parseInt(chartData.failed) || 0
+            ],
+            backgroundColor: [
+              '#fbbf24', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#059669', '#ef4444'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+      console.log("Chart initialized");
+    }
+  }
+</script>
+
+
+
+
+    <!-- <%- include('../partials/footer') %> -->
+
+
 </body>
 </html>
