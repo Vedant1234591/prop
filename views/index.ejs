@@ -136,7 +136,7 @@
             style="top: 0; bottom: 0"
           >
             <h2
-              class="text-white display-4 mb-3"
+              class="text-white display-4 mb-3 text-4xl"
               style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6)"
             >
               <%= item.title %>
@@ -149,14 +149,14 @@
             </p>
             <div>
               <a
-                href="<%= item.contactLink %>"
+                href="#"
                 class="btn text-white px-5 py-3 mx-2"
                 style="background-color: #40788e; border-radius: 0.5rem"
               >
                 Talk to our Team
               </a>
               <a
-                href="<%= item.registerLink %>"
+                href="/customer/add-project"
                 class="btn text-dark px-5 py-3 mx-2"
                 style="background-color: #e9e2b3; border-radius: 0.5rem"
               >
@@ -414,7 +414,7 @@
             <div class="card-body">
               <h5 class="card-title"><%= service.title %></h5>
               <p class="card-text"><%= service.desc %></p>
-              <a href="<%= service.link %>" class="btn btn-primary-custom"
+              <a href="/customer/project-form/" class="btn btn-primary-custom"
                 >Register Project</a
               >
             </div>
@@ -464,7 +464,7 @@
 
               <!-- Read More -->
               <a
-                href="<%= blog.link %>"
+                href="#"
                 class="btn d-inline-block fw-semibold"
                 style="
                   background-color: #2f6c7b;
@@ -515,135 +515,9 @@
     </section>
 
     <!-- Footer Section -->
-    <section
-      class="py-5"
-      style="background: linear-gradient(to top, #1f2c56, #3c4b85); color: #fff"
-    >
-      <div class="container">
-        <div class="row">
-          <!-- Newsletter -->
-          <div class="col-md-3 mb-4">
-            <h5 class="fw-bold">Newsletter</h5>
-            <p class="small text-light">
-              Don't miss out—subscribe or face eternal FOMO!
-            </p>
-            <form class="d-flex">
-              <input
-                type="email"
-                class="form-control me-2"
-                placeholder="Enter your email"
-              />
-              <button class="btn btn-warning text-dark fw-bold" type="submit">
-                Subscribe!
-              </button>
-            </form>
-          </div>
+  
 
-          <!-- Explore -->
-          <div class="col-md-3 mb-4">
-            <h5 class="fw-bold">Explore</h5>
-            <ul class="list-unstyled">
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Home</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>About Us</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Blogs</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Contact Us</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Sitemap</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <!-- Legal -->
-          <div class="col-md-3 mb-4">
-            <h5 class="fw-bold">Legal</h5>
-            <ul class="list-unstyled">
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Terms</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Privacy Policy</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Shipping Policy</a
-                >
-              </li>
-              <li>
-                <a href="#" class="text-light text-decoration-none d-block py-1"
-                  ><i class="fas fa-chevron-right me-2"></i>Refund Policy</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <!-- Contact Info -->
-          <div class="col-md-3 mb-4">
-            <h5 class="fw-bold">Contact Info</h5>
-            <p class="small">
-              <i class="fas fa-map-marker-alt me-2"></i>4th floor, MIG 303,
-              Green Garden, Patrapada, Bhubaneswar, Odisha 751019
-            </p>
-            <p class="small mb-1">
-              <i class="fas fa-envelope me-2"></i>info@propload.com
-            </p>
-            <p class="small mb-1">
-              <i class="fas fa-envelope me-2"></i>customer@propload.com
-            </p>
-            <p class="small mb-1">
-              <i class="fas fa-envelope me-2"></i>seller@propload.com
-            </p>
-            <p class="small"><i class="fas fa-phone me-2"></i>+91 9776622267</p>
-            <div class="d-flex mt-2">
-              <a href="#" class="btn btn-outline-light btn-sm me-2"
-                ><i class="fab fa-facebook-f"></i
-              ></a>
-              <a href="#" class="btn btn-outline-light btn-sm me-2"
-                ><i class="fab fa-twitter"></i
-              ></a>
-              <a href="#" class="btn btn-outline-light btn-sm me-2"
-                ><i class="fab fa-instagram"></i
-              ></a>
-              <a href="#" class="btn btn-outline-light btn-sm"
-                ><i class="fab fa-linkedin-in"></i
-              ></a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer Bottom -->
-        <div
-          class="d-flex justify-content-between pt-3 mt-3 border-top border-light"
-        >
-          <p class="mb-0 small">
-            &copy; Propload All rights reserved by Propaxe Quest Private
-            Limited.
-          </p>
-          <p class="mb-0 small">Designed By Propload Interns</p>
-        </div>
-      </div>
-    </section>
+     <%- include('./partials/landingFooter') %>
 
     <!-- FontAwesome CDN -->
     <link

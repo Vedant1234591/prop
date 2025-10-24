@@ -683,5 +683,27 @@ exports.logout = (req, res) => {
 
 
 
+exports.getTerms = (req,res)=>{
+  res.render("auth/terms")
+
+}
+
+
+exports.getPrivacy = (req,res)=>{
+  res.render("auth/privacy")
+
+}
+
+exports.getShipping = (req,res)=>{
+  res.render("auth/shipping")
+
+}
+
+exports.getRefund = (req,res)=>{
+  res.render("auth/refund")
+
+}
+
+
 
 module.exports = exports;
