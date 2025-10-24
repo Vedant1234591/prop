@@ -1317,6 +1317,7 @@ exports.approveProject = async (req, res) => {
     // Notify customer
     const Notice = require('../models/Notice');
     await Notice.create({
+        targetId: project.customer._id,
       title: `Project Approved - ${project.title}`,
       content: `Your project "${project.title}" has been approved by admin and bidding is now active.${remarks ? ` Admin Remarks: ${remarks}` : ''}`,
       targetAudience: 'customer',
@@ -1370,6 +1371,7 @@ exports.rejectProject = async (req, res) => {
     // Notify customer
     const Notice = require('../models/Notice');
     await Notice.create({
+        targetId: project.customer._id,
       title: `Project Rejected - ${project.title}`,
       content: `Your project "${project.title}" has been rejected by admin. Remarks: ${remarks}. Please edit and resubmit the project.`,
       targetAudience: 'customer',
