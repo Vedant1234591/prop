@@ -112,6 +112,7 @@ exports.getDashboard = async (req, res) => {
       stats: statusCounts,
       latestBids: latestBids || [],
       latestNotices: latestNotices || [],
+      notices: latestNotices.slice(0,5) || [],
       pendingContracts: pendingContracts || [],
       moment: moment,
     });
