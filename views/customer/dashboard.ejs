@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -21,17 +22,21 @@
     }
 
 
-.logout-btn {
-  background: #ffffff; /* keep white background */
-  color: var(--propload-secondary); /* text uses primary color */
-  border: 1px solid rgba(15,23,42,0.04);
-  transition: background .2s, color .2s;
-}
+    .logout-btn {
+      background: #ffffff;
+      /* keep white background */
+      color: var(--propload-secondary);
+      /* text uses primary color */
+      border: 1px solid rgba(15, 23, 42, 0.04);
+      transition: background .2s, color .2s;
+    }
 
-.logout-btn:hover {
-  background: var(--propload-primary); /* hover background uses primary */
-  color: #1f2937; /* text color switches to dark for contrast */
-}
+    .logout-btn:hover {
+      background: var(--propload-primary);
+      /* hover background uses primary */
+      color: #1f2937;
+      /* text color switches to dark for contrast */
+    }
 
 
     /* Layout */
@@ -54,8 +59,17 @@
     }
 
     @media (max-width: 1024px) {
-      .sidebar { transform: translateX(0); position: fixed; left: 0; top: 0; bottom: 0; }
-      .content-area { margin-left: 0; }
+      .sidebar {
+        transform: translateX(0);
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+      }
+
+      .content-area {
+        margin-left: 0;
+      }
     }
 
     /* Card */
@@ -66,9 +80,10 @@
       border: 1px solid rgba(15, 23, 42, 0.03);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+
     .card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(47,76,86,0.08);
+      box-shadow: 0 12px 24px rgba(47, 76, 86, 0.08);
     }
 
     /* Sidebar menu */
@@ -82,16 +97,19 @@
       font-weight: 600;
       transition: background .18s ease, transform .12s ease, color .12s ease;
     }
+
     .menu-item:hover {
       background: var(--propload-primary);
       color: var(--propload-secondary);
       transform: translateY(-2px);
     }
+
     .menu-item.active {
-      background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03));
+      background: linear-gradient(90deg, rgba(233, 226, 179, 0.32), rgba(47, 108, 123, 0.03));
       color: var(--propload-secondary);
-      box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04);
+      box-shadow: inset 0 0 0 1px rgba(47, 108, 123, 0.04);
     }
+
     .menu-item i {
       width: 1.25rem;
       text-align: center;
@@ -99,32 +117,49 @@
     }
 
     /* small helpers */
-    .muted { color: var(--muted); }
-    .status-badge { font-weight:700; font-size:.75rem; padding:.25rem .5rem; border-radius:999px; display:inline-block; }
+    .muted {
+      color: var(--muted);
+    }
+
+    .status-badge {
+      font-weight: 700;
+      font-size: .75rem;
+      padding: .25rem .5rem;
+      border-radius: 999px;
+      display: inline-block;
+    }
 
     /* table row hover */
-    .table-row-hover tbody tr:hover { background: #fbfdff; }
+    .table-row-hover tbody tr:hover {
+      background: #fbfdff;
+    }
 
     /* responsive stats grid tweak */
     @media (max-width: 640px) {
-      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     /* mobile drawer overlay */
     .drawer-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0, 0, 0, 0.45);
       z-index: 30;
       display: none;
     }
-    .drawer-backdrop.show { display:block; }
+
+    .drawer-backdrop.show {
+      display: block;
+    }
 
     /* Latest notices hover */
     .notice-item {
       cursor: pointer;
       transition: background .15s ease;
     }
+
     .notice-item:hover {
       background: #f9fafb;
     }
@@ -132,86 +167,24 @@
 </head>
 
 <body class="bg-gray-50 text-slate-800 antialiased">
-        <%- include('../partials/flash-messages') %>
+
+  <%- include('../partials/flash-messages') %>
 
 
-  <!-- Hidden chart data -->
-  <div id="chartData" 
-       data-drafted="<%= stats.drafted || 0 %>"
-       data-in-progress="<%= stats['in-progress'] || 0 %>"
-       data-half-partial="<%= stats['half-partial'] || 0 %>"
-       data-full-partial="<%= stats['full-partial'] || 0 %>"
-       data-half-completed="<%= stats['half-completed'] || 0 %>"
-       data-completed="<%= stats.completed || 0 %>"
-       data-failed="<%= stats.failed || 0 %>"
-       style="display:none;"></div>
+    <!-- Hidden chart data -->
+    <div id="chartData" data-drafted="<%= stats.drafted || 0 %>" data-in-progress="<%= stats['in-progress'] || 0 %>"
+      data-half-partial="<%= stats['half-partial'] || 0 %>" data-full-partial="<%= stats['full-partial'] || 0 %>"
+      data-half-completed="<%= stats['half-completed'] || 0 %>" data-completed="<%= stats.completed || 0 %>"
+      data-failed="<%= stats.failed || 0 %>" style="display:none;"></div>
 
 
 
 
 
+    <%- include('./sideNav') %>
 
-
-  <!-- SIDEBAR -->
-<button id="openSidebarBtn" class="lg:hidden p-2 rounded-md text-slate-500" aria-label="Open menu">
-  <i class="fas fa-bars"></i>
-</button>
-
-<div id="drawerBackdrop" class="fixed inset-0 bg-black bg-opacity-30 hidden z-40"></div>
-
-  <!-- <aside id="sidebar" class="sidebar"> -->
-   <aside id="sidebar" class="sidebar -translate-x-full fixed top-0 left-0 h-full w-64 bg-white shadow-lg transition-transform duration-300 z-50" aria-hidden="true">
-
-
-    <!-- to test -->
-
-    <div class="flex flex-col h-full">
-      <!-- Logo + Profile clickable -->
-      <div class="flex items-center justify-between mb-6">
-        <div class=" items-center cursor-pointer" onclick="window.location.href='/customer/profile'">
-          <img src="/images/landing/logo.png" alt="Propload" class="h-12 w-auto object-contain" onerror="this.style.display='none'">
-         
-         <div class="flex items-center gap-2">
-  <div class="ml-3 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
-    <i class="fas fa-user" style="color: var(--propload-secondary);"></i>
-  </div>
-  <div class="text-s muted">Customer</div>
-</div>
-
-        </div>
-        <button id="sidebarCloseBtn" class="lg:hidden p-2 rounded-md text-slate-500" aria-label="Close menu" title="Close menu">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <!-- Navigation -->
-      <nav class="flex-1 overflow-y-auto">
-        <ul class="space-y-1">
-          <li><a href="/customer/dashboard" class="menu-item <%= (typeof active !== 'undefined' && active==='dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
-          <li><a href="/customer/my-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='my-projects') ? 'active' : '' %>"><i class="fas fa-folder-open"></i><span>My Projects</span></a></li>
-          <li><a href="/customer/won-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='won-projects') ? 'active' : '' %>"><i class="fas fa-trophy"></i><span>Won Projects</span></a></li>
-          <li><a href="/customer/add-project" class="menu-item <%= (typeof active !== 'undefined' && active==='add-project') ? 'active' : '' %>"><i class="fas fa-plus-circle"></i><span>Add Project</span></a></li>
-          <li><a href="/customer/notices" class="menu-item <%= (typeof active !== 'undefined' && active==='notices') ? 'active' : '' %>"><i class="fas fa-bell"></i><span>Notices</span></a></li>
-          <li class="mt-4"><a href="/support" class="menu-item"><i class="fas fa-headset"></i><span>Support</span></a></li>
-        </ul>
-      </nav>
-
-      <!-- Footer actions (logout) -->
-      <div class="mt-6">
-<form action="/auth/logout" method="post" class="inline-block w-full">
-  <button type="submit" class="w-full text-left px-3 py-2 rounded-md font-semibold logout-btn">
-    <i class="fas fa-sign-out-alt mr-3"></i>
-    <span>Logout</span>
-  </button>
-</form>
-
-
-      </div>
-    </div>
-  </aside>
-
-  <!-- Drawer backdrop -->
-  <!-- <div id="drawerBackdrop" class="drawer-backdrop" tabindex="-1" aria-hidden="true"></div> -->
+      <!-- Drawer backdrop -->
+      <!-- <div id="drawerBackdrop" class="drawer-backdrop" tabindex="-1" aria-hidden="true"></div> -->
 
 
 
@@ -223,293 +196,320 @@
 
 
 
-  <!-- MAIN CONTENT -->
-  <main id="mainContent" class="content-area min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- MAIN CONTENT -->
+      <main id="mainContent" class="content-area min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <%- include('../partials/flash-messages') %>
 
-      <!-- Top header -->
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div class="min-w-0">
-<h1 class="text-2xl md:text-3xl font-bold" style="color: var(--muted);">Dashboard</h1>
-          <p class="text-sm text-slate-500 mt-1">Welcome back, <span class="font-semibold text-slate-700"><%= user.name %></span>. Here's your project overview.</p>
-        </div>
 
-        <div class="flex items-center gap-3 w-full md:w-auto">
-          <button id="openSidebarBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-100 shadow-sm lg:hidden">
-            <i class="fas fa-bars" style="color:var(--propload-secondary)"></i>
-          </button>
-         <a href="/customer/update-statuses" 
-   class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-white text-sm shadow-sm" 
-   style="background-color: var(--propload-secondary);">
-   <i class="fas fa-sync-alt"></i> Update Statuses
-</a>
+          <!-- Top header -->
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+            <div class="min-w-0">
+              <h1 class="text-2xl md:text-3xl font-bold" style="color: var(--muted);">Dashboard</h1>
+              <p class="text-sm text-slate-500 mt-1">Welcome back, <span class="font-semibold text-slate-700">
+                  <%= user.name %>
+                </span>. Here's your project overview.</p>
+            </div>
 
-          <a href="/customer/add-project" 
-   class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-slate-800 text-sm font-semibold shadow" 
-   style="background-color: var(--propload-primary);">
-   <i class="fas fa-plus"></i> Add Project
-</a>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+              <button id="openSidebarBtn"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-100 shadow-sm lg:hidden">
+                <i class="fas fa-bars" style="color:var(--propload-secondary)"></i>
+              </button>
+              <a href="/customer/update-statuses"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-white text-sm shadow-sm"
+                style="background-color: var(--propload-secondary);">
+                <i class="fas fa-sync-alt"></i> Update Statuses
+              </a>
 
-        </div>
-      </div>
+              <a href="/customer/add-project"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-slate-800 text-md font-semibold shadow"
+                style="background-color: var(--propload-primary);">
+                <i class="fas fa-plus"></i> Add Project
+              </a>
 
-      <!-- Real-time Status Header -->
-      <div class="card p-4 mb-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <div class="rounded-md p-2" style="background: rgba(47,108,123,0.08)"><i class="fas fa-sync-alt" style="color:var(--propload-secondary)"></i></div>
-            <div>
-              <p class="text-sm text-slate-600">Automatic status updates active</p>
-              <p class="text-xs muted">Projects activate automatically on start date</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-3">
-
-            <span id="last-updated" class="text-xs muted">Updated just now</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stats-grid">
-        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(47,108,123,0.12);">
-          <div class="flex items-center">
-            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(47,108,123,0.06)"><i class="fas fa-file-alt" style="color:var(--propload-secondary)"></i></div>
-            <div class="ml-3 sm:ml-4 min-w-0">
-              <h3 class="text-xs sm:text-sm font-medium muted">Total Projects</h3>
-              <p class="text-xl sm:text-2xl font-bold text-slate-800">
-                <%= typeof stats === 'object' ? Object.values(stats).reduce((a, b) => a + b, 0) : 0 %>
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(34,197,94,0.08);">
-          <div class="flex items-center">
-            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(34,197,94,0.06)"><i class="fas fa-play-circle" style="color:#16a34a"></i></div>
-            <div class="ml-3 sm:ml-4 min-w-0">
-              <h3 class="text-xs sm:text-sm font-medium muted">In Progress</h3>
-              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats['in-progress'] || 0 %></p>
-            </div>
-          </div>
-        </div>
-        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(250,204,21,0.12);">
-          <div class="flex items-center">
-            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(250,204,21,0.06)"><i class="fas fa-tasks" style="color:#b45309"></i></div>
-            <div class="ml-3 sm:ml-4 min-w-0">
-              <h3 class="text-xs sm:text-sm font-medium muted">Completed</h3>
-              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.completed || 0 %></p>
-            </div>
-          </div>
-        </div>
-        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(239,68,68,0.08);">
-          <div class="flex items-center">
-            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(239,68,68,0.06)"><i class="fas fa-times-circle" style="color:#ef4444"></i></div>
-            <div class="ml-3 sm:ml-4 min-w-0">
-              <h3 class="text-xs sm:text-sm font-medium muted">Failed</h3>
-              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.failed || 0 %></p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pending Contracts -->
-      <% if (pendingContracts && pendingContracts.length > 0) { %>
-        <div class="card p-4 mb-6" style="background: linear-gradient(90deg, rgba(233,226,179,0.18), rgba(47,108,123,0.02))">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <div class="rounded-md p-2" style="background: rgba(47,108,123,0.06)">
-                <i class="fas fa-file-contract" style="color:var(--propload-secondary)"></i>
+          <!-- Real-time Status Header -->
+          <div class="card p-4 mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="rounded-md p-2" style="background: rgba(47,108,123,0.08)"><i class="fas fa-sync-alt"
+                    style="color:var(--propload-secondary)"></i></div>
+                <div>
+                  <p class="text-sm text-slate-600">Automatic status updates active</p>
+                  <p class="text-xs muted">Projects activate automatically on start date</p>
+                </div>
               </div>
-              <div>
-                <p class="text-sm text-slate-700">You have <strong><%= pendingContracts.length %></strong> pending contract(s)</p>
-                <p class="text-xs muted">Action required to move forward</p>
+
+              <div class="flex items-center gap-3">
+
+                <span id="last-updated" class="text-xs muted">Updated just now</span>
               </div>
             </div>
-
-            <a href="/customer/won-projects" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--propload-secondary)] text-white text-sm">
-              <i class="fas fa-eye"></i> View Contracts
-            </a>
           </div>
-        </div>
-      <% } %>
 
-      <!-- Detailed Stats and Content -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-       <!-- Left - Top 3 Notices -->
-<div class="lg:col-span-1">
-  <div class="card overflow-hidden">
-    <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
-      <h3 class="text-base sm:text-lg font-semibold text-slate-800 flex items-center gap-2">
-        <i class="fas fa-bell" style="color:var(--propload-secondary)"></i>
-        Top Notices
-      </h3>
-    </div>
-    <div class="p-4 sm:p-6 space-y-3">
-      <% if (notices && notices.length > 0) { %>
-        <% notices.slice(0,5).forEach(notice => { %>
-          <div class="notice-item border border-gray-100 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/customer/notices'">
-            <div class="flex justify-between items-start mb-1">
-              <h4 class="font-semibold text-slate-800 truncate text-sm sm:text-base flex-1 mr-2"><%= notice.title %></h4>
-              <span class="text-xs muted"><%= new Date(notice.createdAt).toLocaleDateString() %></span>
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stats-grid">
+            <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(47,108,123,0.12);">
+              <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(47,108,123,0.06)"><i class="fas fa-file-alt"
+                    style="color:var(--propload-secondary)"></i></div>
+                <div class="ml-3 sm:ml-4 min-w-0">
+                  <h3 class="text-xs sm:text-sm font-medium muted">Total Projects</h3>
+                  <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                    <%= typeof stats==='object' ? Object.values(stats).reduce((a, b)=> a + b, 0) : 0 %>
+                  </p>
+                </div>
+              </div>
             </div>
-            <p class="text-xs muted truncate"><%= notice.description %></p>
+            <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(34,197,94,0.08);">
+              <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(34,197,94,0.06)"><i
+                    class="fas fa-play-circle" style="color:#16a34a"></i></div>
+                <div class="ml-3 sm:ml-4 min-w-0">
+                  <h3 class="text-xs sm:text-sm font-medium muted">In Progress</h3>
+                  <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                    <%= stats['in-progress'] || 0 %>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(250,204,21,0.12);">
+              <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(250,204,21,0.06)"><i class="fas fa-tasks"
+                    style="color:#b45309"></i></div>
+                <div class="ml-3 sm:ml-4 min-w-0">
+                  <h3 class="text-xs sm:text-sm font-medium muted">Completed</h3>
+                  <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                    <%= stats.completed || 0 %>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(239,68,68,0.08);">
+              <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(239,68,68,0.06)"><i
+                    class="fas fa-times-circle" style="color:#ef4444"></i></div>
+                <div class="ml-3 sm:ml-4 min-w-0">
+                  <h3 class="text-xs sm:text-sm font-medium muted">Failed</h3>
+                  <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                    <%= stats.failed || 0 %>
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        <% }) %>
-      <% } else { %>
-        <p class="text-sm muted">No notices available</p>
-      <% } %>
-    </div>
-  </div>
-</div>
+
+          <!-- Pending Contracts -->
+          <% if (pendingContracts && pendingContracts.length> 0) { %>
+            <div class="card p-4 mb-6"
+              style="background: linear-gradient(90deg, rgba(233,226,179,0.18), rgba(47,108,123,0.02))">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="rounded-md p-2" style="background: rgba(47,108,123,0.06)">
+                    <i class="fas fa-file-contract" style="color:var(--propload-secondary)"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-700">You have <strong>
+                        <%= pendingContracts.length %>
+                      </strong> pending contract(s)</p>
+                    <p class="text-xs muted">Action required to move forward</p>
+                  </div>
+                </div>
+
+                <a href="/customer/won-projects"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--propload-secondary)] text-white text-sm">
+                  <i class="fas fa-eye"></i> View Contracts
+                </a>
+              </div>
+            </div>
+            <% } %>
+
+              <!-- Detailed Stats and Content -->
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                <!-- Left - Top 3 Notices -->
+                <div class="lg:col-span-1">
+                  <div class="card overflow-hidden">
+                    <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+                      <h3 class="text-base sm:text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-bell" style="color:var(--propload-secondary)"></i>
+                        Top Notices
+                      </h3>
+                    </div>
+                    <div class="p-4 sm:p-6 space-y-3">
+                      <% if (notices && notices.length> 0) { %>
+                        <% notices.slice(0,5).forEach(notice=> { %>
+                          <div
+                            class="notice-item border border-gray-100 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition cursor-pointer"
+                            onclick="window.location.href='/customer/notices'">
+                            <div class="flex justify-between items-start mb-1">
+                              <h4 class="font-semibold text-slate-800 truncate text-sm sm:text-base flex-1 mr-2">
+                                <%= notice.title %>
+                              </h4>
+                              <span class="text-xs muted">
+                                <%= new Date(notice.createdAt).toLocaleDateString() %>
+                              </span>
+                            </div>
+                            <p class="text-xs muted truncate">
+                              <%= notice.description %>
+                            </p>
+                          </div>
+                          <% }) %>
+                            <% } else { %>
+                              <p class="text-sm muted">No notices available</p>
+                              <% } %>
+                    </div>
+                  </div>
+                </div>
 
 
-        <!-- Center - Stats Chart -->
-        <div class="lg:col-span-2 card p-4 sm:p-6">
-          <canvas id="projectsChart" height="180"></canvas>
+                <!-- Center - Stats Chart -->
+                <div class="lg:col-span-2 card p-4 sm:p-6">
+                  <canvas id="projectsChart" height="180"></canvas>
+                </div>
+              </div>
         </div>
-      </div>
-    </div>
-  </main>
+      </main>
 
-<script>
-  // Elements
-  const sidebar = document.getElementById('sidebar');
-  const openBtn = document.getElementById('openSidebarBtn'); // Hamburger icon
-  const closeBtn = document.getElementById('sidebarCloseBtn'); // X icon
-  const backdrop = document.getElementById('drawerBackdrop');
+      <script>
+        // Elements
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn'); // Hamburger icon
+        const closeBtn = document.getElementById('sidebarCloseBtn'); // X icon
+        const backdrop = document.getElementById('drawerBackdrop');
 
-  console.log("Sidebar script loaded");
-  console.log({ sidebar, openBtn, closeBtn, backdrop });
+        console.log("Sidebar script loaded");
+        console.log({ sidebar, openBtn, closeBtn, backdrop });
 
-  // Function to open sidebar (mobile)
-  function openSidebar() {
-    console.log("Opening sidebar...");
-    if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
+        // Function to open sidebar (mobile)
+        function openSidebar() {
+          console.log("Opening sidebar...");
+          if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
 
-    sidebar.classList.remove('-translate-x-full');
-    sidebar.classList.add('translate-x-0');
-    backdrop.classList.add('show');
-    if (closeBtn) closeBtn.focus(); // move focus to close button
+          sidebar.classList.remove('-translate-x-full');
+          sidebar.classList.add('translate-x-0');
+          backdrop.classList.add('show');
+          if (closeBtn) closeBtn.focus(); // move focus to close button
 
-    console.log("Sidebar should be visible now", sidebar.classList.value);
-  }
+          console.log("Sidebar should be visible now", sidebar.classList.value);
+        }
 
-  // Function to close sidebar
-  function closeSidebar() {
-    console.log("Closing sidebar...");
-    if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
+        // Function to close sidebar
+        function closeSidebar() {
+          console.log("Closing sidebar...");
+          if (!sidebar || !backdrop) return console.warn("Sidebar or backdrop element missing");
 
-    sidebar.classList.add('-translate-x-full');
-    sidebar.classList.remove('translate-x-0');
-    backdrop.classList.remove('show');
-    if (openBtn) openBtn.focus(); // return focus to hamburger button
+          sidebar.classList.add('-translate-x-full');
+          sidebar.classList.remove('translate-x-0');
+          backdrop.classList.remove('show');
+          if (openBtn) openBtn.focus(); // return focus to hamburger button
 
-    console.log("Sidebar should be hidden now", sidebar.classList.value);
-  }
+          console.log("Sidebar should be hidden now", sidebar.classList.value);
+        }
 
-  // Event listeners
-  if (openBtn) {
-    openBtn.addEventListener('click', () => {
-      console.log("Hamburger clicked");
-      openSidebar();
-    });
-  } else {
-    console.warn("Open button not found!");
-  }
+        // Event listeners
+        if (openBtn) {
+          openBtn.addEventListener('click', () => {
+            console.log("Hamburger clicked");
+            openSidebar();
+          });
+        } else {
+          console.warn("Open button not found!");
+        }
 
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      console.log("Close button clicked");
-      closeSidebar();
-    });
-  } else {
-    console.warn("Close button not found!");
-  }
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            console.log("Close button clicked");
+            closeSidebar();
+          });
+        } else {
+          console.warn("Close button not found!");
+        }
 
-  if (backdrop) {
-    backdrop.addEventListener('click', () => {
-      console.log("Backdrop clicked");
-      closeSidebar();
-    });
-  } else {
-    console.warn("Backdrop element not found!");
-  }
+        if (backdrop) {
+          backdrop.addEventListener('click', () => {
+            console.log("Backdrop clicked");
+            closeSidebar();
+          });
+        } else {
+          console.warn("Backdrop element not found!");
+        }
 
-  // Initialize sidebar based on screen width
-  function initSidebar() {
-    console.log("Initializing sidebar, screen width:", window.innerWidth);
-    if (!sidebar) return console.warn("Sidebar element missing!");
+        // Initialize sidebar based on screen width
+        function initSidebar() {
+          console.log("Initializing sidebar, screen width:", window.innerWidth);
+          if (!sidebar) return console.warn("Sidebar element missing!");
 
-    if (window.innerWidth >= 1024) { // desktop
-      sidebar.classList.remove('-translate-x-full');
-      sidebar.classList.add('translate-x-0');
-      if (backdrop) backdrop.classList.remove('show');
-      sidebar.removeAttribute('inert');
-      console.log("Desktop mode: sidebar visible");
-    } else { // mobile
-      sidebar.classList.add('-translate-x-full');
-      sidebar.classList.remove('translate-x-0');
-      sidebar.setAttribute('inert', '');
-      if (backdrop) backdrop.classList.remove('show');
-      console.log("Mobile mode: sidebar hidden");
-    }
-  }
-
-  initSidebar();
-  window.addEventListener('resize', initSidebar);
-
-  // --- Chart.js code remains the same ---
-  console.log("Initializing Chart.js");
-  const chartData = document.getElementById('chartData')?.dataset;
-  if (!chartData) {
-    console.warn("Chart data element not found!");
-  } else {
-    const ctx = document.getElementById('projectsChart')?.getContext('2d');
-    if (!ctx) {
-      console.warn("Chart canvas not found!");
-    } else {
-      const projectsChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Drafted','In Progress','Half Partial','Full Partial','Half Completed','Completed','Failed'],
-          datasets: [{
-            label: 'Projects',
-            data: [
-              parseInt(chartData.drafted) || 0,
-              parseInt(chartData['in-progress']) || 0,
-              parseInt(chartData['half-partial']) || 0,
-              parseInt(chartData['full-partial']) || 0,
-              parseInt(chartData['half-completed']) || 0,
-              parseInt(chartData.completed) || 0,
-              parseInt(chartData.failed) || 0
-            ],
-            backgroundColor: [
-              '#fbbf24', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#059669', '#ef4444'
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          if (window.innerWidth >= 1024) { // desktop
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            if (backdrop) backdrop.classList.remove('show');
+            sidebar.removeAttribute('inert');
+            console.log("Desktop mode: sidebar visible");
+          } else { // mobile
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            sidebar.setAttribute('inert', '');
+            if (backdrop) backdrop.classList.remove('show');
+            console.log("Mobile mode: sidebar hidden");
           }
         }
-      });
-      console.log("Chart initialized");
-    }
-  }
-</script>
+
+        initSidebar();
+        window.addEventListener('resize', initSidebar);
+
+        // --- Chart.js code remains the same ---
+        console.log("Initializing Chart.js");
+        const chartData = document.getElementById('chartData')?.dataset;
+        if (!chartData) {
+          console.warn("Chart data element not found!");
+        } else {
+          const ctx = document.getElementById('projectsChart')?.getContext('2d');
+          if (!ctx) {
+            console.warn("Chart canvas not found!");
+          } else {
+            const projectsChart = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: ['Drafted', 'In Progress', 'Half Partial', 'Full Partial', 'Half Completed', 'Completed', 'Failed'],
+                datasets: [{
+                  label: 'Projects',
+                  data: [
+                    parseInt(chartData.drafted) || 0,
+                    parseInt(chartData['in-progress']) || 0,
+                    parseInt(chartData['half-partial']) || 0,
+                    parseInt(chartData['full-partial']) || 0,
+                    parseInt(chartData['half-completed']) || 0,
+                    parseInt(chartData.completed) || 0,
+                    parseInt(chartData.failed) || 0
+                  ],
+                  backgroundColor: [
+                    '#fbbf24', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#059669', '#ef4444'
+                  ]
+                }]
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { grid: { display: false } },
+                  y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+              }
+            });
+            console.log("Chart initialized");
+          }
+        }
+      </script>
 
 
 
 
-    <!-- <%- include('../partials/footer') %> -->
+      <!-- <%- include('../partials/footer') %> -->
 
 
 </body>
+
 </html>

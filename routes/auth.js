@@ -33,5 +33,13 @@ router.post("/logout", authController.logout);
 
 
 
+router.get("/terms",authController.getTerms)
+router.get("/privacy",authController.getPrivacy)
+router.get("/shipping",authController.getShipping)
+router.get("/refund",authController.getRefund)
+
+
+
+
 
 module.exports = router;
