@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Projects - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Add moment.js CDN for client-side date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-50">
+  
+
+
+    <%- include('../partials/header', { 
+        user: typeof user !== 'undefined' ? user : {}, 
+        currentPage: 'projects',
+        bidCount: typeof bidCount !== 'undefined' ? bidCount : 0,
+        messageCount: 0 
+    }) %>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Real-time Status Header -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
+                    <span class="text-sm text-blue-700">Automatic status updates active • Projects activate after admin approval</span>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="/customer/update-statuses" 
+                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center">
+                        <i class="fas fa-sync-alt mr-1"></i>
+                        Update Now
+                    </a>
+                    <span class="text-xs text-blue-600" id="last-updated">
+                        Updated just now
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Projects</h1>
+            <div class="flex space-x-3">
+                <a href="/customer/update-statuses" 
+                   class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition duration-300 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Update Statuses
+                </a>
+                <a href="/customer/add-project" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add New Project
+                </a>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">All Projects</h2>
+            </div>
+            
+            <% if (projects && projects.length > 0) { %>
+                <div class="divide-y divide-gray-200">
+                    <% projects.forEach(project => { %>
+                    <div class="p-6 hover:bg-gray-50 transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-xl font-semibold text-gray-900">
+                                        <%= project.title || 'Untitled Project' %>
+                                    </h3>
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                        <%= project.displayStatus === 'completed' ? 'bg-purple-100 text-purple-800' : 
+                                        project.status === 'drafted' ? 'bg-gray-100 text-gray-800' : '' %>
+                                        <%= project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' %>
+                                        <%= project.status === 'active' ? 'bg-blue-100 text-blue-800' : '' %>
+                                        <%= project.status === 'defected' ? 'bg-red-100 text-red-800' : '' %>
+                                        <%= project.status === 'failed' ? 'bg-red-100 text-red-800' : '' %>
+                                        <%= !project.status ? 'bg-gray-100 text-gray-800' : '' %>">
+                                        <%= project.displayStatus ? project.displayStatus.toUpperCase() : 
+                                           project.status ? project.status.toUpperCase() : 'DRAFT' %>
+                                    </span>
+                                </div>
+                                
+                                <!-- Admin Verification Status -->
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <% if (project.adminStatus === 'pending') { %>
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium flex items-center">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Pending Verification
+                                    </span>
+                                    <% if (project.status === 'drafted') { %>
+                                    <form action="/customer/project/<%= project._id %>/submit-verification" method="POST" class="inline">
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                        <button type="submit" 
+                                                class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition duration-300">
+                                            Submit for Verification
+                                        </button>
+                                    </form>
+                                    <% } %>
+                                    <% } else if (project.adminStatus === 'approved') { %>
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium flex items-center">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Approved
+                                    </span>
+                                    <% } else if (project.adminStatus === 'rejected' || project.adminStatus === 'defected') { %>
+                                    <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium flex items-center">
+                                        <i class="fas fa-times-circle mr-1"></i>
+                                        <%= project.adminStatus === 'rejected' ? 'Rejected' : 'Defected' %>
+                                    </span>
+                                    <% if (project.adminRemarks) { %>
+                                    <span class="text-xs text-red-600" title="<%= project.adminRemarks %>">
+                                        <i class="fas fa-comment-alt mr-1"></i>
+                                        See Remarks
+                                    </span>
+                                    <% } %>
+                                    <!-- Show edit button for rejected/defected projects -->
+                                    <a href="/customer/edit-project/<%= project._id %>"
+                                       class="bg-yellow-600 text-white px-3 py-1 rounded text-xs hover:bg-yellow-700 transition duration-300">
+                                        Edit & Resubmit
+                                    </a>
+                                    <% } %>
+                                </div>
+
+                                <!-- Round Status -->
+                                <% if (project.biddingRounds && project.biddingRounds.currentRound) { %>
+                                <div class="mt-2">
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                        <% if (project.biddingRounds.currentRound === 1) { %>
+                                        Round 1 - Active
+                                        <% } else if (project.biddingRounds.currentRound === 1.5) { %>
+                                        Round 1 Completed - Select Top 3
+                                        <% } else if (project.biddingRounds.currentRound === 2) { %>
+                                        Round 2 - Active
+                                        <% } else if (project.biddingRounds.currentRound === 2.5) { %>
+                                        Round 2 Completed - Select Winner
+                                        <% } else if (project.biddingRounds.currentRound === 3) { %>
+                                        Contract Phase
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <% } %>
+                                
+                                <!-- Featured Image -->
+                                <% if (project.featuredImage && project.featuredImage.url) { %>
+                                <div class="mb-3">
+                                    <img src="<%= project.featuredImage.url %>" 
+                                         alt="<%= project.title || 'Project Image' %>" 
+                                         class="w-full h-48 object-cover rounded-lg shadow-sm"
+                                         onerror="this.style.display='none'">
+                                </div>
+                                <% } %>
+                                
+                                <p class="text-gray-600 mb-3">
+                                    <%= project.description || 'No description provided.' %>
+                                </p>
+                                
+                                <div class="grid md:grid-cols-4 gap-4 text-sm text-gray-500">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-tag mr-2 text-indigo-500"></i>
+                                        <span class="capitalize">
+                                            <%= project.category ? project.category.replace('-', ' ') : 'general' %>
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                                        <span>
+                                            <%= project.location && project.location.city ? `${project.location.city}, ${project.location.state || ''}` : 'Location not set' %>
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar mr-2 text-green-500"></i>
+                                        <span>
+                                            Starts: 
+                                            <% if (project.timeline && project.timeline.startDate) { %>
+                                                <%= moment(project.timeline.startDate).format('MMM D, YYYY') %>
+                                            <% } else { %>
+                                                Not set
+                                            <% } %>
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+                                        <span>
+                                            Starting Bid: $<%= project.bidSettings && project.bidSettings.startingBid ? project.bidSettings.startingBid : '0' %>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Bid Information -->
+                                <div class="mt-3 flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="text-sm text-gray-600">
+                                            <i class="fas fa-gavel mr-1"></i>
+                                            <%= project.bids ? project.bids.length : 0 %> bids
+                                        </span>
+                                        <% if (project.bidSettings && project.bidSettings.isActive && project.biddingRounds && project.biddingRounds.round1 && project.biddingRounds.round1.endDate && new Date() < new Date(project.biddingRounds.round1.endDate)) { %>
+                                        <span class="text-sm text-green-600">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            Bidding open
+                                        </span>
+                                        <% } else if (project.selectedBid) { %>
+                                        <span class="text-sm text-blue-600">
+                                            <i class="fas fa-trophy mr-1"></i>
+                                            Winner selected
+                                        </span>
+                                        <% } else { %>
+                                        <span class="text-sm text-red-600">
+                                            <i class="fas fa-times mr-1"></i>
+                                            Bidding closed
+                                        </span>
+                                        <% } %>
+                                    </div>
+                                    
+                                    <% if (project.selectedBid) { %>
+                                    <div class="bg-green-50 border border-green-200 rounded-md px-3 py-1">
+                                        <span class="text-green-800 text-sm font-medium">
+                                            Winning Bid: $<%= project.selectedBid.amount %>
+                                        </span>
+                                        <% if (project.selectedBid.seller && project.selectedBid.seller.companyName) { %>
+                                        <span class="text-green-600 text-xs ml-2">
+                                            by <%= project.selectedBid.seller.companyName %>
+                                        </span>
+                                        <% } %>
+                                    </div>
+                                    <% } %>
+                                </div>
+
+                                <!-- Action Buttons Based on Round Status -->
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <% if (project.biddingRounds && project.biddingRounds.currentRound === 1.5) { %>
+                                    <a href="/customer/project/<%= project._id %>/round1-selection" 
+                                       class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition duration-300">
+                                        Select Top 3 Bids
+                                    </a>
+                                    <% } else if (project.biddingRounds && project.biddingRounds.currentRound === 2.5) { %>
+                                    <a href="/customer/project/<%= project._id %>/round2-selection" 
+                                       class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition duration-300">
+                                        Select Winner
+                                    </a>
+                                    <% } %>
+                                </div>
+
+                                <!-- NEW: Contract Status and Download Options for Completed Projects -->
+                                <% if (project.contract) { %>
+                                <div class="mt-3 p-3 <%= project.contract.status === 'completed' ? 'bg-purple-50 border border-purple-200' : 'bg-blue-50 border border-blue-200' %> rounded-md">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center text-sm <%= project.contract.status === 'completed' ? 'text-purple-700' : 'text-blue-700' %>">
+                                            <i class="fas fa-file-contract mr-2"></i>
+                                            Contract Status: 
+                                            <span class="font-medium ml-1 capitalize">
+                                                <%= project.contract.status.replace('-', ' ') %>
+                                            </span>
+                                        </div>
+                                        <% if (project.contract.status === 'pending-customer' && !project.contract.customerSignedContract) { %>
+                                        <a href="/customer/project/<%= project._id %>" 
+                                           class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300">
+                                            Upload Contract
+                                        </a>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- Download Options for Completed Contracts -->
+                                    <% if (project.contract.status === 'completed') { %>
+                                    <div class="mt-3 pt-3 border-t border-purple-200">
+                                        <h4 class="font-semibold text-purple-800 text-sm mb-2">Download Certificates & Documents:</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <!-- Customer Certificate -->
+                                            <% if (project.contract.customerCertificate && project.contract.customerCertificate.url) { %>
+                                            <a href="/customer/download-customer-certificate/<%= project.selectedBid._id %>" 
+                                               target="_blank"
+                                               class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 transition duration-300 flex items-center justify-center">
+                                                <i class="fas fa-award mr-2"></i>My Certificate
+                                            </a>
+                                            <% } %>
+
+                                            <!-- /download-customer-certificate/:bidId -->
+                                            
+                                            <!-- Seller Certificate -->
+                                            <% if (project.contract.sellerCertificate && project.contract.sellerCertificate.url) { %>
+                                            <a href="/customer/download-seller-certificate/<%= project.selectedBid._id %>" 
+                                               target="_blank"
+                                               class="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center justify-center">
+                                                <i class="fas fa-user-tie mr-2"></i>Seller Certificate
+                                            </a>
+                                            <% } %>
+                                            
+                                            <!-- Final Certificate -->
+                                            <% if (project.contract.finalCertificate && project.contract.finalCertificate.url) { %>
+                                            <a href="/customer/download-final-certificate/<%= project.selectedBid._id %>" 
+                                               target="_blank"
+                                               class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition duration-300 flex items-center justify-center">
+                                                <i class="fas fa-file-certificate mr-2"></i>Final Certificate
+                                            </a>
+                                            <% } %>
+                                            
+                                            <!-- Customer Contract -->
+                                            <% if (project.contract.customerSignedContract && project.contract.customerSignedContract.url) { %>
+                                            <a href="/customer/download-customer-contract/<%= project.selectedBid._id %>" 
+                                               target="_blank"
+                                               class="bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition duration-300 flex items-center justify-center">
+                                                <i class="fas fa-file-contract mr-2"></i>My Signed Contract
+                                            </a>
+                                            <% } %>
+                                            
+                                            <!-- Seller Contract -->
+                                            <% if (project.contract.sellerSignedContract && project.contract.sellerSignedContract.url) { %>
+                                            <a href="/customer/download-seller-contract/<%= project.selectedBid._id %>" 
+                                               target="_blank"
+                                               class="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition duration-300 flex items-center justify-center">
+                                                <i class="fas fa-user-tie mr-2"></i>Seller Contract
+                                            </a>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Completion Info -->
+                                        <% if (project.contract.adminApprovedAt) { %>
+                                        <div class="mt-2 text-xs text-purple-600">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Project completed on <%= moment(project.contract.adminApprovedAt).format('MMM D, YYYY') %>
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                    <% } %>
+                                </div>
+                                <% } %>
+
+                                <!-- Status Information -->
+                                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <div class="flex items-center text-sm text-blue-700">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        <% if (project.displayStatus === 'completed') { %>
+                                            Project completed successfully! Download your certificates above.
+                                        <% } else if (project.status === 'drafted') { %>
+                                            <% if (project.adminStatus === 'pending') { %>
+                                                Project submitted for admin verification
+                                            <% } else { %>
+                                                Project is in draft mode
+                                            <% } %>
+                                        <% } else if (project.status === 'pending') { %>
+                                            Waiting for admin verification
+                                        <% } else if (project.status === 'active') { %>
+                                            <% if (project.biddingRounds && project.biddingRounds.round1 && project.biddingRounds.round1.endDate) { %>
+                                                Round 1 bidding ends: <%= moment(project.biddingRounds.round1.endDate).format('MMM D, YYYY h:mm A') %>
+                                            <% } else { %>
+                                                Project is active for bidding
+                                            <% } %>
+                                        <% } else if (project.status === 'defected') { %>
+                                            Project requires corrections. Please edit and resubmit.
+                                        <% } else if (project.status === 'failed') { %>
+                                            Project failed to complete
+                                        <% } else { %>
+                                            Project status: <%= project.status || 'Unknown' %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ml-6 flex space-x-2">
+                                <a href="/customer/project/<%= project._id %>" 
+                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm">
+                                    View Details
+                                </a>
+                                
+                                <% if (project.status === 'drafted' || project.adminStatus === 'rejected' || project.adminStatus === 'defected') { %>
+                                <a href="/customer/edit-project/<%= project._id %>"
+                                   class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition duration-300 text-sm">
+                                    Edit
+                                </a>
+                                <% if (project.status === 'drafted') { %>
+                                <form action="/customer/delete-project/<%= project._id %>" method="POST" class="inline">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" 
+                                            onclick="return confirm('Are you sure you want to delete this project? This will also delete all uploaded files.')"
+                                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300 text-sm">
+                                        Delete
+                                    </button>
+                                </form>
+                                <% } %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-12">
+                    <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
+                    <p class="text-gray-500 mb-6">Get started by creating your first project</p>
+                    <a href="/customer/add-project" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        Create Your First Project
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        // Update last updated timestamp
+        setInterval(() => {
+            const now = new Date();
+            const lastUpdated = document.getElementById('last-updated');
+            if (lastUpdated) {
+                lastUpdated.textContent = 'Updated ' + moment(now).fromNow();
+            }
+        }, 60000);
+
+        // Auto-refresh page every 30 seconds for real-time status updates
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+
+        // Client-side date formatting fallback
+        document.addEventListener('DOMContentLoaded', function() {
+            // If moment is not available on server, format dates on client
+            const dateElements = document.querySelectorAll('[data-date]');
+            dateElements.forEach(element => {
+                const dateString = element.getAttribute('data-date');
+                if (dateString && window.moment) {
+                    element.textContent = moment(dateString).format('MMM D, YYYY');
+                }
+            });
+        });
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>
