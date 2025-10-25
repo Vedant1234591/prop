@@ -7,14 +7,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50">
-    <%- include('../partials/header') %>
+<body class="bg-gray-50 pl-3">
+    <%- include('./sideNav') %>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class=" ml-64 max-w-7xl mx-auto px-4">
         <%- include('../partials/flash-messages') %>
 
+        <div>
+            <h1 class="text-4xl font-semibold m-6 text-gray-500">
+                Detailed overview
+            </h1>
+        </div>
+
         <!-- Real-time Status Header -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <!-- <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
@@ -31,44 +37,57 @@
                     </span>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Project Header with Featured Image -->
         <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="flex justify-between items-start mb-4">
-                <div class="flex-1">
-                    <h1 class="text-3xl font-bold text-gray-900"><%= project.title %></h1>
-                    <p class="text-gray-600 mt-2"><%= project.description %></p>
-                </div>
-                <div class="text-right">
-                    <span class="px-4 py-2 rounded-full text-sm font-medium 
-                        <%= project.status === 'drafted' ? 'bg-gray-100 text-gray-800' : '' %>
-                        <%= project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' %>
-                        <%= project.status === 'active' ? 'bg-blue-100 text-blue-800' : '' %>
-                        <%= project.status === 'defected' ? 'bg-red-100 text-red-800' : '' %>
-                        <%= project.status === 'failed' ? 'bg-red-100 text-red-800' : '' %>
-                        <%= project.status === 'completed' ? 'bg-green-100 text-green-800' : '' %>">
-                        <%= project.status.toUpperCase() %>
-                    </span>
-                    
-                    <!-- Admin Verification Status -->
-                    <div class="mt-2">
-                        <% if (project.adminStatus === 'pending') { %>
-                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                            <i class="fas fa-clock mr-1"></i>Pending Verification
-                        </span>
-                        <% } else if (project.adminStatus === 'approved') { %>
-                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                            <i class="fas fa-check-circle mr-1"></i>Approved
-                        </span>
-                        <% } else if (project.adminStatus === 'rejected' || project.adminStatus === 'defected') { %>
-                        <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                            <i class="fas fa-times-circle mr-1"></i><%= project.adminStatus === 'rejected' ? 'Rejected' : 'Defected' %>
-                        </span>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
+          <div class="flex justify-between items-center mb-4 space-x-4">
+  
+  <!-- Title & Description -->
+  <div class="flex-1">
+    <h1 class="text-3xl font-bold text-gray-900"><%= project.title %></h1>
+    <p class="text-gray-600 mt-2"><%= project.description %></p>
+  </div>
+
+  <!-- PROP Badge -->
+  <div class="border border-blue-200 rounded p-2 text-center flex-shrink-0">
+    <h2 class="text-lg uppercase text-gray-600">
+      PROP/<%= new Date(project.createdAt).getFullYear() %>/<%= project._id %>
+    </h2>
+  </div>
+
+  <!-- Status Badges -->
+  <div class="text-right flex flex-col items-end space-y-2">
+    <!-- Project Status -->
+    <span class="px-4 py-2 rounded-full text-sm font-medium 
+      <%= project.status === 'drafted' ? 'bg-gray-100 text-gray-800' : '' %>
+      <%= project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' %>
+      <%= project.status === 'active' ? 'bg-blue-100 text-blue-800' : '' %>
+      <%= project.status === 'defected' ? 'bg-red-100 text-red-800' : '' %>
+      <%= project.status === 'failed' ? 'bg-red-100 text-red-800' : '' %>
+      <%= project.status === 'completed' ? 'bg-green-100 text-green-800' : '' %>">
+      <%= project.status.toUpperCase() %>
+    </span>
+
+    <!-- Admin Verification Status -->
+    <% if (project.adminStatus === 'pending') { %>
+      <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+        <i class="fas fa-clock mr-1"></i>Pending Verification
+      </span>
+    <% } else if (project.adminStatus === 'approved') { %>
+      <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+        <i class="fas fa-check-circle mr-1"></i>Approved
+      </span>
+    <% } else if (project.adminStatus === 'rejected' || project.adminStatus === 'defected') { %>
+      <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+        <i class="fas fa-times-circle mr-1"></i>
+        <%= project.adminStatus === 'rejected' ? 'Rejected' : 'Defected' %>
+      </span>
+    <% } %>
+  </div>
+
+</div>
+
 
             <!-- Featured Image -->
             <% if (project.featuredImage && project.featuredImage.url) { %>
@@ -717,6 +736,7 @@
         });
     </script>
 
-    <%- include('../partials/footer') %>
+    
 </body>
+
 </html>

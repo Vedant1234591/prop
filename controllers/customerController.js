@@ -440,6 +440,11 @@ exports.getNotices = async (req, res) => {
   }
 };
 
+//get support
+exports.getSupport = async (req,res)=>{
+  res.render("customer/support")
+}
+
 // Project Management
 exports.getAddProject = async (req, res) => {
   try {

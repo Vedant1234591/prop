@@ -19,6 +19,7 @@ router.post('/profile/image', upload.single('image'), customerController.updateP
 router.post('/change-password', customerController.changePassword);
 router.get('/messages', customerController.getMessages);
 router.get('/notices', customerController.getNotices);
+router.get('/support', customerController.getSupport);
 
 // Project Management - ENHANCED with verification workflow
 router.get('/add-project', customerController.getAddProject);
