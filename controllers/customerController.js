@@ -424,14 +424,15 @@ exports.getMessages = async (req, res) => {
 // Get Notices Page
 exports.getNotices = async (req, res) => {
   try {
+    const userData = req.session.user || { name: "Customer", email: "" };
+
     const notices = await Notice.find({
-      $or: [{ targetAudience: "all" }, { targetAudience: "customer" }],
+      targetId :userData._id ,
       isActive: true,
       startDate: { $lte: new Date() },
       $or: [{ endDate: { $gte: new Date() } }, { endDate: null }],
     }).sort({ createdAt: -1 });
 
-    const userData = req.session.user || { name: "Customer", email: "" };
 
     res.render("customer/notices", {
       user: userData,
