@@ -63,8 +63,11 @@
       .text-secondary-custom {
         color: #e9e2b3;
       }
+      header a {
+        text-decoration: none;
+      }
 
-      /* Carousel Styles */
+      /* === Carousel Styles === */
       .carousel-item img {
         width: 100%;
         height: 100vh;
@@ -91,6 +94,34 @@
         align-items: center;
         text-align: center;
         z-index: 5;
+      }
+      .carousel-caption h2,
+      .carousel-caption p,
+      .carousel-caption .btn {
+        animation: fadeInUp 1.5s ease forwards;
+        opacity: 0;
+      }
+      @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Carousel Controls */
+      .carousel-control-prev,
+      .carousel-control-next {
+        width: 3rem;
+        height: 3rem;
+        background-color: #e9e2b3;
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .carousel-control-prev-icon,
+      .carousel-control-next-icon {
+        filter: invert(1);
       }
 
       /* Card Hover Effects */
@@ -120,17 +151,17 @@
       <div class="carousel-inner">
         <% carouselItems.forEach((item, index) => { %>
         <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-          <img src="<%= item.img %>" class="d-block w-100" alt="<%= item.title %>" />
+          <img src="<%= item.img %>" alt="<%= item.title %>" />
           <div class="carousel-caption px-3">
-            <h2 class="text-white display-4 mb-3" style="text-shadow:2px2px4px rgba(0,0,0,0.6)">
+            <h2 class="text-white display-4 mb-3 text-4xl md:text-5xl" style="text-shadow:2px2px4px rgba(0,0,0,0.6)">
               <%= item.title %>
             </h2>
-            <p class="text-white mb-4 fs-5" style="text-shadow:1px1px3px rgba(0,0,0,0.6)">
+            <p class="text-white mb-4 text-lg md:text-xl max-w-2xl" style="text-shadow:1px1px3px rgba(0,0,0,0.6)">
               <%= item.desc %>
             </p>
-            <div class="d-flex flex-wrap justify-content-center gap-2">
-              <a href="#" class="btn btn-primary-custom px-4 py-2">Talk to our Team</a>
-              <a href="/customer/add-project" class="btn btn-secondary px-4 py-2" style="background-color:#e9e2b3; color:#000;">Register Your Project</a>
+            <div class="d-flex flex-wrap justify-center gap-2">
+              <a href="#" class="btn text-white px-5 py-3" style="background-color:#40788e;border-radius:0.5rem;">Talk to our Team</a>
+              <a href="/customer/add-project" class="btn text-dark px-5 py-3" style="background-color:#e9e2b3;border-radius:0.5rem;">Register Your Project</a>
             </div>
           </div>
         </div>
@@ -144,54 +175,108 @@
       </button>
     </div>
 
+
+
     <!-- About Section -->
-    <section class="container py-5">
-      <div class="row g-5 align-items-center">
-        <div class="col-xl-6 position-relative">
-          <div class="d-flex position-relative">
-            <img src="/images/landing/about.jpg" class="img-fluid w-50 rounded shadow me-n3" alt="About Us" />
-            <img src="/images/landing/about-1.jpg" class="img-fluid w-50 rounded shadow position-absolute top-0 start-50 translate-middle-x" style="z-index:2;" alt="About Us" />
-            <img src="/images/landing/about-2.jpg" class="img-fluid w-50 rounded shadow position-absolute top-50 start-100 translate-middle" style="z-index:1;" alt="About Us" />
-          </div>
-        </div>
-        <div class="col-xl-6">
-          <h5 class="text-secondary-custom text-uppercase mb-2">Propload: India’s Leading Online Bidding Platform</h5>
-          <h2 class="text-primary-custom mb-4">Making Your Vision Come True with Simplicity</h2>
-          <p class="fs-5 mb-4">
-            Connecting you with the right professionals to bring your project to life, at the best price.
-          </p>
-
-          <!-- Features -->
-          <div class="row g-4">
-            <div class="col-lg-6 d-flex align-items-center">
-              <div class="bg-secondary-custom rounded p-3 me-3">
-                <i class="fas fa-user-shield fa-2x text-primary-custom"></i>
-              </div>
-              <div>
-                <h5 class="mb-1">Easy Project Registration</h5>
-                <p class="mb-0">Register your project effortlessly and get connected with professionals.</p>
-              </div>
-            </div>
-            <div class="col-lg-6 d-flex align-items-center">
-              <div class="bg-secondary-custom rounded p-3 me-3">
-                <i class="fas fa-users-cog fa-2x text-primary-custom"></i>
-              </div>
-              <div>
-                <h5 class="mb-1">Smart Professional Filtering</h5>
-                <p class="mb-0">Get matched with verified experts suited to your project needs.</p>
-              </div>
+    <section class="container-fluid py-5">
+      <div class="container py-5">
+        <div class="row g-5 align-items-center">
+          <!-- Left: Image Cluster -->
+          <div
+            class="col-xl-6 position-relative wow fadeInLeft"
+            data-wow-delay="0.1s"
+          >
+            <div class="d-flex position-relative">
+              <img
+                src="/images/landing/about.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="z-index: 3; margin-right: -50px"
+                alt="About Us"
+              />
+              <img
+                src="/images/landing/about-1.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="
+                  z-index: 2;
+                  margin-left: -50px;
+                  position: absolute;
+                  top: 20px;
+                  left: 50px;
+                "
+                alt="About Us"
+              />
+              <img
+                src="/images/landing/about-2.jpg"
+                class="img-fluid w-50 rounded shadow"
+                style="z-index: 1; position: absolute; top: 60px; left: 100px"
+                alt="About Us"
+              />
             </div>
           </div>
 
-          <!-- Checklist -->
-          <div class="row mt-4">
-            <div class="col-lg-6">
-              <p><i class="fas fa-check text-secondary-custom me-2"></i>Cost-Effective Solutions</p>
-              <p><i class="fas fa-check text-secondary-custom me-2"></i>Time-Saving</p>
+          <!-- Right: Text Content -->
+          <div class="col-xl-6 wow fadeInRight" data-wow-delay="0.1s">
+            <h5 class="text-secondary-custom text-uppercase mb-2">
+              Propload: India’s Leading Online Bidding Platform
+            </h5>
+            <h2 class="text-primary-custom mb-4">
+              Making Your Vision Come True with Simplicity
+            </h2>
+            <p class="fs-5 mb-4">
+              Connecting you with the right professionals to bring your project
+              to life, at the best price.
+            </p>
+
+            <!-- Features / Icons -->
+            <div class="row g-4">
+              <div class="col-lg-6 d-flex align-items-center">
+                <div class="bg-secondary-custom rounded p-3 me-3">
+                  <i class="fas fa-user-shield fa-2x text-primary-custom"></i>
+                </div>
+                <div>
+                  <h5 class="mb-1">Easy Project Registration</h5>
+                  <p class="mb-0">
+                    Register your project effortlessly and get connected with
+                    professionals.
+                  </p>
+                </div>
+              </div>
+              <div class="col-lg-6 d-flex align-items-center">
+                <div class="bg-secondary-custom rounded p-3 me-3">
+                  <i class="fas fa-users-cog fa-2x text-primary-custom"></i>
+                </div>
+                <div>
+                  <h5 class="mb-1">Smart Professional Filtering</h5>
+                  <p class="mb-0">
+                    Get matched with verified experts suited to your project
+                    needs.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div class="col-lg-6">
-              <p><i class="fas fa-check text-secondary-custom me-2"></i>Nationwide Reach</p>
-              <p><i class="fas fa-check text-secondary-custom me-2"></i>Trusted Professionals</p>
+
+            <!-- Checklist -->
+            <div class="row mt-4">
+              <div class="col-lg-6">
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Cost-Effective Solutions
+                </p>
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Time-Saving
+                </p>
+              </div>
+              <div class="col-lg-6">
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i
+                  >Nationwide Reach
+                </p>
+                <p>
+                  <i class="fas fa-check text-secondary-custom me-2"></i>Trusted
+                  Professionals
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -199,30 +284,130 @@
     </section>
 
     <!-- Why Choose Us Section -->
-    <section class="py-5 bg-light">
+    <section class="py-5" style="background-color: #f7f8fb">
       <div class="container text-center">
-        <p class="text-uppercase fw-semibold mb-2" style="color: #40788e; letter-spacing: 2px">Why Us</p>
-        <h2 class="fw-bold mb-5" style="color: #40788e">Why Choose Us</h2>
+        <p
+          class="text-uppercase fw-semibold mb-2"
+          style="color: #40788e; letter-spacing: 2px"
+        >
+          Why Us
+        </p>
+        <h2 class="fw-bold mb-5 display-5" style="color: #40788e">
+          Why Choose Us
+        </h2>
+
         <div class="row g-4">
-          <% /* Repeat cards as in your original code */ %>
+          <!-- Card 1 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i class="fas fa-tasks fa-2x" style="color: #e9e4b5"></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Seamless Project Management
+              </h5>
+              <p class="text-muted fs-5">
+                Easily manage your project from start to finish with an
+                intuitive platform that streamlines the process.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i class="fas fa-tags fa-2x" style="color: #e9e4b5"></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Competitive Pricing for Your Project
+              </h5>
+              <p class="text-muted fs-5">
+                Get the best value for your project by connecting with multiple
+                professionals who offer competitive bids.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 custom-card">
+              <div class="d-flex justify-content-center mb-4">
+                <div
+                  class="rounded-circle d-flex justify-content-center align-items-center"
+                  style="background-color: #40788e; width: 90px; height: 90px"
+                >
+                  <i
+                    class="fas fa-network-wired fa-2x"
+                    style="color: #e9e4b5"
+                  ></i>
+                </div>
+              </div>
+              <h5 class="fw-semibold mb-3 fs-4" style="color: #40788e">
+                Nationwide Network of Experts
+              </h5>
+              <p class="text-muted fs-5">
+                Access a vast network of verified professionals across India,
+                ensuring you find the right match for your needs.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
+    <style>
+      /* Hover + transition effects */
+      .custom-card {
+        transition: all 0.4s ease;
+        border-radius: 15px;
+      }
+
+      .custom-card:hover {
+        transform: translateY(-10px) scale(1.03);
+        box-shadow: 0 10px 30px rgba(64, 120, 142, 0.3);
+      }
+
+      .custom-card:hover i {
+        transform: rotate(10deg) scale(1.1);
+        transition: transform 0.3s ease;
+      }
+
+      .custom-card i {
+        transition: transform 0.3s ease;
+      }
+    </style>
+
     <!-- Services Section -->
-    <section class="container py-5">
+    <section class="container py-5 bg-light">
       <div class="text-center mb-5">
-        <h2 class="text-primary-custom">Our Services</h2>
+        <h2 class="text-4xl text-primary-custom">Our Services</h2>
       </div>
       <div class="row g-4">
         <% services.forEach(service => { %>
         <div class="col-lg-3 col-md-6">
           <div class="card h-100 text-center">
-            <img src="<%= service.img %>" class="card-img-top" alt="<%= service.title %>" />
+            <img
+              src="<%= service.img %>"
+              class="card-img-top"
+              alt="<%= service.title %>"
+            />
             <div class="card-body">
               <h5 class="card-title"><%= service.title %></h5>
               <p class="card-text"><%= service.desc %></p>
-              <a href="/customer/project-form/" class="btn btn-primary-custom mt-2">Register Project</a>
+              <a href="/customer/project-form/" class="mt-3 btn btn-primary-custom"
+                >Register Project</a
+              >
             </div>
           </div>
         </div>
@@ -232,19 +417,58 @@
 
     <!-- Blog Section -->
     <section class="container py-5">
+      <!-- Section Header -->
       <div class="text-center mb-5">
-        <p class="text-uppercase text-muted mb-2" style="letter-spacing: 1px">News & Blog</p>
-        <h2 class="fw-bold" style="color: #2f6c7b; font-size: 2.8rem">Our Latest News Post And Articles?</h2>
+        <p class="text-uppercase text-muted mb-2" style="letter-spacing: 1px">
+          News & Blog
+        </p>
+        <h2 class="fw-bold" style="color: #2f6c7b; font-size: 2.8rem">
+          Our Latest News Post And <br />Articles?
+        </h2>
       </div>
+
+      <!-- Blog Cards -->
       <div class="row g-4 justify-content-center">
         <% blogs.forEach(blog => { %>
         <div class="col-md-6 col-lg-4">
           <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
-            <img src="<%= blog.img %>" class="card-img-top" alt="<%= blog.title %>" style="height: 260px; object-fit: cover" />
+            <!-- Blog Image -->
+            <img
+              src="<%= blog.img %>"
+              class="card-img-top"
+              alt="<%= blog.title %>"
+              style="height: 260px; object-fit: cover"
+            />
+
+            <!-- Card Body -->
             <div class="card-body">
-              <p class="text-muted mb-2" style="font-size: 0.95rem"><i class="bi bi-calendar-event me-2"></i><%= blog.date %></p>
-              <h5 class="fw-semibold mb-3" style="color: #2f6c7b"><%= blog.title %></h5>
-              <a href="#" class="btn btn-primary-custom">Read More</a>
+              <!-- Date -->
+              <p class="text-muted mb-2" style="font-size: 0.95rem">
+                <i class="bi bi-calendar-event me-2"></i>
+                <%= blog.date %>
+              </p>
+
+              <!-- Title -->
+              <h5 class="fw-semibold mb-3" style="color: #2f6c7b">
+                <%= blog.title %>
+              </h5>
+
+              <!-- Read More -->
+              <a
+                href="#"
+                class="btn d-inline-block fw-semibold"
+                style="
+                  background-color: #2f6c7b;
+                  color: #fff;
+                  border: none;
+                  padding: 10px 24px;
+                  border-radius: 6px;
+                  text-transform: capitalize;
+                  transition: all 0.3s ease;
+                "
+              >
+                Read More
+              </a>
             </div>
           </div>
         </div>
@@ -263,7 +487,13 @@
           <div class="card p-3 h-100">
             <p>"<%= testimonial.review %>"</p>
             <div class="d-flex align-items-center mt-3">
-              <img src="<%= testimonial.img %>" alt="<%= testimonial.name %>" class="rounded-circle me-3" width="60" height="60" />
+              <img
+                src="<%= testimonial.img %>"
+                alt="<%= testimonial.name %>"
+                class="rounded-circle me-3"
+                width="60"
+                height="60"
+              />
               <div>
                 <h6 class="mb-0"><%= testimonial.name %></h6>
                 <small class="text-muted"><%= testimonial.profession %></small>
@@ -275,8 +505,16 @@
       </div>
     </section>
 
-    <!-- Footer -->
-    <%- include('./partials/landingFooter') %>
+    <!-- Footer Section -->
+  
+
+     <%- include('./partials/landingFooter') %>
+
+    <!-- FontAwesome CDN -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
