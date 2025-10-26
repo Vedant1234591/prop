@@ -1,76 +1,142 @@
-<link rel="stylesheet" href="/css/landing.css" />
 
-<header class="container-fluid py-3">
-  <div class="container d-flex justify-content-between align-items-center">
-    <a href="/">
-      <img
-        src="/images/landing/logo.png"
-        alt="Propload Logo"
-        style="height: 50px"
-      />
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* === Propload Custom Styles === */
+  .btn-primary-custom {
+    background-color: #40788e;
+    color: white;
+  }
+  .btn-primary-custom:hover {
+    background-color: #2f5e6b;
+    color: white;
+  }
+  .text-primary-custom {
+    color: #40788e;
+  }
+  .text-secondary-custom {
+    color: #e9e2b3;
+  }
+  header a {
+    text-decoration: none;
+  }
+</style>
+
+<header class="w-full bg-white shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-1 flex justify-between items-center">
+    <!-- Logo -->
+    <a href="/" class="flex items-center ">
+      <img src="/images/landing/logo.png" alt="Propload Logo" class="h-12" />
     </a>
-    <nav>
-      <ul class="d-flex list-unstyled mb-0">
-        <li class="mx-2">
-          <a href="/" class="text-primary-custom">Home</a>
-        </li>
-        <li class="mx-2">
-          <a href="#" class="text-primary-custom">About Us</a>
-        </li>
-        <li class="mx-2">
-          <a href="#" class="text-primary-custom">Our Blogs</a>
-        </li>
-        <li class="mx-2">
-          <a href="#" class="text-primary-custom">Store</a>
-        </li>
-        <li class="mx-2">
-          <a href="#" class="text-primary-custom">Contact Us</a>
-        </li>
-      </ul>
-    </nav>
 
-    <div class="d-flex align-items-center">
-      <div class="d-flex align-items-center">
-        <a href="/auth/login" class="btn btn-primary-custom mx-1">Login</a>
+    <!-- Hamburger Button (Mobile) -->
+    <button
+      id="menu-btn"
+      class="block md:hidden text-[#40788e] focus:outline-none"
+    >
+      <svg
+        class="w-7 h-7"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
 
-        <div class="dropdown mx-1">
-          <button
-            class="btn btn-primary-custom dropdown-toggle"
-            type="button"
-            id="joinDropdown"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Sign up
-          </button>
-          <ul class="dropdown-menu" aria-labelledby="joinDropdown">
-            <li>
-              <a class="dropdown-item" href="/auth/register?role=seller"
-                >Join as Seller</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="/auth/register?role=customer"
-                >Join as Customer</a
-              >
-            </li>
-          </ul>
-        </div>
+    <!-- Navigation -->
+    <nav
+      id="menu"
+      class="hidden md:flex flex-col py-3  md:flex-row md:items-center md:space-x-6 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none z-50
+      text-center md:text-left items-center justify-center py-2 md:py-0"
+    >
+      <!-- Nav Links -->
+      <div class="text-md font-semibold flex flex-col md:flex-row items-center justify-center mr-5 gap-3 md:gap-6 w-full">
+        <a href="/" class="text-primary-custom hover:text-[#2f5e6b] py-2">Home</a>
+        <a href="#" class="text-primary-custom hover:text-[#2f5e6b] py-2">About Us</a>
+        <a href="#" class="text-primary-custom hover:text-[#2f5e6b] py-2">Our Blogs</a>
+        <a href="#" class="text-primary-custom hover:text-[#2f5e6b] py-2">Store</a>
+        <a href="#" class="text-primary-custom hover:text-[#2f5e6b] py-2">Contact Us</a>
       </div>
 
-      <style>
-        @media (min-width: 768px) {
-          .dropdown:hover .dropdown-menu {
-            display: block;
-            margin-top: 0;
-          }
-        }
+      <!-- Buttons -->
+      <div class="flex flex-col md:flex-row items-center justify-center gap-2 ml-3 mt-1 md:mt-0 w-full md:w-auto">
+        <a
+          href="/auth/login"
+          class="btn-primary-custom px-6 py-2 rounded-md text-center font-medium w-40 md:w-auto"
+        >
+          Login
+        </a>
 
-        /* Optional: smooth hover feel */
-        .dropdown-menu {
-          transition: all 0.15s ease;
-        }
-      </style>
-    </div>
+        <div class="relative w-40 md:w-auto">
+          <button
+            id="signup-btn"
+            class="btn-primary-custom px-6 py-2 rounded-md flex justify-center items-center w-full"
+          >
+            Sign_up
+            <svg class="w-5 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- Dropdown -->
+          <div
+            id="signup-dropdown"
+            class="hidden absolute left-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg w-44 text-gray-700"
+          >
+            <a
+              href="/auth/register?role=seller"
+              class="block px-4 py-2 hover:bg-[#e9e2b3] hover:text-[#2f5e6b]"
+              >Join as Seller</a
+            >
+            <a
+              href="/auth/register?role=customer"
+              class="block px-4 py-2 hover:bg-[#e9e2b3] hover:text-[#2f5e6b]"
+              >Join as Customer</a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
   </div>
 </header>
+
+<!-- JS -->
+<script>
+  const menuBtn = document.getElementById("menu-btn");
+  const menu = document.getElementById("menu");
+  const signupBtn = document.getElementById("signup-btn");
+  const signupDropdown = document.getElementById("signup-dropdown");
+
+  // Toggle mobile menu
+  menuBtn.addEventListener("click", () => {
+    menu.classList.toggle("hidden");
+  });
+
+  // Toggle signup dropdown
+  signupBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    signupDropdown.classList.toggle("hidden");
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!signupBtn.contains(e.target)) {
+      signupDropdown.classList.add("hidden");
+    }
+  });
+</script>

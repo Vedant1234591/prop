@@ -1,179 +1,187 @@
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-  <style>
-    /* Brand colors provided by you */
-    :root {
-      --propload-primary: #e9e2b3;
-      --propload-secondary: #2f6c7b;
-      --surface: #ffffff;
-      --muted: #6b7280;
-      --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
-    }
+<style>
+  :root {
+    --propload-primary: #e9e2b3;
+    --propload-secondary: #2f6c7b;
+    --surface: #ffffff;
+    --muted: #6b7280;
+    --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+  }
 
+  .logout-btn {
+    background: var(--surface);
+    color: var(--propload-secondary);
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    transition: background .2s, color .2s;
+  }
+  .logout-btn:hover {
+    background: var(--propload-primary);
+    color: #1f2937;
+  }
 
-.logout-btn {
-  background: #ffffff; /* keep white background */
-  color: var(--propload-secondary); /* text uses primary color */
-  border: 1px solid rgba(15,23,42,0.04);
-  transition: background .2s, color .2s;
-}
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid rgba(15, 23, 42, 0.04);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 1.25rem;
+    transition: transform .3s ease;
+  }
 
-.logout-btn:hover {
-  background: var(--propload-primary); /* hover background uses primary */
-  color: #1f2937; /* text color switches to dark for contrast */
-}
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    padding: .625rem .75rem;
+    border-radius: .75rem;
+    color: var(--propload-secondary);
+    font-weight: 600;
+    transition: background .18s ease, transform .12s ease, color .12s ease;
+  }
+  .menu-item:hover {
+    background: var(--propload-primary);
+    color: var(--propload-secondary);
+    transform: translateY(-2px);
+  }
+  .menu-item.active {
+    background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03));
+    color: var(--propload-secondary);
+    box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04);
+  }
 
+  .menu-item i {
+    width: 1.25rem;
+    text-align: center;
+    font-size: 1.05rem;
+  }
 
-    /* Layout */
-    .sidebar {
-      width: 280px;
-      min-width: 280px;
-      background: var(--surface);
-      border-right: 1px solid rgba(15, 23, 42, 0.04);
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      z-index: 40;
-      padding: 1.25rem;
-    }
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 40;
+    display: none;
+  }
+  .drawer-backdrop.show { display: block; }
 
-    .content-area {
-      margin-left: 280px;
-      transition: margin-left .25s ease;
-    }
+  .muted { color: var(--muted); }
+</style>
 
-    @media (max-width: 1024px) {
-      .sidebar { transform: translateX(0); position: fixed; left: 0; top: 0; bottom: 0; }
-      .content-area { margin-left: 0; }
-    }
+<!-- Sidebar -->
+<aside id="sidebar"
+  class="sidebar fixed top-0 left-0 h-full bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
+  aria-hidden="true">
 
-    /* Card */
-    .card {
-      background: var(--surface);
-      border-radius: 10px;
-      box-shadow: var(--card-shadow);
-      border: 1px solid rgba(15, 23, 42, 0.03);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(47,76,86,0.08);
-    }
-
-    /* Sidebar menu */
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: .875rem;
-      padding: .625rem .75rem;
-      border-radius: .75rem;
-      color: var(--propload-secondary);
-      font-weight: 600;
-      transition: background .18s ease, transform .12s ease, color .12s ease;
-    }
-    .menu-item:hover {
-      background: var(--propload-primary);
-      color: var(--propload-secondary);
-      transform: translateY(-2px);
-    }
-    .menu-item.active {
-      background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03));
-      color: var(--propload-secondary);
-      box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04);
-    }
-    .menu-item i {
-      width: 1.25rem;
-      text-align: center;
-      font-size: 1.05rem;
-    }
-
-    /* small helpers */
-    .muted { color: var(--muted); }
-    .status-badge { font-weight:700; font-size:.75rem; padding:.25rem .5rem; border-radius:999px; display:inline-block; }
-
-    /* table row hover */
-    .table-row-hover tbody tr:hover { background: #fbfdff; }
-
-    /* responsive stats grid tweak */
-    @media (max-width: 640px) {
-      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    /* mobile drawer overlay */
-    .drawer-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 30;
-      display: none;
-    }
-    .drawer-backdrop.show { display:block; }
-
-    /* Latest notices hover */
-    .notice-item {
-      cursor: pointer;
-      transition: background .15s ease;
-    }
-    .notice-item:hover {
-      background: #f9fafb;
-    }
-  </style>
- 
-
-
-
-
- 
- 
- <aside id="sidebar" class="sidebar -translate-x-full fixed top-0 left-0 h-full w-64 bg-white shadow-lg transition-transform duration-300 z-50" aria-hidden="true">
-
-
-    <!-- to test -->
-
-    <div class="flex flex-col h-full">
-      <!-- Logo + Profile clickable -->
-      <div class="flex items-center justify-between mb-6">
-        <div class=" items-center cursor-pointer" onclick="window.location.href='/customer/profile'">
-          <img src="/images/landing/logo.png" alt="Propload" class="h-12 w-auto object-contain" onerror="this.style.display='none'">
-         
-         <div class="flex items-center gap-2">
-  <div class="ml-3 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
-    <i class="fas fa-user" style="color: var(--propload-secondary);"></i>
-  </div>
-  <div class="text-s muted">Customer</div>
-</div>
-
+  <div class="flex flex-col h-full">
+    <!-- Logo + Profile -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="cursor-pointer" onclick="window.location.href='/customer/profile'">
+        <img src="/images/landing/logo.png" alt="Propload"
+          class="h-12 w-auto object-contain" onerror="this.style.display='none'">
+        <div class="flex items-center gap-2 mt-2">
+          <div class="ml-3 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
+            <i class="fas fa-user" style="color: var(--propload-secondary);"></i>
+          </div>
+          <div class="text-s muted">Customer</div>
         </div>
-        <button id="sidebarCloseBtn" class="lg:hidden p-2 rounded-md text-slate-500" aria-label="Close menu" title="Close menu">
-          <i class="fas fa-times"></i>
-        </button>
       </div>
 
-      <!-- Navigation -->
-      <nav class="flex-1 overflow-y-auto">
-        <ul class="space-y-1">
-          <li><a href="/customer/dashboard" class="menu-item <%= (typeof active !== 'undefined' && active==='dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
-          <li><a href="/customer/my-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='my-projects') ? 'active' : '' %>"><i class="fas fa-folder-open"></i><span>My Projects</span></a></li>
-          <li><a href="/customer/Active-projects" class="menu-item <%= (typeof active !== 'undefined' && active==='Active-projects') ? 'active' : '' %>"><i class="fas fa-trophy"></i><span>Active Projects</span></a></li>
-          <li><a href="/customer/add-project" class="menu-item <%= (typeof active !== 'undefined' && active==='add-project') ? 'active' : '' %>"><i class="fas fa-plus-circle"></i><span>Add Project</span></a></li>
-          <li><a href="/customer/notices" class="menu-item <%= (typeof active !== 'undefined' && active==='notices') ? 'active' : '' %>"><i class="fas fa-bell"></i><span>Notices</span></a></li>
-          <li class="mt-4"><a href="/customer/support" class="menu-item"><i class="fas fa-headset"></i><span>Support</span></a></li>
-        </ul>
-      </nav>
-
-      <!-- Footer actions (logout) -->
-      <div class="mt-6">
-<form action="/auth/logout" method="post" class="inline-block w-full">
-  <button type="submit" class="w-full text-left px-3 py-2 rounded-md font-semibold logout-btn">
-    <i class="fas fa-sign-out-alt mr-3"></i>
-    <span>Logout</span>
-  </button>
-</form>
-
-
-      </div>
+      <button id="sidebarCloseBtn" class="lg:hidden p-2 rounded-md text-slate-500"
+        aria-label="Close menu" title="Close menu">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-  </aside>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto">
+      <ul class="space-y-1">
+        <li><a href="/customer/dashboard"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='dashboard') ? 'active' : '' %>">
+            <i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+        <li><a href="/customer/my-projects"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='my-projects') ? 'active' : '' %>">
+            <i class="fas fa-folder-open"></i><span>My Projects</span></a></li>
+        <li><a href="/customer/Active-projects"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='Active-projects') ? 'active' : '' %>">
+            <i class="fas fa-trophy"></i><span>Active Projects</span></a></li>
+        <li><a href="/customer/add-project"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='add-project') ? 'active' : '' %>">
+            <i class="fas fa-plus-circle"></i><span>Add Project</span></a></li>
+        <li><a href="/customer/notices"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='notices') ? 'active' : '' %>">
+            <i class="fas fa-bell"></i><span>Notices</span></a></li>
+        <li class="mt-4"><a href="/customer/support" class="menu-item">
+            <i class="fas fa-headset"></i><span>Support</span></a></li>
+      </ul>
+    </nav>
+
+    <!-- Footer / Logout -->
+    <div class="mt-6">
+      <form action="/auth/logout" method="post" class="inline-block w-full">
+        <button type="submit" class="w-full text-left px-3 py-2 rounded-md font-semibold logout-btn">
+          <i class="fas fa-sign-out-alt mr-3"></i><span>Logout</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</aside>
+
+<!-- Backdrop for Mobile -->
+<div id="drawerBackdrop" class="bg-red-200 drawer-backdrop hidden lg:hidden"></div>
+
+<!-- Mobile Sidebar Toggle Button -->
+ <!-- <button id="openSidebarBtn"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-100 shadow-sm lg:hidden">
+                <i class="fas fa-bars" style="color:var(--propload-secondary)"></i>
+              </button> -->
+
+
+<button id="openSidebarBtn"
+  class="fixed top-1 left-1 z-50 lg:hidden  text-white p-2 rounded-md shadow-md inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-100 shadow-sm lg:hidden">
+  <i class="fas fa-bars" style="color:var(--propload-secondary)"></i>
+</button>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("sidebar");
+  const openBtn = document.getElementById("openSidebarBtn");
+  const closeBtn = document.getElementById("sidebarCloseBtn");
+  const backdrop = document.getElementById("drawerBackdrop");
+
+  const openSidebar = () => {
+    sidebar.classList.remove("-translate-x-full");
+    backdrop.classList.add("show");
+    document.body.classList.add("overflow-hidden");
+    openBtn.classList.add("hidden");
+  };
+
+  const closeSidebar = () => {
+    sidebar.classList.add("-translate-x-full");
+    backdrop.classList.remove("show");
+    document.body.classList.remove("overflow-hidden");
+    openBtn.classList.remove("hidden");
+  };
+
+  openBtn.addEventListener("click", openSidebar);
+  closeBtn.addEventListener("click", closeSidebar);
+  backdrop.addEventListener("click", closeSidebar);
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 1024) {
+      sidebar.classList.remove("-translate-x-full");
+      backdrop.classList.remove("show");
+      document.body.classList.remove("overflow-hidden");
+      openBtn.classList.remove("hidden");
+    } else {
+      sidebar.classList.add("-translate-x-full");
+    }
+  });
+});
+</script>
