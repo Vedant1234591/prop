@@ -1,6 +1,8 @@
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
+const path = require('path');
+
 
 // Main Cloudinary storage configuration
 const storage = new CloudinaryStorage({
@@ -232,41 +234,171 @@ const uploadSingle = multer({
 // Contract documents upload - ENHANCED
 // ✅ ENHANCED Contract documents upload - FIXED
 // Make sure the uploadContracts configuration is correct:
+// const uploadContracts = multer({
+//   storage: new CloudinaryStorage({
+//     cloudinary: cloudinary,
+//     params: {
+
+//       folder: 'propload/contracts',
+//       resource_type: 'auto', // Allow all resource types
+//       public_id: (req, file) => {
+//         console.log('📤 Contract upload detected:', {
+//           originalName: file.originalname,
+//           mimetype: file.mimetype,
+//           path: req.path,
+//           baseUrl: req.baseUrl
+//         });
+        
+//         const timestamp = Date.now();
+//         const random = Math.random().toString(36).substring(2, 15);
+//         const originalName = file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+        
+//         // Determine if it's customer or seller upload
+//         let userType = 'unknown';
+//         if (req.baseUrl && req.baseUrl.includes('/customer')) {
+//           userType = 'customer';
+//         } else if (req.baseUrl && req.baseUrl.includes('/seller')) {
+//           userType = 'seller';
+//         }
+        
+//         const public_id = `contract_${userType}_${originalName}_${timestamp}_${random}`;
+//         console.log('Generated public_id:', public_id);
+//         return public_id;
+//       }
+//     }
+//   }),
+//   fileFilter: (req, file, cb) => {
+//     console.log('🔍 Contract file filter checking:', file.mimetype, file.originalname);
+    
+//     const allowedTypes = [
+//       'application/pdf',
+//       'application/msword',
+//       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+//       'image/jpeg',
+//       'image/jpg',
+//       'image/png'
+//     ];
+    
+//     if (allowedTypes.includes(file.mimetype)) {
+//       console.log('✅ Contract document accepted:', file.mimetype);
+//       cb(null, true);
+//     } else {
+//       console.log('❌ Contract document rejected:', file.mimetype);
+//       cb(new Error('Only PDF, Word documents, and images are allowed for contracts'), false);
+//     }
+//   },
+//   limits: {
+//     fileSize: 10 * 1024 * 1024, // 10MB
+//     files: 1
+//   }
+// });
+
+// const uploadContracts = multer({
+//   storage: new CloudinaryStorage({
+//     cloudinary: cloudinary,
+//     params: async (req, file) => {
+//       console.log('📤 Contract upload detected:', {
+//         originalName: file.originalname,
+//         mimetype: file.mimetype,
+//         path: req.path,
+//         baseUrl: req.baseUrl
+//       });
+
+//       // Dynamically determine resource type
+//       let resource_type = 'image';
+//       if (!file.mimetype.startsWith('image/')) {
+//         resource_type = 'raw'; // ✅ For PDFs, DOCX, etc.
+//       }
+
+//       // Determine folder
+//       const folder = 'propload/contracts';
+
+//       // Generate unique ID
+//       const timestamp = Date.now();
+//       const random = Math.random().toString(36).substring(2, 15);
+//       const originalName = file.originalname
+//         .split('.')[0]
+//         .replace(/[^a-zA-Z0-9]/g, '_');
+
+//       // Determine if it's customer or seller
+//       let userType = 'unknown';
+//       if (req.baseUrl?.includes('/customer')) userType = 'customer';
+//       else if (req.baseUrl?.includes('/seller')) userType = 'seller';
+
+//       const public_id = `contract_${userType}_${originalName}_${timestamp}_${random}`;
+//       console.log('Generated public_id:', public_id);
+//       console.log('Detected resource_type:', resource_type);
+
+//       return {
+//         folder,
+//         resource_type,
+//         public_id
+//       };
+//     }
+//   }),
+//   fileFilter: (req, file, cb) => {
+//     console.log('🔍 Contract file filter checking:', file.mimetype, file.originalname);
+
+//     const allowedTypes = [
+//       'application/pdf',
+//       'application/msword',
+//       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+//       'image/jpeg',
+//       'image/jpg',
+//       'image/png'
+//     ];
+
+//     if (allowedTypes.includes(file.mimetype)) {
+//       console.log('✅ Contract document accepted:', file.mimetype);
+//       cb(null, true);
+//     } else {
+//       console.log('❌ Contract document rejected:', file.mimetype);
+//       cb(new Error('Only PDF, Word documents, and images are allowed for contracts'), false);
+//     }
+//   },
+//   limits: {
+//     fileSize: 10 * 1024 * 1024, // 10MB
+//     files: 1
+//   }
+// });
+
+
+ // Make sure this is at the top
+
 const uploadContracts = multer({
   storage: new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: {
-      folder: 'propload/contracts',
-      resource_type: 'auto', // Allow all resource types
-      public_id: (req, file) => {
-        console.log('📤 Contract upload detected:', {
-          originalName: file.originalname,
-          mimetype: file.mimetype,
-          path: req.path,
-          baseUrl: req.baseUrl
-        });
-        
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 15);
-        const originalName = file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
-        
-        // Determine if it's customer or seller upload
-        let userType = 'unknown';
-        if (req.baseUrl && req.baseUrl.includes('/customer')) {
-          userType = 'customer';
-        } else if (req.baseUrl && req.baseUrl.includes('/seller')) {
-          userType = 'seller';
-        }
-        
-        const public_id = `contract_${userType}_${originalName}_${timestamp}_${random}`;
-        console.log('Generated public_id:', public_id);
-        return public_id;
-      }
+    params: async (req, file) => {
+      console.log('📤 Contract upload detected:', {
+        originalName: file.originalname,
+        mimetype: file.mimetype
+      });
+
+      // Resource type
+      let resource_type = file.mimetype.startsWith('image/') ? 'image' : 'raw';
+
+      // Folder
+      const folder = 'propload/contracts';
+
+      // Generate public_id without extension (Cloudinary adds extension automatically for raw)
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      const baseName = path.basename(file.originalname, path.extname(file.originalname))
+                       .replace(/[^a-zA-Z0-9]/g, '_');
+      const userType = req.baseUrl?.includes('/customer') ? 'customer'
+                       : req.baseUrl?.includes('/seller') ? 'seller' : 'unknown';
+      const public_id = `contract_${userType}_${baseName}_${timestamp}_${random}`;
+
+      console.log('Generated public_id:', public_id, 'resource_type:', resource_type);
+
+      return {
+        folder,
+        resource_type,
+        public_id
+      };
     }
   }),
   fileFilter: (req, file, cb) => {
-    console.log('🔍 Contract file filter checking:', file.mimetype, file.originalname);
-    
     const allowedTypes = [
       'application/pdf',
       'application/msword',
@@ -275,20 +407,17 @@ const uploadContracts = multer({
       'image/jpg',
       'image/png'
     ];
-    
-    if (allowedTypes.includes(file.mimetype)) {
-      console.log('✅ Contract document accepted:', file.mimetype);
-      cb(null, true);
-    } else {
-      console.log('❌ Contract document rejected:', file.mimetype);
-      cb(new Error('Only PDF, Word documents, and images are allowed for contracts'), false);
-    }
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF, Word, and images allowed'), false);
   },
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-    files: 1
-  }
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 }
 });
+
+
+
+
+
+
 
 // NEW: Bid attachments upload (specific for bid proposals)
 const uploadBidAttachments = multer({

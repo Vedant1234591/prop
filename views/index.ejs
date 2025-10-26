@@ -10,8 +10,7 @@
       name="description"
       content="Propload connects clients with builders, architects, and professionals for construction, electrification, and interior design projects."
     />
-    <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
-
+    <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg" />
     <meta
       name="keywords"
       content="Real Estate Bidding, Hire Builders Online, Construction Bidding, Hire Architects India, Interior Design Professionals India, Construction Services India, Electrification Services India, Online Project Bidding"
@@ -21,10 +20,7 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.propload.com" />
-    <meta
-      property="og:title"
-      content="Top Real Estate Bidding Platform in India"
-    />
+    <meta property="og:title" content="Top Real Estate Bidding Platform in India" />
     <meta
       property="og:description"
       content="Propload connects clients with builders, architects, and other professionals for construction, electrification, and interior design projects in India."
@@ -34,10 +30,7 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://www.propload.com" />
-    <meta
-      property="twitter:title"
-      content="Top Real Estate Bidding Platform in India"
-    />
+    <meta property="twitter:title" content="Top Real Estate Bidding Platform in India" />
     <meta
       property="twitter:description"
       content="Discover Propload: India's leading platform for connecting clients with qualified builders, architects, and professionals in construction, electrification, and interior design."
@@ -46,7 +39,7 @@
 
     <!-- Bootstrap 5 -->
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
     <link
@@ -54,7 +47,8 @@
       rel="stylesheet"
     />
 
-    <!-- <style>
+    <style>
+      /* === Propload Custom Styles === */
       .btn-primary-custom {
         background-color: #40788e;
         color: white;
@@ -73,120 +67,115 @@
         text-decoration: none;
       }
 
-      /* Zoom + blur animation for carousel images */
+      /* === Carousel Styles === */
       .carousel-item img {
+        width: 100%;
+        height: 100vh;
+        min-height: 400px;
+        object-fit: cover;
+        object-position: center;
         transition: transform 1.5s ease, filter 1.5s ease;
       }
-
-      /* Animate the active image */
       .carousel-item.active img {
         animation: zoomBlur 8s ease-in-out infinite;
       }
-
       @keyframes zoomBlur {
-        0% {
-          transform: scale(1);
-          filter: blur(0px);
-        }
-        50% {
-          transform: scale(1.05);
-          filter: blur(1px);
-        }
-        100% {
-          transform: scale(1);
-          filter: blur(0px);
-        }
+        0% { transform: scale(1); filter: blur(0px); }
+        50% { transform: scale(1.05); filter: blur(1px); }
+        100% { transform: scale(1); filter: blur(0px); }
       }
 
-      /* Optional: fade in text smoothly */
+      .carousel-caption {
+        top: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        z-index: 5;
+      }
       .carousel-caption h2,
       .carousel-caption p,
       .carousel-caption .btn {
         animation: fadeInUp 1.5s ease forwards;
         opacity: 0;
       }
-
       @keyframes fadeInUp {
-        0% {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
       }
-    </style> -->
+
+      /* Carousel Controls */
+      .carousel-control-prev,
+      .carousel-control-next {
+        width: 3rem;
+        height: 3rem;
+        background-color: #e9e2b3;
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .carousel-control-prev-icon,
+      .carousel-control-next-icon {
+        filter: invert(1);
+      }
+
+      /* Card Hover Effects */
+      .custom-card {
+        transition: all 0.4s ease;
+        border-radius: 15px;
+      }
+      .custom-card:hover {
+        transform: translateY(-10px) scale(1.03);
+        box-shadow: 0 10px 30px rgba(64, 120, 142, 0.3);
+      }
+      .custom-card i {
+        transition: transform 0.3s ease;
+      }
+      .custom-card:hover i {
+        transform: rotate(10deg) scale(1.1);
+      }
+    </style>
   </head>
+
   <body>
     <!-- Header -->
-
     <%- include('./partials/landingHeader') %>
 
     <!-- Carousel -->
-    <div id="carouselExample" class="carousel slide" data-bs-ride="carousel">
+    <div id="carouselExample" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
       <div class="carousel-inner">
         <% carouselItems.forEach((item, index) => { %>
         <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-          <img
-            src="<%= item.img %>"
-            class="d-block w-100"
-            alt="<%= item.title %>"
-          />
-          <div
-            class="carousel-caption d-flex flex-column justify-content-center align-items-center text-center"
-            style="top: 0; bottom: 0"
-          >
-            <h2
-              class="text-white display-4 mb-3 text-4xl"
-              style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6)"
-            >
+          <img src="<%= item.img %>" alt="<%= item.title %>" />
+          <div class="carousel-caption px-3">
+            <h2 class="text-white display-4 mb-3 text-4xl md:text-5xl" style="text-shadow:2px2px4px rgba(0,0,0,0.6)">
               <%= item.title %>
             </h2>
-            <p
-              class="text-white mb-4 fs-5"
-              style="text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6)"
-            >
+            <p class="text-white mb-4 text-lg md:text-xl max-w-2xl" style="text-shadow:1px1px3px rgba(0,0,0,0.6)">
               <%= item.desc %>
             </p>
-            <div>
-              <a
-                href="#"
-                class="btn text-white px-5 py-3 mx-2"
-                style="background-color: #40788e; border-radius: 0.5rem"
-              >
-                Talk to our Team
-              </a>
-              <a
-                href="/customer/add-project"
-                class="btn text-dark px-5 py-3 mx-2"
-                style="background-color: #e9e2b3; border-radius: 0.5rem"
-              >
-                Register Your Project
-              </a>
+            <div class="d-flex flex-wrap justify-center gap-2">
+              <a href="#" class="btn text-white px-5 py-3" style="background-color:#40788e;border-radius:0.5rem;">Talk to our Team</a>
+              <a href="/customer/add-project" class="btn text-dark px-5 py-3" style="background-color:#e9e2b3;border-radius:0.5rem;">Register Your Project</a>
             </div>
           </div>
         </div>
         <% }) %>
       </div>
-
-      <button
-        class="carousel-control-prev"
-        type="button"
-        data-bs-target="#carouselExample"
-        data-bs-slide="prev"
-      >
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
         <span class="carousel-control-prev-icon"></span>
       </button>
-      <button
-        class="carousel-control-next"
-        type="button"
-        data-bs-target="#carouselExample"
-        data-bs-slide="next"
-      >
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
         <span class="carousel-control-next-icon"></span>
       </button>
     </div>
+
+
 
     <!-- About Section -->
     <section class="container-fluid py-5">
@@ -402,7 +391,7 @@
     <!-- Services Section -->
     <section class="container py-5 bg-light">
       <div class="text-center mb-5">
-        <h2 class="text-primary-custom">Our Services</h2>
+        <h2 class="text-4xl text-primary-custom">Our Services</h2>
       </div>
       <div class="row g-4">
         <% services.forEach(service => { %>
@@ -416,7 +405,7 @@
             <div class="card-body">
               <h5 class="card-title"><%= service.title %></h5>
               <p class="card-text"><%= service.desc %></p>
-              <a href="/customer/project-form/" class="btn btn-primary-custom"
+              <a href="/customer/project-form/" class="mt-3 btn btn-primary-custom"
                 >Register Project</a
               >
             </div>

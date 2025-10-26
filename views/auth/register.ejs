@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
     <title>Register - Propload</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -25,7 +26,7 @@
 
   <body class="bg-white min-h-screen flex flex-col">
     <!-- Header -->
-    <div class="shadow-sm w-full px-20">
+    <div class="shadow-sm w-full ">
       <%- include('../partials/landingHeader') %>
     </div>
 
@@ -183,11 +184,11 @@
                 />
                 <label for="terms" class="leading-tight">
                   By registering, you agree to our
-                  <a href="#" class="underline hover:text-blue-800"
+                  <a href="/auth/terms" class="underline hover:text-blue-800"
                     >Terms of Service</a
                   >
                   and
-                  <a href="#" class="underline hover:text-blue-800"
+                  <a href="/auth/privacy" class="underline hover:text-blue-800"
                     >Privacy Policy</a
                   >.
                 </label>

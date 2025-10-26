@@ -86,28 +86,7 @@
             <% } %>
         </div>
 
-        <!-- Pagination (if needed in future) -->
-        <% if (totalPages > 1) { %>
-        <div class="flex justify-center items-center space-x-2 mt-8">
-            <% if (currentPage > 1) { %>
-                <a href="?page=<%= currentPage - 1 %>" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-300">
-                    Previous
-                </a>
-            <% } %>
-            
-            <% for (let i = 1; i <= totalPages; i++) { %>
-                <a href="?page=<%= i %>" class="px-4 py-2 <%= currentPage === i ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border border-gray-300' %> rounded-md hover:bg-indigo-50 transition duration-300">
-                    <%= i %>
-                </a>
-            <% } %>
-            
-            <% if (currentPage < totalPages) { %>
-                <a href="?page=<%= currentPage + 1 %>" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-300">
-                    Next
-                </a>
-            <% } %>
-        </div>
-        <% } %>
+       
     </div>
 
     <%- include('../partials/footer') %>

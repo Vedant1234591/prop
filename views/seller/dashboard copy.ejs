@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
+    <title>Seller Dashboard - Propload</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  </head>
+
+  <body class="bg-gray-50">
+
+    <%- include('./sideNav') %>
+  
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <%- include('../partials/flash-messages') %>
+
+      <!-- Real-time Status Header -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
+            <span class="text-sm text-blue-700"
+              >Real-time status updates active • Automatic winner selection
+              enabled</span
+            >
+          </div>
+          <div class="flex space-x-2">
+            <a
+              href="/seller/update-statuses"
+              class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center"
+            >
+              <i class="fas fa-sync-alt mr-1"></i>
+              Update Now
+            </a>
+            <span class="text-xs text-blue-600" id="last-updated">
+              Updated just now
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: Pending Contracts Alert -->
+      <% if (pendingContracts && pendingContracts.length> 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-file-contract text-yellow-600 mr-2"></i>
+            <span class="text-sm text-yellow-700">
+              You have <%= pendingContracts.length %> pending contract(s)
+              waiting for your signature
+            </span>
+          </div>
+          <a
+            href="/seller/my-bids"
+            class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition duration-300 flex items-center"
+          >
+            <i class="fas fa-eye mr-1"></i>
+            View Contracts
+          </a>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800">Seller Dashboard</h2>
+          <p class="text-gray-600 mt-2">
+            Welcome back, <%= user.name %>! Here's your bidding overview.
+          </p>
+        </div>
+        <a
+          href="/seller/find-bids"
+          class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center shadow-lg hover:shadow-xl"
+        >
+          <i class="fas fa-search mr-2"></i>
+          Find Bids
+        </a>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div
+          class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500 hover:shadow-lg transition duration-300"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-blue-100 rounded-lg">
+              <i class="fas fa-paper-plane text-blue-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-sm font-medium text-gray-500">Submitted Bids</h3>
+              <p class="text-2xl font-bold text-gray-800">
+                <%= stats.submitted.count || 0 %>
+              </p>
+              <p class="text-sm text-gray-600">
+                $<%= (stats.submitted.amount || 0).toLocaleString() %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 hover:shadow-lg transition duration-300"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-green-100 rounded-lg">
+              <i class="fas fa-trophy text-green-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-sm font-medium text-gray-500">Won Bids</h3>
+              <p class="text-2xl font-bold text-gray-800">
+                <%= stats.won.count || 0 %>
+              </p>
+              <p class="text-sm text-gray-600">
+                $<%= (stats.won.amount || 0).toLocaleString() %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500 hover:shadow-lg transition duration-300"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-orange-100 rounded-lg">
+              <i class="fas fa-chart-line text-orange-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-sm font-medium text-gray-500">In Progress</h3>
+              <p class="text-2xl font-bold text-gray-800">
+                <%= stats['in-progress'].count || 0 %>
+              </p>
+              <p class="text-sm text-gray-600">
+                $<%= (stats['in-progress'].amount || 0).toLocaleString() %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500 hover:shadow-lg transition duration-300"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-purple-100 rounded-lg">
+              <i class="fas fa-percentage text-purple-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-sm font-medium text-gray-500">Success Rate</h3>
+              <p class="text-2xl font-bold text-gray-800">
+                <%= totalStats.successRate || 0 %>%
+              </p>
+              <p class="text-sm text-gray-600">
+                <%= totalStats.totalBids || 0 %> total bids
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-center">
+            <h3 class="text-sm font-medium text-gray-500">Total Bid Amount</h3>
+            <p class="text-2xl font-bold text-green-600">
+              $<%= (totalStats.totalAmount || 0).toLocaleString() %>
+            </p>
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-center">
+            <h3 class="text-sm font-medium text-gray-500">Lost Bids</h3>
+            <p class="text-2xl font-bold text-red-600">
+              <%= stats.lost.count || 0 %>
+            </p>
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-center">
+            <h3 class="text-sm font-medium text-gray-500">Completed</h3>
+            <p class="text-2xl font-bold text-blue-600">
+              <%= stats.completed.count || 0 %>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Side - Latest Bids -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow">
+            <div
+              class="px-6 py-4 border-b border-gray-200 flex justify-between items-center"
+            >
+              <h3 class="text-lg font-semibold text-gray-800">
+                Your Latest Bids
+              </h3>
+              <span class="text-xs text-gray-500" id="bids-last-updated">
+                Updated just now
+              </span>
+            </div>
+            <div class="p-6">
+              <div id="latest-bids-container">
+                <% if (latestBids && latestBids.length> 0) { %>
+                <div class="space-y-4">
+                  <% latestBids.forEach(bid=> { %>
+                  <div
+                    class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition duration-300"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-semibold text-gray-800 truncate text-sm">
+                        <%= bid.project && bid.project.title ? bid.project.title
+                        : 'Project' %>
+                      </h4>
+                      <span
+                        class="px-2 py-1 rounded-full text-xs font-medium <%= bid.status === 'submitted' ? 'bg-blue-100 text-blue-800' : '' %> <%= bid.status === 'won' ? 'bg-green-100 text-green-800' : '' %> <%= bid.status === 'lost' ? 'bg-red-100 text-red-800' : '' %> <%= bid.status === 'in-progress' ? 'bg-orange-100 text-orange-800' : '' %> <%= bid.status === 'completed' ? 'bg-purple-100 text-purple-800' : '' %>"
+                      >
+                        <%= bid.status ? bid.status.toUpperCase() : 'UNKNOWN' %>
+                      </span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-2">
+                      $<%= bid.amount || 0 %> • <%= bid.project &&
+                      bid.project.category ? bid.project.category : 'General' %>
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      <%= moment(bid.createdAt).fromNow() %>
+                    </p>
+                    <!-- NEW: Auto-won indicator -->
+                    <% if (bid.autoWon) { %>
+                    <div class="mt-1 text-xs text-green-600 flex items-center">
+                      <i class="fas fa-robot mr-1"></i>
+                      Auto-won
+                    </div>
+                    <% } %>
+                  </div>
+                  <% }) %>
+                </div>
+                <% } else { %>
+                <p class="text-gray-500 text-center py-4">
+                  No bids submitted yet
+                </p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle - Quick Actions -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-800">Quick Actions</h3>
+            </div>
+            <div class="p-6 grid grid-cols-2 gap-4">
+              <a
+                href="/seller/find-bids"
+                class="bg-indigo-50 text-indigo-700 p-4 rounded-lg text-center hover:bg-indigo-100 transition duration-300"
+              >
+                <i class="fas fa-search text-lg mb-2 block"></i>
+                <span class="text-sm font-medium">Find Bids</span>
+              </a>
+              <a
+                href="/seller/my-bids"
+                class="bg-green-50 text-green-700 p-4 rounded-lg text-center hover:bg-green-100 transition duration-300"
+              >
+                <i class="fas fa-list text-lg mb-2 block"></i>
+                <span class="text-sm font-medium">My Bids</span>
+              </a>
+              <a
+                href="/seller/profile"
+                class="bg-blue-50 text-blue-700 p-4 rounded-lg text-center hover:bg-blue-100 transition duration-300"
+              >
+                <i class="fas fa-user text-lg mb-2 block"></i>
+                <span class="text-sm font-medium">Profile</span>
+              </a>
+              <a
+                href="/seller/notices"
+                class="bg-purple-50 text-purple-700 p-4 rounded-lg text-center hover:bg-purple-100 transition duration-300"
+              >
+                <i class="fas fa-bell text-lg mb-2 block"></i>
+                <span class="text-sm font-medium">Notices</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Active Projects -->
+          <div class="bg-white rounded-lg shadow mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-800">
+                Active Projects for Bidding
+              </h3>
+            </div>
+            <div class="p-6">
+              <% if (activeProjects && activeProjects.length> 0) { %>
+              <div class="space-y-3">
+                <% activeProjects.forEach(project=> { %>
+                <div
+                  class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-300"
+                >
+                  <h4 class="font-semibold text-gray-800 text-sm mb-1">
+                    <%= project.title %>
+                  </h4>
+                  <p class="text-xs text-gray-600 mb-2">
+                    <%= project.location.city %>, <%= project.location.state %>
+                  </p>
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs text-green-600 font-semibold">
+                      $<%= project.bidSettings.startingBid %>
+                    </span>
+                    <span class="text-xs text-blue-600">
+                      <%= moment(project.bidSettings.bidEndDate).fromNow() %>
+                    </span>
+                  </div>
+                  <a
+                    href="/seller/bid-details/<%= project._id %>"
+                    class="block w-full mt-2 bg-indigo-600 text-white text-center py-1 rounded text-xs hover:bg-indigo-700 transition duration-300"
+                  >
+                    View Details
+                  </a>
+                </div>
+                <% }) %>
+              </div>
+              <% } else { %>
+              <p class="text-gray-500 text-center py-4">
+                No active projects available
+              </p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side - Latest Notices -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow">
+            <div
+              class="px-6 py-4 border-b border-gray-200 flex justify-between items-center"
+            >
+              <h3 class="text-lg font-semibold text-gray-800">
+                Latest Notices
+              </h3>
+              <span class="text-xs text-gray-500" id="notices-last-updated">
+                Updated just now
+              </span>
+            </div>
+            <div class="p-6">
+              <div id="latest-notices-container">
+                <% if (latestNotices && latestNotices.length> 0) { %>
+                <div class="space-y-4">
+                  <% latestNotices.forEach(notice=> { %>
+                  <div
+                    class="border-l-4 border-indigo-500 pl-4 py-2 hover:bg-gray-50 transition duration-300"
+                  >
+                    <h4 class="font-semibold text-gray-800 text-sm mb-1">
+                      <%= notice.title %>
+                    </h4>
+                    <p class="text-xs text-gray-600 mb-2">
+                      <%= notice.content ? notice.content.substring(0, 80) +
+                      '...' : 'No content' %>
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      <%= moment(notice.createdAt).fromNow() %>
+                    </p>
+                  </div>
+                  <% }) %>
+                </div>
+                <% } else { %>
+                <p class="text-gray-500 text-center py-4">No notices</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEW: Pending Contracts Section -->
+          <div class="bg-white rounded-lg shadow mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-800">
+                Pending Contracts
+              </h3>
+            </div>
+            <div class="p-6">
+              <% if (pendingContracts && pendingContracts.length> 0) { %>
+              <div class="space-y-3">
+                <% pendingContracts.forEach(item=> { %>
+                <div
+                  class="border border-yellow-200 rounded-lg p-3 bg-yellow-50"
+                >
+                  <h4 class="font-semibold text-gray-800 text-sm mb-1">
+                    <%= item.bid.project.title %>
+                  </h4>
+                  <p class="text-xs text-gray-600 mb-2">
+                    $<%= item.bid.amount %>
+                  </p>
+                  <div class="text-xs text-yellow-700 mb-2">
+                    <% if (item.contract.status==='pending-seller' ) { %>
+                    <i class="fas fa-clock mr-1"></i>
+                    Waiting for your contract upload <% } else if
+                    (item.contract.status==='pending-admin' ) { %>
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Waiting for admin approval <% } %>
+                  </div>
+                  <a
+                    href="/seller/my-bids"
+                    class="block w-full bg-yellow-600 text-white text-center py-1 rounded text-xs hover:bg-yellow-700 transition duration-300"
+                  >
+                    Upload Contract
+                  </a>
+                </div>
+                <% }) %>
+              </div>
+              <% } else { %>
+              <p class="text-gray-500 text-center py-4">No pending contracts</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize real-time updates
+      document.addEventListener("DOMContentLoaded", function () {
+        // Update timestamps every minute
+        setInterval(() => {
+          const now = new Date();
+          if (document.getElementById("bids-last-updated")) {
+            document.getElementById("bids-last-updated").textContent =
+              "Updated " + moment(now).fromNow();
+          }
+          if (document.getElementById("notices-last-updated")) {
+            document.getElementById("notices-last-updated").textContent =
+              "Updated " + moment(now).fromNow();
+          }
+          if (document.getElementById("last-updated")) {
+            document.getElementById("last-updated").textContent =
+              "Updated " + moment(now).fromNow();
+          }
+        }, 60000);
+
+        // Auto-refresh page every 30 seconds for real-time updates
+        setInterval(() => {
+          location.reload();
+        }, 30000);
+      });
+    </script>
+
+    <%- include('../partials/footer') %>
+  </body>
+</html>

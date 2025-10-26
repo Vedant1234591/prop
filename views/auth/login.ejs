@@ -1,10 +1,11 @@
-<!-- //uttkarsh -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
     <title>Login - Propload</title>
+    <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
 
+    <!-- Bootstrap & FontAwesome -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -13,6 +14,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
+    <!-- Tailwind -->
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
       rel="stylesheet"
@@ -22,7 +24,6 @@
       .bg-propload {
         background-color: #e9e2b3;
       }
-
       .bg-propload:hover {
         background-color: #dcd39e;
       }
@@ -30,76 +31,75 @@
   </head>
 
   <body class="bg-white min-h-screen flex flex-col">
-    <div class="shadow-sm w-full px-20">
+    <!-- Header -->
+    <div class="w-full">
       <%- include('../partials/landingHeader') %>
     </div>
 
-    <div
-      class="mx-10 flex flex-col gap-12 md:flex-row items-center justify-center flex-grow py-10"
-    >
+    <!-- Login Section -->
+    <div class="flex flex-col md:flex-row items-center justify-center flex-grow py-10 px-4 md:px-10 gap-12">
       <!-- Left Side: Illustration -->
-      <div class="max-h-full md:w-1/2 flex justify-center mb-10 md:mb-0">
+      <div class="flex justify-center md:w-1/2">
         <img
           src="/images/login/login.webp"
-          alt="Construction Crane"
-          class="w-[40rem] h-[35rem] object-contain"
+          alt="Construction Illustration"
+          class="w-full max-w-md md:max-w-lg lg:max-w-xl object-contain"
         />
       </div>
 
       <!-- Right Side: Login Form -->
-      <div
-        class="mr-20 md:w-1/2 max-w-md bg-white p-8 rounded-lg border border-gray-100"
-      >
-        <h2 class="text-3xl font-semibold text-gray-800 mb-6 text-center">
+      <div class="md:w-1/2 max-w-md bg-white p-6 md:p-8 rounded-lg border border-gray-100 shadow-lg">
+        <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">
           Login to Your Account
         </h2>
 
         <%- include('../partials/flash-messages') %>
 
         <!-- Standard login -->
-        <form action="/auth/login" method="POST" class="space-y-5">
+        <form action="/auth/login" method="POST" class="space-y-4 md:space-y-5">
           <div>
-            <label for="email" class="block text-gray-700 font-medium mb-2"
-              >Email Address</label
-            >
+            <label for="email" class="block text-gray-700 font-medium mb-1 md:mb-2">
+              Email Address
+            </label>
             <input
               id="email"
               name="email"
               type="email"
               autocomplete="email"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
               placeholder="Enter your email"
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
             />
           </div>
 
           <div>
-            <label for="password" class="block text-gray-700 font-medium mb-2"
-              >Password</label
-            >
+            <label for="password" class="block text-gray-700 font-medium mb-1 md:mb-2">
+              Password
+            </label>
             <input
               id="password"
               name="password"
               type="password"
               autocomplete="current-password"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
               placeholder="Enter your password"
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
             />
           </div>
 
           <button
-            class="w-full bg-propload text-gray-800 font-semibold py-2 rounded-md transition duration-200"
+            type="submit"
+            class="w-full bg-propload text-gray-800 font-semibold py-2 rounded-md transition duration-200 hover:shadow-md"
           >
             Sign In
           </button>
         </form>
 
         <!-- OR separator -->
-        <div class="flex items-center justify-center my-6">
-          <div class="border-t border-gray-300 w-1/3"></div>
+        <div class="flex items-center justify-center my-4 md:my-6">
+          <div class="border-t border-gray-300 w-1/4 md:w-1/3"></div>
           <span class="px-3 text-gray-500 text-sm">or</span>
-          <div class="border-t border-gray-300 w-1/3"></div>
+          <div class="border-t border-gray-300 w-1/4 md:w-1/3"></div>
         </div>
 
         <!-- OTP login button -->
@@ -112,21 +112,16 @@
           </a>
         </div>
 
-        <p class="text-center text-gray-600 mt-5">
+        <p class="text-center text-gray-600 mt-5 text-sm md:text-base">
           Don’t have an account?
-          <a
-            href="/auth/register?role=customer"
-            class="text-blue-600 hover:underline"
-            >Join as Customer</a
-          >
+          <a href="/auth/register?role=customer" class="text-blue-600 hover:underline">Join as Customer</a>
           or
-          <a
-            href="/auth/register?role=seller"
-            class="text-blue-600 hover:underline"
-            >Join as Seller</a
-          >
+          <a href="/auth/register?role=seller" class="text-blue-600 hover:underline">Join as Seller</a>
         </p>
       </div>
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
