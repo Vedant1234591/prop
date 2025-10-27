@@ -450,6 +450,12 @@ exports.getProfile = async (req, res) => {
       status: "submitted",
     });
 
+  const office = seller.officeLocations.find((loc) => loc.primary);
+
+
+
+console.log("=== SELLER PROFILE DEBUG ===", JSON.stringify(office, null, 2));
+
     res.render("seller/profile/profile", {
       user, // Base user data
       seller, // Extended seller details (optional)
