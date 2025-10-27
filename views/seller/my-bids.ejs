@@ -529,11 +529,11 @@
                                                 Both contracts uploaded. Waiting for <strong>manual admin approval</strong>. This process typically takes 1-2 business days.
                                             </p>
                                             <div class="flex gap-2">
-                                                <a href="/seller/download-customer-contract/<%= bid._id %>" 
+                                                <a href="/seller/download-customer-contract/<%= bid._id %>" target="_blank" 
                                                    class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
                                                     <i class="fas fa-download mr-1"></i>Customer Contract
                                                 </a>
-                                                <a href="<%= bid.contract.sellerSignedContract.url %>" target="_blank"
+                                                <a href="/seller/download-contract/<%= bid._id %>" target="_blank"
                                                    class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
                                                     <i class="fas fa-download mr-1"></i>Your Contract
                                                 </a>

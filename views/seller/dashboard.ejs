@@ -53,7 +53,7 @@
 
 <body class="text-slate-800 antialiased">
 
-  <%- include('../partials/flash-messages') %>
+  
   <%- include('./sideNav') %>
 
   <main class="content-area min-h-screen">
@@ -61,6 +61,7 @@
 
       <!-- Header -->
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <%- include('../partials/flash-messages') %>
         <div>
           <h1 class="text-3xl font-bold" style="color: var(--muted);">Seller Dashboard</h1>
           <p class="text-sm text-slate-500 mt-1">
