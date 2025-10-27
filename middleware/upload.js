@@ -365,6 +365,56 @@ const uploadSingle = multer({
 
  // Make sure this is at the top
 
+
+ //able to download by adding .pdf in the end
+// const uploadContracts = multer({
+//   storage: new CloudinaryStorage({
+//     cloudinary: cloudinary,
+//     params: async (req, file) => {
+//       console.log('📤 Contract upload detected:', {
+//         originalName: file.originalname,
+//         mimetype: file.mimetype
+//       });
+
+//       // Resource type
+//       let resource_type = file.mimetype.startsWith('image/') ? 'image' : 'raw';
+
+//       // Folder
+//       const folder = 'propload/contracts';
+
+//       // Generate public_id without extension (Cloudinary adds extension automatically for raw)
+//       const timestamp = Date.now();
+//       const random = Math.random().toString(36).substring(2, 15);
+//       const baseName = path.basename(file.originalname, path.extname(file.originalname))
+//                        .replace(/[^a-zA-Z0-9]/g, '_');
+//       const userType = req.baseUrl?.includes('/customer') ? 'customer'
+//                        : req.baseUrl?.includes('/seller') ? 'seller' : 'unknown';
+//       const public_id = `contract_${userType}_${baseName}_${timestamp}_${random}`;
+
+//       console.log('Generated public_id:', public_id, 'resource_type:', resource_type);
+
+//       return {
+//         folder,
+//         resource_type,
+//         public_id
+//       };
+//     }
+//   }),
+//   fileFilter: (req, file, cb) => {
+//     const allowedTypes = [
+//       'application/pdf',
+//       'application/msword',
+      
+//       'image/jpeg',
+//       'image/jpg',
+//       'image/png'
+//     ];
+//     if (allowedTypes.includes(file.mimetype)) cb(null, true);
+//     else cb(new Error('Only PDF, Word, and images allowed'), false);
+//   },
+//   limits: { fileSize: 10 * 1024 * 1024, files: 1 }
+// });
+
 const uploadContracts = multer({
   storage: new CloudinaryStorage({
     cloudinary: cloudinary,
@@ -374,8 +424,11 @@ const uploadContracts = multer({
         mimetype: file.mimetype
       });
 
-      // Resource type
-      let resource_type = file.mimetype.startsWith('image/') ? 'image' : 'raw';
+      // Determine resource type
+      let resource_type = file.mimetype === 'application/pdf' ||
+                          file.mimetype === 'application/msword'
+                          ? 'raw'
+                          : 'image';
 
       // Folder
       const folder = 'propload/contracts';
@@ -394,7 +447,9 @@ const uploadContracts = multer({
       return {
         folder,
         resource_type,
-        public_id
+        public_id,
+        // preserve original file extension for download
+        format: path.extname(file.originalname).slice(1) || undefined
       };
     }
   }),
@@ -402,7 +457,6 @@ const uploadContracts = multer({
     const allowedTypes = [
       'application/pdf',
       'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'image/jpeg',
       'image/jpg',
       'image/png'
@@ -412,6 +466,7 @@ const uploadContracts = multer({
   },
   limits: { fileSize: 10 * 1024 * 1024, files: 1 }
 });
+
 
 
 
