@@ -15,7 +15,7 @@ router.get('/bids', customerController.getBids);
 router.get('/won-projects', customerController.getWonProjects);
 router.get('/profile', customerController.getProfile);
 router.post('/profile', customerController.updateProfile);
-router.post('/profile/image', upload.single('image'), customerController.updateProfileImage);
+router.post('/profile/image', upload.single('profileImage'), customerController.updateProfileImage);
 router.post('/change-password', customerController.changePassword);
 router.get('/messages', customerController.getMessages);
 router.get('/notices', customerController.getNotices);
