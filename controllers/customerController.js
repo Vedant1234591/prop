@@ -1213,6 +1213,24 @@ exports.downloadCertificate = async (req, res) => {
 };
 
 // Update Profile Information
+exports.getupdateProfile= async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      req.flash("error", "User not found");
+      return res.redirect("/customer/profile");
+    }
+
+    res.render('customer/editProfile', { user });
+  } catch (error) {
+    console.error("Get profile edit error:", error);
+    req.flash("error", "Error loading profile edit page");
+    res.redirect("/customer/profile");
+  }
+};
+
+
+// Update Profile Information
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, address, city, state, zipCode, bio } = req.body;
@@ -1248,6 +1266,11 @@ exports.updateProfile = async (req, res) => {
     res.redirect("/customer/profile");
   }
 };
+
+exports.changePasswordPage = (req, res) => {
+  res.render('customer/changePassword', { messages: req.flash(), user: req.session.user });
+}
+
 
 // Change Password
 exports.changePassword = async (req, res) => {
