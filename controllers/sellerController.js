@@ -123,7 +123,7 @@ exports.getDashboard = async (req, res) => {
 
     // ✅ Active notices
     const latestNotices = await Notice.find({
-      $or: [{ targetAudience: "all" }, { targetAudience: "seller" }],
+      targetAudience: "seller" ,
       isActive: true,
       startDate: { $lte: new Date() },
       $or: [{ endDate: { $gte: new Date() } }, { endDate: null }],
@@ -721,7 +721,7 @@ exports.getNotices = async (req, res) => {
     }
 
     const notices = await Notice.find({
-      $or: [{ targetAudience: "all" }, { targetAudience: "seller" }],
+      targetAudience: "seller" ,
       isActive: true,
       startDate: { $lte: new Date() },
       $or: [{ endDate: { $gte: new Date() } }, { endDate: null }],

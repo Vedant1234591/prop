@@ -2000,9 +2000,10 @@ exports.postProjectStep3 = async (req, res) => {
     await project.save();
 
     console.log("✅ Project created successfully:", project._id);
-
+const userData = req.session.user
     const Notice = require("../models/Notice");
     await Notice.create({
+      targetId :userData._id ,
       title: `New Project Submitted - ${project.title}`,
       content: `A new project "${project.title}" has been submitted for verification.`,
       targetAudience: "admin",

@@ -1,5 +1,6 @@
-// utils/emailService.js
-import nodemailer from "nodemailer";
+// // utils/emailService.js
+// import nodemailer from "nodemailer";
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   service: "gmail", // You can use others like SendGrid, etc.
@@ -9,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (to, subject, html) => {
+exports.sendEmail = async (to, subject, html) => {
   const mailOptions = {
     from: `"Propload" <${process.env.EMAIL_USER}>`,
     to,
