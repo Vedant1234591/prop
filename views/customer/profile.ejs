@@ -126,12 +126,19 @@
                     <div class="mt-8 pt-6 border-t border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="flex space-x-4">
-                            <button class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-                                Edit Profile
-                            </button>
-                            <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-                                Change Password
-                            </button>
+                            <button 
+  class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+  onclick="window.location.href='/customer/profile/edit'"
+>
+  Edit Profile
+</button>
+                            <button 
+  class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+  onclick="window.location.href='/customer/change-password'"
+>
+  Change Password
+</button>
+
                         </div>
                     </div>
                 </div>
