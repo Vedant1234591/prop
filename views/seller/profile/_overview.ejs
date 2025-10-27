@@ -1,30 +1,55 @@
-<section id="overview" class="bg-white rounded-2xl shadow p-6">
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold text-[rgb(49,94,113)]">
-      👤 Profile Overview
+<section id="overview" class="bg-white rounded-2xl shadow p-6 border border-transparent hover:border-[var(--propload-secondary)] hover:shadow-lg transition-all duration-300">
+  <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
+    <h2 class="text-2xl font-bold text-secondary flex items-center gap-2">
+      <i class="fas fa-user-circle text-primary"></i>
+      Profile Overview
     </h2>
     <a
       href="/seller/edit-profile"
-      class="text-sm text-[rgb(49,94,113)] hover:underline"
-      >Edit</a
+      class="bg-secondary text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition duration-300"
     >
+      Edit Profile
+    </a>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-    <div><strong>Name:</strong> <%= user?.name || "-" %></div>
-    <div><strong>Email:</strong> <%= user?.email || "-" %></div>
-    <div><strong>Phone:</strong> <%= user?.phone || "-" %></div>
-    <div><strong>Company:</strong> <%= user?.companyName || "-" %></div>
-    <div><strong>Role:</strong> <%= user?.role || "Seller" %></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800 text-sm">
     <div>
-      <strong>Verified:</strong> <%= user?.isVerified ? "✅ Yes" : "❌ No" %>
+      <span class="block text-secondary font-semibold">Name</span>
+      <p class="mt-1"><%= user?.name || "-" %></p>
+    </div>
+
+    <div>
+      <span class="block text-secondary font-semibold">Email</span>
+      <p class="mt-1"><%= user?.email || "-" %></p>
+    </div>
+
+    <div>
+      <span class="block text-secondary font-semibold">Phone</span>
+      <p class="mt-1"><%= user?.phone || "-" %></p>
+    </div>
+
+    <div>
+      <span class="block text-secondary font-semibold">Company</span>
+      <p class="mt-1"><%= user?.companyName || "-" %></p>
+    </div>
+
+    <div>
+      <span class="block text-secondary font-semibold">Role</span>
+      <p class="mt-1 capitalize"><%= user?.role || "Seller" %></p>
+    </div>
+
+    <div>
+      <span class="block text-secondary font-semibold">Verified</span>
+      <p class="mt-1">
+        <%= seller.adminVerified ? "✅ Yes" : "❌ No" %>
+      </p>
     </div>
   </div>
 
   <% if (user?.bio) { %>
-  <div class="mt-4">
-    <strong>Bio:</strong>
-    <p class="text-gray-600 mt-1 text-sm"><%= user.bio %></p>
-  </div>
+    <div class="mt-6 pt-4 border-t border-gray-200">
+      <span class="block text-secondary font-semibold mb-1">Bio</span>
+      <p class="text-gray-700 text-sm leading-relaxed"><%= user.bio %></p>
+    </div>
   <% } %>
 </section>
