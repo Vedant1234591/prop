@@ -46,4 +46,8 @@ router.get('/update-statuses', sellerController.updateStatuses);
 // Seller Round 2 Bidding Routes// Round 2 Bidding Routes
 router.get('/project/:projectId/round2-bidding', sellerController.getSellerRound2Bidding);
 router.post('/project/:projectId/update-round2-bid', sellerController.updateRound2Bid);
+
+//seller profile documents access
+router.get('/profile/documents/:filename', sellerController.serveSellerDocument);
+
 module.exports = router;
