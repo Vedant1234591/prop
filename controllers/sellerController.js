@@ -1773,6 +1773,12 @@ exports.updateRound2Bid = async (req, res) => {
   }
 };
 
+
+exports.serveSellerDocument = async (req, res) => {
+  console.log("dfghjkldfghjk",req.params)
+}
+
+
 // NEW: Function to automatically complete Round 2 and select winner
 exports.autoCompleteRound2 = async (projectId) => {
   try {
