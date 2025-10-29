@@ -506,9 +506,15 @@ exports.sellerRegisterForm = async (req, res) => {
   res.render("auth/seller-register");
 };
 
+
+
 exports.postSellerData = async (req, res) => {
   try {
     console.log("=== 🧾 SELLER REGISTRATION STEP 2 ===");
+
+    // ✅ Parse nested form fields (important!)
+    const body = qs.parse(req.body);
+    console.log("📦 Parsed form data:", JSON.stringify(body, null, 2));
 
     // ✅ 1️⃣ Check session
     if (!req.session.seller) {
@@ -519,37 +525,25 @@ exports.postSellerData = async (req, res) => {
 
     const sessionSeller = req.session.seller;
 
-    // ✅ 2️⃣ Extract flat fields from form
+    // ✅ 2️⃣ Extract fields from parsed body (NOT req.body)
     const {
       BusinessType,
       BusinessName,
       BusinessDetails,
       PersonalDetails,
-      officeName,
-      state,
-      district,
-      city,
-      pinCode,
-      fullAddress,
-      gstin,
-      primary,
-      pan,
-      itrType,
-      assessmentYear,
-      ackNumber,
-      profitGainFromBusiness,
-      grossReceipts,
-    } = req.body;
+      officeLocations,
+      taxAssessments,
+    } = body;
 
-    console.log("📦 Received seller form data:", req.body);
+    console.log("🏢 OfficeLocations received:", officeLocations);
 
-    // ✅ 3️⃣ Create user first (if not already)
+    // ✅ 3️⃣ Create user if not already
     let user;
     if (!req.session.userId) {
       user = await User.create({
         name: sessionSeller.name,
         email: sessionSeller.email,
-        password: sessionSeller.password, // ✅ plain password
+        password: sessionSeller.password,
         role: "seller",
         phone: sessionSeller.phone,
         companyName: sessionSeller.companyName,
@@ -603,33 +597,43 @@ exports.postSellerData = async (req, res) => {
       }));
     }
 
-    // ✅ 6️⃣ Fix assessment year format (auto convert)
-    let formattedYear = (assessmentYear || "").trim();
-    if (/^\d{2}-\d{2}$/.test(formattedYear)) {
-      formattedYear = `20${formattedYear}`; // e.g., 23-24 → 2023-24
-    }
+    // ✅ 6️⃣ Prepare office location object
+    const officeData =
+      officeLocations && officeLocations.length > 0
+        ? officeLocations.map((o) => ({
+            officeName: o.officeName,
+            address: {
+              state: o.address?.state,
+              district: o.address?.district,
+              city: o.address?.city,
+              pinCode: o.address?.pinCode,
+              fullAddress: o.address?.fullAddress,
+            },
+            gstin: o.gstin,
+            primary: o.primary === "on" || o.primary === true,
+          }))
+        : [];
 
-    // ✅ 7️⃣ Build data objects manually
-    const officeLocations = [
-      {
-        officeName,
-        address: { state, district, city, pinCode, fullAddress },
-        gstin,
-        primary: primary === "on" || primary === true,
-      },
-    ];
-
-    const taxAssessments = [
-      {
-        pan,
-        itrType,
-        assessmentYear: formattedYear,
-        ackNumber,
-        profitGainFromBusiness: Number(profitGainFromBusiness) || 0,
-        grossReceipts: Number(grossReceipts) || 0,
-        documents: taxDocs,
-      },
-    ];
+    // ✅ 7️⃣ Prepare tax assessment object
+    const taxData =
+      taxAssessments && taxAssessments.length > 0
+        ? taxAssessments.map((t) => {
+            let formattedYear = (t.assessmentYear || "").trim();
+            if (/^\d{2}-\d{2}$/.test(formattedYear)) {
+              formattedYear = `20${formattedYear}`;
+            }
+            return {
+              pan: t.pan,
+              itrType: t.itrType,
+              assessmentYear: formattedYear,
+              ackNumber: t.ackNumber,
+              profitGainFromBusiness:
+                Number(t.profitGainFromBusiness) || 0,
+              grossReceipts: Number(t.grossReceipts) || 0,
+              documents: taxDocs,
+            };
+          })
+        : [];
 
     // ✅ 8️⃣ Create Seller record
     const seller = await Seller.create({
@@ -644,20 +648,16 @@ exports.postSellerData = async (req, res) => {
         : [PersonalDetails],
       Aadhaar,
       Pancard,
-      officeLocations,
-      taxAssessments,
+      officeLocations: officeData,
+      taxAssessments: taxData,
     });
 
     console.log("✅ Seller registered successfully:", seller._id);
 
     // ✅ 9️⃣ Save session and redirect
-
-    console.log(user._id);
     req.session.userId = user._id;
     req.session.user = user;
-
-    req.session.save();
-    console.log(user._id);
+    await req.session.save();
 
     req.flash("success", "Seller registration completed successfully!");
     return res.redirect("/seller/dashboard");
