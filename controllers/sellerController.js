@@ -4,8 +4,11 @@ const Bid = require("../models/Bid");
 const User = require("../models/User");
 const Notice = require("../models/Notice");
 const Contract = require("../models/Contract");
+const Agreement = require('../models/Agreement');
 const Seller = require("../models/Seller");
 const cloudinary = require("../config/cloudinary");
+// Add these imports at the top
+const moment = require("moment");
 
 // const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
@@ -17,14 +20,6 @@ const statusAutomation = require("../services/statusAutomation");
 exports.pendingPage = async (req, res) => {
   res.render("seller/pending");
 };
-// const mongoose = require("mongoose");
-// const moment = require("moment");
-// const Seller = require("../../models/seller");
-// const Project = require("../../models/project");
-// const Bid = require("../../models/bid");
-// const Contract = require("../../models/contract");
-// const Notice = require("../../models/notice");
-// const statusAutomation = require("../../utils/statusAutomation");
 
 // ======================== SELLER DASHBOARD ========================
 exports.getDashboard = async (req, res) => {
@@ -160,114 +155,9 @@ exports.getDashboard = async (req, res) => {
 };
 
 // ======================== FIND BIDS PAGE ========================
-exports.getFindBids = async (req, res) => {
-  try {
-    const sellerId = req.session.userId;
-
-    if (!sellerId) {
-      req.flash("error", "Please log in to view projects");
-      return res.redirect("/auth/login");
-    }
-
-    const { state, city, category } = req.query;
-    const filters = {};
-
-    if (state) filters["location.state"] = new RegExp(state, "i");
-    if (city) filters["location.city"] = new RegExp(city, "i");
-    if (category) filters.category = category;
-
-    // ✅ Always update project statuses before listing
-    await statusAutomation.updateAllProjectStatuses();
-
-    const activeProjects = await Project.find({
-      ...filters,
-      status: { $in: ["drafted", "in-progress"] },
-      "bidSettings.bidEndDate": { $gt: new Date() },
-      "bidSettings.isActive": true,
-    })
-      .populate("customer", "name companyName")
-      .populate("bids")
-      .sort({ createdAt: -1 });
-
-    const userData = req.session.user || { name: "Seller", email: "" };
-
-    // ✅ Bid count for notification
-    const bidCount = await Bid.countDocuments({
-      seller: sellerId,
-      status: "submitted",
-    });
-
-    // ✅ Render find-bids page
-    res.render("seller/find-bids", {
-      user: userData,
-      currentPage: "find-bids",
-      projects: activeProjects || [],
-      filters: { state, city, category },
-      bidCount,
-      moment,
-    });
-  } catch (error) {
-    console.error("Find bids error:", error);
-    req.flash("error", "Error loading projects: " + error.message);
-    res.redirect("/seller/dashboard");
-  }
-};
 
 
-// Bid Details - Enhanced with real-time updates
-exports.getBidDetails = async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    const sellerId = req.session.userId;
 
-    console.log("=== BID DETAILS DEBUG ===");
-    console.log("Project ID:", projectId);
-    console.log("Seller ID:", sellerId);
-
-    if (!sellerId) {
-      req.flash("error", "Please log in to view project details");
-      return res.redirect("/auth/login");
-    }
-
-    await statusAutomation.updateAllProjectStatuses();
-
-    const project = await Project.findById(projectId)
-      .populate("customer", "name email phone companyName")
-      .populate("bids");
-
-    if (!project) {
-      req.flash("error", "Project not found");
-      return res.redirect("/seller/find-bids");
-    }
-
-    // Check if seller already bid on this project
-    const existingBid = await Bid.findOne({
-      project: projectId,
-      seller: sellerId,
-    });
-
-    const userData = req.session.user || { name: "Seller", email: "" };
-
-    // Get bid count for notifications
-    const bidCount = await Bid.countDocuments({
-      seller: sellerId,
-      status: "submitted",
-    });
-
-    res.render("seller/bid-details", {
-      user: userData,
-      currentPage: "find-bids",
-      project: project,
-      existingBid: existingBid,
-      bidCount: bidCount,
-      moment: require("moment"),
-    });
-  } catch (error) {
-    console.error("Bid details error:", error);
-    req.flash("error", "Error loading project details: " + error.message);
-    res.redirect("/seller/find-bids");
-  }
-};
 
 
 
@@ -388,43 +278,6 @@ exports.withdrawBid = async (req, res) => {
   }
 };
 
-// Seller Profile
-// exports.getProfile = async (req, res) => {
-//   try {
-//     const sellerId = req.session.userId;
-
-//     if (!sellerId) {
-//       req.flash("error", "Please log in to view profile");
-//       return res.redirect("/auth/login");
-//     }
-
-//     const user = await User.findById(sellerId);
-
-//     if (!user) {
-//       req.flash("error", "User not found");
-//       return res.redirect("/seller/dashboard");
-//     }
-
-//     const userData = req.session.user || { name: "Seller", email: "" };
-
-//     // Get bid count for notifications
-//     const bidCount = await Bid.countDocuments({
-//       seller: sellerId,
-//       status: "submitted",
-//     });
-
-//     res.render("seller/profile", {
-//       user: userData,
-//       currentPage: "profile",
-//       profile: user,
-//       bidCount: bidCount,
-//     });
-//   } catch (error) {
-//     console.error("Seller profile error:", error);
-//     req.flash("error", "Error loading profile: " + error.message);
-//     res.redirect("/seller/dashboard");
-//   }
-// };
 
 exports.getProfile = async (req, res) => {
   try {
@@ -1110,79 +963,6 @@ exports.downloadCustomerContract = async (req, res) => {
 
 
 
-
-// NEW: Update bid for round 2
-exports.updateBidForRound = async (req, res) => {
-  try {
-    const { bidId } = req.params;
-    const sellerId = req.session.userId;
-
-    if (!sellerId) {
-      req.flash("error", "Please log in to update bid");
-      return res.redirect("/auth/login");
-    }
-
-    const bid = await Bid.findOne({ _id: bidId, seller: sellerId })
-      .populate('project');
-
-    if (!bid) {
-      req.flash("error", "Bid not found");
-      return res.redirect("/seller/my-bids");
-    }
-
-    // Check if bid is active in current round and round is active
-    if (!bid.isActiveInRound || bid.project.biddingRounds.currentRound !== bid.round) {
-      req.flash("error", "Cannot update bid in this round");
-      return res.redirect("/seller/my-bids");
-    }
-
-    // Check if round is still active
-    const roundEndDate = bid.round === 1 ? 
-      bid.project.biddingRounds.round1.endDate : 
-      bid.project.biddingRounds.round2.endDate;
-    
-    if (new Date() > roundEndDate) {
-      req.flash("error", "Round has ended. Cannot update bid.");
-      return res.redirect("/seller/my-bids");
-    }
-
-    // Validate amount
-    const bidAmount = parseFloat(req.body.amount);
-    if (isNaN(bidAmount) || bidAmount < bid.project.bidSettings.startingBid) {
-      req.flash(
-        "error",
-        `Bid amount must be a number and at least $${bid.project.bidSettings.startingBid}`
-      );
-      return res.redirect("/seller/my-bids");
-    }
-
-    // Update bid
-    bid.amount = bidAmount;
-    bid.proposal = req.body.proposal.trim();
-    bid.revisionCount += 1;
-    bid.lastRevisedAt = new Date();
-    bid.updatedAt = new Date();
-
-    // Add revision history
-    bid.revisions.push({
-      round: bid.round,
-      amount: bidAmount,
-      proposal: req.body.proposal.trim(),
-      revisedAt: new Date()
-    });
-
-    await bid.save();
-
-    req.flash("success", `Bid updated successfully for Round ${bid.round}!`);
-    res.redirect("/seller/my-bids");
-  } catch (error) {
-    console.error("Update bid error:", error);
-    req.flash("error", "Error updating bid: " + error.message);
-    res.redirect("/seller/my-bids");
-  }
-};
-
-
 // NEW: Update bid for specific round
 exports.updateBidForRound = async (req, res) => {
   try {
@@ -1251,20 +1031,6 @@ exports.updateBidForRound = async (req, res) => {
 
 
 
-// NEW: Manual status update
-exports.updateStatuses = async (req, res) => {
-  try {
-    const statusAutomation = require('../services/statusAutomation');
-    const result = await statusAutomation.updateAllProjectStatuses();
-    
-    req.flash('success', 'Status updates completed successfully!');
-    res.redirect('/seller/my-bids');
-  } catch (error) {
-    console.error('Status update error:', error);
-    req.flash('error', 'Error updating statuses: ' + error.message);
-    res.redirect('/seller/my-bids');
-  }
-};
 
 
 // UPDATED: Apply bid with round awareness
@@ -1418,71 +1184,6 @@ exports.updateBidForRound2 = async (req, res) => {
   }
 };
 
-// UPDATED: Get my bids with new statuses
-exports.getMyBids = async (req, res) => {
-  try {
-    const sellerId = req.session.userId;
-
-    if (!sellerId) {
-      req.flash("error", "Please log in to view your bids");
-      return res.redirect("/auth/login");
-    }
-
-    // Force status update before showing bids
-    await statusAutomation.updateAllProjectStatuses();
-
-    const myBids = await Bid.find({ seller: sellerId })
-      .populate(
-        "project",
-        "title category description location bidSettings timeline status progress biddingRounds"
-      )
-      .populate("customer", "name email phone")
-      .sort({ createdAt: -1 });
-
-    // Group bids by selection status and round
-    const bidsByStatus = {
-      submitted: myBids.filter((bid) => bid.selectionStatus === 'submitted'),
-      selectedRound1: myBids.filter((bid) => bid.selectionStatus === 'selected-round1'),
-      selectedRound2: myBids.filter((bid) => bid.selectionStatus === 'selected-round2'),
-      won: myBids.filter((bid) => bid.selectionStatus === 'won'),
-      lost: myBids.filter((bid) => bid.selectionStatus === 'lost'),
-    };
-
-    // Get contracts for won bids
-    const wonBidIds = bidsByStatus.won.map((bid) => bid._id);
-    const contracts = await Contract.find({ bid: { $in: wonBidIds } });
-
-    // Add contract info to won bids
-    bidsByStatus.won.forEach((bid) => {
-      const contract = contracts.find(
-        (contract) => contract.bid.toString() === bid._id.toString()
-      );
-      if (contract) {
-        bid.contract = contract;
-      }
-    });
-
-    const userData = req.session.user || { name: "Seller", email: "" };
-
-    // Get bid count for notifications
-    const bidCount = await Bid.countDocuments({
-      seller: sellerId,
-      selectionStatus: 'submitted'
-    });
-
-    res.render("seller/my-bids", {
-      user: userData,
-      currentPage: "my-bids",
-      bids: bidsByStatus,
-      bidCount: bidCount,
-      moment: require("moment"),
-    });
-  } catch (error) {
-    console.error("My bids error:", error);
-    req.flash("error", "Error loading bids: " + error.message);
-    res.redirect("/seller/dashboard");
-  }
-};
 
 // UPDATED: Find bids - only show approved and active projects
 exports.getFindBids = async (req, res) => {
@@ -1626,89 +1327,1046 @@ exports.updateRound2Bid = async (req, res) => {
 };
 
 // NEW: Function to automatically complete Round 2 and select winner
+// exports.autoCompleteRound2 = async (projectId) => {
+//   try {
+//     const project = await Project.findById(projectId);
+//     if (!project || project.biddingRounds.currentRound !== 2) {
+//       return;
+//     }
+
+//     console.log(`🕒 Checking Round 2 completion for project: ${projectId}`);
+
+//     // Get all Round 2 bids that were actually submitted (not just selected)
+//     const round2Bids = await Bid.find({
+//       project: projectId,
+//       round: 2,
+//       selectionStatus: 'selected-round2'
+//     }).sort({ amount: -1 }); // Sort by HIGHEST amount first
+
+//     console.log(`📨 Found ${round2Bids.length} Round 2 bids for project ${projectId}`);
+
+//     if (round2Bids.length > 0) {
+//       // Auto-select the HIGHEST bid as winner (since you mentioned highest bid wins)
+//       const winningBid = round2Bids[0];
+      
+//       console.log(`🏆 Selecting winner: ${winningBid._id} with amount: $${winningBid.amount}`);
+
+//       // Use project method to complete round 2
+//       await project.completeRound2(winningBid._id);
+//       await winningBid.markAsWon();
+
+//       // Mark other bids as lost
+//       await Bid.updateMany(
+//         {
+//           project: projectId,
+//           round: 2,
+//           _id: { $ne: winningBid._id },
+//           selectionStatus: 'selected-round2'
+//         },
+//         { 
+//           selectionStatus: 'lost', 
+//           status: 'lost',
+//           isActiveInRound: false
+//         }
+//       );
+
+//       console.log(`✅ Round 2 automatically completed for project ${projectId}. Winner: ${winningBid._id}`);
+      
+//       // Initialize contract for winner
+//       const statusAutomation = require('../services/statusAutomation');
+//       await statusAutomation.initializeContractForWinner(project, winningBid, {});
+
+//       // Notify winner
+//       const Notice = require("../models/Notice");
+//       await Notice.create({
+//         title: `You Won! - ${project.title}`,
+//         content: `Congratulations! Your bid has been selected as the winner for "${project.title}". Contract process has started.`,
+//         targetAudience: "seller",
+//         specificUser: winningBid.seller,
+//         noticeType: "success",
+//         isActive: true,
+//         startDate: new Date(),
+//         endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//       });
+
+//       // Notify other bidders
+//       const losingBids = round2Bids.slice(1);
+//       for (const bid of losingBids) {
+//         await Notice.create({
+//           title: `Bid Result - ${project.title}`,
+//           content: `The project "${project.title}" has been awarded to another bidder.`,
+//           targetAudience: "seller",
+//           specificUser: bid.seller,
+//           noticeType: "info",
+//           isActive: true,
+//           startDate: new Date(),
+//           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//         });
+//       }
+
+//     } else {
+//       // No bids submitted in Round 2 - project fails
+//       await project.markAsFailed();
+//       console.log(`❌ Project ${projectId} failed - no bids submitted in Round 2`);
+//     }
+//   } catch (error) {
+//     console.error("Auto complete Round 2 error:", error);
+//   }
+// };
+
+// exports.autoCompleteRound2 = async (projectId) => {
+//   try {
+//     const Project = mongoose.model('Project');
+//     const Bid = mongoose.model('Bid');
+    
+//     const project = await Project.findById(projectId);
+//     if (!project || project.biddingRounds.currentRound !== 2) {
+//       console.log(`Project ${projectId} not found or not in Round 2`);
+//       return;
+//     }
+
+//     console.log(`🕒 Auto-completing Round 2 for project: ${projectId}`);
+
+//     // Use the project's completeRound2 method directly
+//     await project.completeRound2();
+    
+//     // If project was successfully awarded, initialize contract
+//     if (project.status === 'awarded' && project.finalWinner.bid) {
+//       const winningBid = await Bid.findById(project.finalWinner.bid);
+//       if (winningBid) {
+//         const statusAutomation = require('../services/statusAutomation');
+//         await statusAutomation.initializeContractForWinner(project, winningBid, {});
+
+//         // Notify winner
+//         const Notice = require("../models/Notice");
+//         await Notice.create({
+//           title: `You Won! - ${project.title}`,
+//           content: `Congratulations! Your bid has been selected as the winner for "${project.title}". Contract process has started.`,
+//           targetAudience: "seller",
+//           specificUser: winningBid.seller,
+//           noticeType: "success",
+//           isActive: true,
+//           startDate: new Date(),
+//           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//         });
+
+//         console.log(`✅ Contract initialized and notifications sent for project ${projectId}`);
+//       }
+//     }
+
+//     console.log(`🎉 Round 2 auto-completion finished for project ${projectId}`);
+    
+//   } catch (error) {
+//     console.error("Auto complete Round 2 error:", error);
+//   }
+// };
 exports.autoCompleteRound2 = async (projectId) => {
   try {
+    const Project = mongoose.model('Project');
+    const Bid = mongoose.model('Bid');
+    const statusAutomation = require('../services/statusAutomation'); // ADD THIS
+    
     const project = await Project.findById(projectId);
     if (!project || project.biddingRounds.currentRound !== 2) {
+      console.log(`Project ${projectId} not found or not in Round 2`);
       return;
     }
 
-    console.log(`🕒 Checking Round 2 completion for project: ${projectId}`);
+    console.log(`🕒 Auto-completing Round 2 for project: ${projectId}`);
 
-    // Get all Round 2 bids that were actually submitted (not just selected)
-    const round2Bids = await Bid.find({
-      project: projectId,
-      round: 2,
-      selectionStatus: 'selected-round2'
-    }).sort({ amount: -1 }); // Sort by HIGHEST amount first
+    // Use the project's completeRound2 method directly
+    await project.completeRound2();
+    
+    // Get updated project to check status
+    const updatedProject = await Project.findById(projectId);
+    
+    // If project was successfully awarded, initialize contract
+    if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
+      const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
+      if (winningBid) {
+        await statusAutomation.initializeContractForWinner(updatedProject, winningBid, {});
 
-    console.log(`📨 Found ${round2Bids.length} Round 2 bids for project ${projectId}`);
-
-    if (round2Bids.length > 0) {
-      // Auto-select the HIGHEST bid as winner (since you mentioned highest bid wins)
-      const winningBid = round2Bids[0];
-      
-      console.log(`🏆 Selecting winner: ${winningBid._id} with amount: $${winningBid.amount}`);
-
-      // Use project method to complete round 2
-      await project.completeRound2(winningBid._id);
-      await winningBid.markAsWon();
-
-      // Mark other bids as lost
-      await Bid.updateMany(
-        {
-          project: projectId,
-          round: 2,
-          _id: { $ne: winningBid._id },
-          selectionStatus: 'selected-round2'
-        },
-        { 
-          selectionStatus: 'lost', 
-          status: 'lost',
-          isActiveInRound: false
-        }
-      );
-
-      console.log(`✅ Round 2 automatically completed for project ${projectId}. Winner: ${winningBid._id}`);
-      
-      // Initialize contract for winner
-      const statusAutomation = require('../services/statusAutomation');
-      await statusAutomation.initializeContractForWinner(project, winningBid, {});
-
-      // Notify winner
-      const Notice = require("../models/Notice");
-      await Notice.create({
-        title: `You Won! - ${project.title}`,
-        content: `Congratulations! Your bid has been selected as the winner for "${project.title}". Contract process has started.`,
-        targetAudience: "seller",
-        specificUser: winningBid.seller,
-        noticeType: "success",
-        isActive: true,
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      });
-
-      // Notify other bidders
-      const losingBids = round2Bids.slice(1);
-      for (const bid of losingBids) {
+        // Notify winner
+        const Notice = require("../models/Notice");
         await Notice.create({
-          title: `Bid Result - ${project.title}`,
-          content: `The project "${project.title}" has been awarded to another bidder.`,
+          title: `You Won! - ${updatedProject.title}`,
+          content: `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
           targetAudience: "seller",
-          specificUser: bid.seller,
-          noticeType: "info",
+          specificUser: winningBid.seller,
+          noticeType: "success",
           isActive: true,
           startDate: new Date(),
           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
-      }
 
-    } else {
-      // No bids submitted in Round 2 - project fails
-      await project.markAsFailed();
-      console.log(`❌ Project ${projectId} failed - no bids submitted in Round 2`);
+        console.log(`✅ Contract initialized and notifications sent for project ${projectId}`);
+      }
     }
+
+    console.log(`🎉 Round 2 auto-completion finished for project ${projectId}`);
+    
   } catch (error) {
     console.error("Auto complete Round 2 error:", error);
+  }
+};
+
+
+
+
+
+
+
+// Get waiting queue page
+exports.getWaitingQueue = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const sellerId = req.session.userId;
+
+    const bid = await Bid.findById(bidId)
+      .populate('project')
+      .populate('seller');
+
+    if (!bid || bid.seller._id.toString() !== sellerId) {
+      req.flash("error", "Bid not found or unauthorized");
+      return res.redirect("/seller/my-bids");
+    }
+
+    if (!bid.isInWaitingQueue) {
+      req.flash("error", "This bid is not in the waiting queue");
+      return res.redirect("/seller/my-bids");
+    }
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+    const bidCount = await Bid.countDocuments({ 
+      seller: sellerId, 
+      selectionStatus: "submitted" 
+    });
+
+    res.render("seller/waiting-queue", {
+      user: userData,
+      currentPage: "my-bids",
+      bid: bid,
+      bidCount: bidCount,
+      moment: require("moment"),
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+  } catch (error) {
+    console.error("Get waiting queue error:", error);
+    req.flash("error", "Error loading waiting queue details");
+    res.redirect("/seller/my-bids");
+  }
+};
+
+
+
+
+// Get notifications
+exports.getNotifications = async (req, res) => {
+  try {
+    const sellerId = req.session.userId;
+
+    const notices = await Notice.find({
+      $or: [
+        { targetAudience: "seller" },
+        { specificUser: sellerId },
+        { targetId: sellerId }
+      ],
+      isActive: true,
+      startDate: { $lte: new Date() },
+      $or: [{ endDate: { $gte: new Date() } }, { endDate: null }],
+    })
+    .sort({ createdAt: -1 });
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    res.render("seller/notifications", {
+      user: userData,
+      currentPage: "notifications",
+      notices: notices || [],
+      moment: require("moment")
+    });
+  } catch (error) {
+    console.error("Get notifications error:", error);
+    req.flash("error", "Error loading notifications");
+    res.redirect("/seller/dashboard");
+  }
+};
+
+// ============ BID MANAGEMENT & STATUS ============
+
+
+
+
+
+// Get My Bids with Enhanced Status Handling
+
+
+// ============ ROUND 1 BIDDING ============
+
+// Get Round 1 Bidding Form
+
+// ============ DEFECTED BID RESUBMISSION ============
+
+
+// ============ ROUND 2 BIDDING ============
+
+// Get Round 2 Bidding Form
+
+
+// ============ REAL-TIME STATUS UPDATES ============
+
+// Manual status update for seller
+exports.updateStatuses = async (req, res) => {
+  try {
+    const sellerId = req.session.userId;
+    const statusAutomation = require('../services/statusAutomation');
+    
+    // Update all project statuses
+    await statusAutomation.updateAllProjectStatuses();
+    
+    // Handle expired resubmissions for this seller
+    const expiredBids = await Bid.find({
+      seller: sellerId,
+      selectionStatus: 'defected',
+      resubmissionDeadline: { $lte: new Date() }
+    });
+    
+    for (const bid of expiredBids) {
+      await bid.autoMarkAsLostIfExpired();
+    }
+
+    req.flash('success', 'Status updates completed successfully!');
+    res.redirect('/seller/my-bids');
+  } catch (error) {
+    console.error('Status update error:', error);
+    req.flash('error', 'Error updating statuses: ' + error.message);
+    res.redirect('/seller/my-bids');
+  }
+};
+
+// ============ BID DETAILS VIEW ============
+
+// Get Bid Details with Enhanced Status
+
+
+
+
+
+exports.getMyBids = async (req, res) => {
+  try {
+    const sellerId = req.session.userId;
+
+    if (!sellerId) {
+      req.flash("error", "Please log in to view your bids");
+      return res.redirect("/auth/login");
+    }
+
+    // Force status update before showing bids
+    await statusAutomation.updateAllProjectStatuses();
+
+    // Handle expired resubmissions
+    const expiredDefectedBids = await Bid.findExpiredDefectedBids();
+    for (const bid of expiredDefectedBids) {
+      await bid.autoMarkAsLostIfExpired();
+    }
+
+    const myBids = await Bid.find({ seller: sellerId })
+      .populate({
+        path: "project",
+        select: "title category description location bidSettings timeline status progress biddingRounds adminStatus round1Selections"
+      })
+      .populate("customer", "name email phone")
+      .sort({ createdAt: -1 });
+
+    console.log(`📊 Found ${myBids.length} total bids for seller ${sellerId}`);
+
+    // Enhanced grouping with proper multi-round status handling
+    const bidsByStatus = {
+      submitted: myBids.filter(bid => 
+        bid.selectionStatus === 'submitted' && 
+        bid.status === 'submitted' &&
+        bid.isActiveInRound !== false &&
+        bid.round === 1
+      ),
+      
+      defected: myBids.filter(bid => 
+        bid.selectionStatus === 'defected' &&
+        bid.agreementResponses?.status === 'defected' &&
+        // Only show defected bids that can still be resubmitted
+        (bid.agreementResponses.defectCount < bid.agreementResponses.maxDefectCount) &&
+        // Check if resubmission deadline hasn't passed
+        (!bid.resubmissionDeadline || new Date(bid.resubmissionDeadline) > new Date())
+      ),
+      
+      waitingQueue: myBids.filter(bid => 
+        bid.selectionStatus === 'waiting-queue' && 
+        bid.isInWaitingQueue === true &&
+        bid.isActiveInRound !== false
+      ),
+      
+      selectedRound1: myBids.filter(bid => 
+        bid.selectionStatus === 'selected-round1' && 
+        bid.isActiveInRound !== false &&
+        bid.round === 1
+      ),
+      
+      selectedRound2: myBids.filter(bid => 
+        bid.selectionStatus === 'selected-round2' && 
+        bid.isActiveInRound !== false &&
+        bid.round === 2
+      ),
+      
+      won: myBids.filter(bid => 
+        bid.selectionStatus === 'won' || 
+        bid.status === 'won'
+      ),
+      
+      lost: myBids.filter(bid => 
+        (bid.selectionStatus === 'lost' || bid.status === 'lost') &&
+        bid.agreementResponses?.status !== 'defected'
+      )
+    };
+
+    // Get contracts for won bids
+    const wonBidIds = bidsByStatus.won.map(bid => bid._id);
+    const contracts = await Contract.find({ bid: { $in: wonBidIds } })
+      .populate('customer', 'name email')
+      .populate('seller', 'name companyName')
+      .populate('project', 'title');
+
+    // Add contract info to won bids
+    bidsByStatus.won.forEach(bid => {
+      const contract = contracts.find(
+        contract => contract.bid && contract.bid.toString() === bid._id.toString()
+      );
+      if (contract) {
+        bid.contract = contract;
+      }
+    });
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    // Get bid count for notifications (active bids only)
+    const bidCount = await Bid.countDocuments({
+      seller: sellerId,
+      selectionStatus: { 
+        $in: ['submitted', 'selected-round1', 'selected-round2', 'waiting-queue'] 
+      },
+      status: { $ne: 'lost' }
+    });
+
+    console.log('📈 Bid counts by status:', {
+      submitted: bidsByStatus.submitted.length,
+      defected: bidsByStatus.defected.length,
+      waitingQueue: bidsByStatus.waitingQueue.length,
+      selectedRound1: bidsByStatus.selectedRound1.length,
+      selectedRound2: bidsByStatus.selectedRound2.length,
+      won: bidsByStatus.won.length,
+      lost: bidsByStatus.lost.length
+    });
+
+    res.render("seller/my-bids", {
+      user: userData,
+      currentPage: "my-bids",
+      bids: bidsByStatus,
+      bidCount: bidCount,
+      moment: require("moment"),
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+
+  } catch (error) {
+    console.error("❌ My bids error:", error);
+    req.flash("error", "Error loading bids: " + error.message);
+    res.redirect("/seller/dashboard");
+  }
+};
+
+// Get Round 1 Bidding Form - FIXED
+exports.getRound1BiddingForm = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const sellerId = req.session.userId;
+
+    console.log('=== GET ROUND 1 FORM ===');
+    console.log('Project ID:', projectId);
+    console.log('Seller ID:', sellerId);
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash("error", "Project not found");
+      return res.redirect("/seller/find-bids");
+    }
+
+    // Check if project is approved and in round 1
+    if (project.adminStatus !== 'approved' || project.biddingRounds.currentRound !== 1) {
+      req.flash("error", "Project is not accepting Round 1 bids");
+      return res.redirect("/seller/find-bids");
+    }
+
+    // Check for existing bid
+    const existingBid = await Bid.findOne({
+      project: projectId,
+      seller: sellerId,
+      round: 1
+    });
+
+    console.log('Existing bid found:', existingBid ? existingBid._id : 'None');
+
+    // Get agreements for project category - FIXED QUERY
+    let agreements = await Agreement.findOne({ 
+      category: project.category,
+      isActive: true 
+    });
+    
+    console.log('Agreements found:', agreements ? agreements.clauses.length : 'None');
+
+    // Create default agreements if they don't exist
+    if (!agreements) {
+      console.log('Creating default agreements for category:', project.category);
+      agreements = new Agreement({
+        category: project.category,
+        clauses: Agreement.getDefaultClauses(project.category)
+      });
+      await agreements.save();
+      console.log('Default agreements created');
+    }
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    // Get bid count for notifications
+    const bidCount = await Bid.countDocuments({
+      seller: sellerId,
+      selectionStatus: "submitted"
+    });
+
+    res.render("seller/round1-bidding-form", {
+      user: userData,
+      currentPage: "find-bids",
+      project: project,
+      agreements: agreements,
+      existingBid: existingBid,
+      bidCount: bidCount,
+      moment: moment,
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+  } catch (error) {
+    console.error("Get round 1 bidding form error:", error);
+    req.flash("error", "Error loading bidding form: " + error.message);
+    res.redirect("/seller/find-bids");
+  }
+};
+// Submit Round 1 Bid - FIXED STATUS UPDATES
+exports.submitRound1Bid = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const sellerId = req.session.userId;
+    const { amount, proposal, agreementResponses } = req.body;
+
+    console.log('=== SUBMIT ROUND 1 BID ===');
+    console.log('Project ID:', projectId);
+    console.log('Seller ID:', sellerId);
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash("error", "Project not found");
+      return res.redirect("/seller/find-bids");
+    }
+
+    // Validate project status
+    if (project.adminStatus !== 'approved' || 
+        project.biddingRounds.currentRound !== 1 || 
+        project.biddingRounds.round1.status !== 'active') {
+      req.flash("error", "Project is not accepting Round 1 bids");
+      return res.redirect("/seller/find-bids");
+    }
+
+    // Check if bidding time hasn't ended
+    if (new Date() > project.biddingRounds.round1.endDate) {
+      req.flash("error", "Round 1 bidding has ended");
+      return res.redirect("/seller/find-bids");
+    }
+
+    // Get agreements for validation
+    let agreements = await Agreement.findOne({ 
+      category: project.category,
+      isActive: true 
+    });
+    
+    if (!agreements) {
+      agreements = new Agreement({
+        category: project.category,
+        clauses: Agreement.getDefaultClauses(project.category)
+      });
+      await agreements.save();
+    }
+
+    // Check for existing bid
+    let bid = await Bid.findOne({
+      project: projectId,
+      seller: sellerId,
+      $or: [
+        { round: 1 },
+        { round: { $exists: false } }
+      ]
+    });
+
+    console.log('Existing bid check:', bid ? 'Found' : 'Not found');
+
+    if (bid && bid.agreementResponses?.submitted) {
+      req.flash("error", "You have already submitted a bid for this project");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Validate amount
+    const bidAmount = parseFloat(amount);
+    if (isNaN(bidAmount) || bidAmount < project.bidSettings.startingBid) {
+      req.flash("error", `Bid amount must be at least $${project.bidSettings.startingBid}`);
+      return res.redirect(`/seller/project/${projectId}/bid`);
+    }
+
+    // Validate proposal
+    if (!proposal || proposal.trim().length < 100) {
+      req.flash("error", "Proposal must be at least 100 characters long");
+      return res.redirect(`/seller/project/${projectId}/bid`);
+    }
+
+    // PROCESS AGREEMENT RESPONSES - FIXED LOGIC
+    const processedResponses = [];
+    
+    if (agreementResponses && typeof agreementResponses === 'object') {
+      console.log('Processing agreement responses...');
+      
+      for (const [clauseId, responseData] of Object.entries(agreementResponses)) {
+        console.log('Processing clause:', clauseId, responseData);
+        
+        // Skip if it's not a proper clause ID format
+        if (!mongoose.Types.ObjectId.isValid(clauseId)) {
+          console.log('Invalid clause ID:', clauseId);
+          continue;
+        }
+
+        // Find the clause in agreements to validate it exists
+        const clause = agreements.clauses.find(c => c._id.toString() === clauseId);
+        if (!clause) {
+          console.log('Clause not found in agreement:', clauseId);
+          continue;
+        }
+
+        const agreed = responseData.agreed === 'true' || responseData.agreed === true;
+        const remarks = responseData.remarks || '';
+
+        console.log(`Clause ${clauseId}: agreed=${agreed}, remarks=${remarks}`);
+
+        // Validate that if it's a required clause and disagreed, remarks are provided
+        if (clause.required && !agreed && (!remarks || remarks.trim() === '')) {
+          req.flash("error", `Remarks are required for disagreed clause: ${clause.title}`);
+          return res.redirect(`/seller/project/${projectId}/bid`);
+        }
+
+        processedResponses.push({
+          clauseId: new mongoose.Types.ObjectId(clauseId),
+          agreed: agreed,
+          remarks: remarks,
+          submittedAt: new Date()
+        });
+      }
+    }
+
+    console.log('Processed responses count:', processedResponses.length);
+
+    // Validate that all required clauses are responded to
+    const requiredClauses = agreements.clauses.filter(clause => clause.required);
+    const respondedRequiredClauses = processedResponses.filter(response => {
+      const clause = requiredClauses.find(c => c._id.toString() === response.clauseId.toString());
+      return clause !== undefined;
+    });
+
+    console.log('Required clauses:', requiredClauses.length);
+    console.log('Responded required clauses:', respondedRequiredClauses.length);
+
+    if (respondedRequiredClauses.length !== requiredClauses.length) {
+      req.flash("error", "Please respond to all required agreement clauses");
+      return res.redirect(`/seller/project/${projectId}/bid`);
+    }
+
+    // Create or update bid - FIXED BID CREATION
+    if (!bid) {
+      console.log('Creating new bid...');
+      bid = new Bid({
+        project: projectId,
+        seller: sellerId,
+        customer: project.customer,
+        amount: bidAmount,
+        proposal: proposal.trim(),
+        round: 1,
+        status: "submitted",
+        selectionStatus: "submitted",
+        isActiveInRound: true,
+        bidSubmittedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    } else {
+      console.log('Updating existing bid...');
+      bid.amount = bidAmount;
+      bid.proposal = proposal.trim();
+      bid.status = "submitted";
+      bid.selectionStatus = "submitted";
+      bid.isActiveInRound = true;
+      bid.round = 1;
+      bid.updatedAt = new Date();
+    }
+
+    // Set agreement responses - FIXED STRUCTURE
+    bid.agreementResponses = {
+      submitted: true,
+      responses: processedResponses,
+      submittedAt: new Date(),
+      status: 'pending',
+      defectCount: 0,
+      maxDefectCount: 3,
+      defectHistory: []
+    };
+
+    // Add initial revision
+    bid.revisions = bid.revisions || [];
+    bid.revisions.push({
+      round: 1,
+      amount: bidAmount,
+      proposal: proposal.trim(),
+      agreementResponses: processedResponses,
+      revisedAt: new Date(),
+      revisionType: 'initial'
+    });
+
+    bid.revisionCount = (bid.revisionCount || 0) + 1;
+    bid.lastRevisedAt = new Date();
+
+    // SAVE THE BID
+    console.log('Saving bid...');
+    await bid.save();
+    console.log('✅ Bid saved successfully:', bid._id);
+
+    // Add to project bids if not already added
+    if (!project.bids.includes(bid._id)) {
+      project.bids.push(bid._id);
+      await project.save();
+      console.log('✅ Bid added to project');
+    }
+
+    req.flash("success", "Bid submitted successfully for Round 1!");
+    res.redirect("/seller/my-bids");
+
+  } catch (error) {
+    console.error("Submit round 1 bid error:", error);
+    console.error("Error details:", error.stack);
+    req.flash("error", "Error submitting bid: " + error.message);
+    res.redirect(`/seller/project/${projectId}/bid`);
+  }
+};
+// Get Defected Bid Resubmission Form
+exports.getDefectedBidResubmission = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const sellerId = req.session.userId;
+
+    const bid = await Bid.findById(bidId)
+      .populate('project')
+      .populate({
+        path: 'agreementResponses.responses.clauseId',
+        model: 'Agreement'
+      });
+
+    if (!bid || bid.seller.toString() !== sellerId) {
+      req.flash("error", "Bid not found or unauthorized");
+      return res.redirect("/seller/my-bids");
+    }
+
+    if (bid.agreementResponses?.status !== 'defected') {
+      req.flash("error", "This bid does not require resubmission");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if deadline passed
+    if (bid.isResubmissionDeadlinePassed && bid.isResubmissionDeadlinePassed()) {
+      req.flash("error", "Resubmission deadline has passed");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check max defect count
+    if (bid.agreementResponses.defectCount >= bid.agreementResponses.maxDefectCount) {
+      req.flash("error", "Maximum resubmission attempts reached");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Get agreements
+    const agreements = await Agreement.findOne({ category: bid.project.category });
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    // Get bid count for notifications
+    const bidCount = await Bid.countDocuments({
+      seller: sellerId,
+      selectionStatus: "submitted"
+    });
+
+    res.render("seller/defected-bid-resubmission", {
+      user: userData,
+      currentPage: "my-bids",
+      bid: bid,
+      agreements: agreements,
+      bidCount: bidCount,
+      moment: moment,
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+  } catch (error) {
+    console.error("Get defected bid resubmission error:", error);
+    req.flash("error", "Error loading resubmission form: " + error.message);
+    res.redirect("/seller/my-bids");
+  }
+};
+
+// Resubmit Defected Bid
+exports.resubmitDefectedBid = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const sellerId = req.session.userId;
+    const { amount, proposal } = req.body;
+
+    console.log('=== RESUBMIT DEFECTED BID ===');
+    console.log('Bid ID:', bidId);
+
+    const bid = await Bid.findById(bidId);
+    if (!bid || bid.seller.toString() !== sellerId) {
+      req.flash("error", "Bid not found or unauthorized");
+      return res.redirect("/seller/my-bids");
+    }
+
+    if (bid.agreementResponses.status !== 'defected') {
+      req.flash("error", "This bid does not require resubmission");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if deadline passed
+    if (bid.isResubmissionDeadlinePassed && bid.isResubmissionDeadlinePassed()) {
+      req.flash("error", "Resubmission deadline has passed. You can no longer resubmit this bid.");
+      return res.redirect("/seller/my-bids");
+    }
+
+    if (bid.agreementResponses.defectCount >= bid.agreementResponses.maxDefectCount) {
+      req.flash("error", "Maximum resubmission attempts reached");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Validate amount
+    const bidAmount = parseFloat(amount);
+    const project = await Project.findById(bid.project);
+    if (isNaN(bidAmount) || bidAmount < project.bidSettings.startingBid) {
+      req.flash("error", `Bid amount must be at least $${project.bidSettings.startingBid}`);
+      return res.redirect(`/seller/bid/${bidId}/defected-resubmission`);
+    }
+
+    // Process agreement responses
+    const processedResponses = [];
+    const agreementResponses = req.body.agreementResponses;
+    
+    if (agreementResponses && typeof agreementResponses === 'object') {
+      for (const [clauseId, response] of Object.entries(agreementResponses)) {
+        if (clauseId.startsWith('custom_')) continue;
+
+        processedResponses.push({
+          clauseId,
+          agreed: response.agreed === 'true',
+          remarks: response.remarks || '',
+          supportingDocs: [],
+          submittedAt: new Date()
+        });
+      }
+    }
+
+    // Resubmit the bid using model method
+    await bid.resubmitAfterDefect(bidAmount, proposal.trim(), processedResponses);
+
+    // Update project selection status
+    const projectUpdate = await Project.findById(bid.project);
+    await projectUpdate.handleResubmission(bidId, {
+      amount: bidAmount,
+      proposal: proposal.trim(),
+      agreementResponses: processedResponses
+    });
+
+    req.flash("success", "Bid resubmitted successfully! Waiting for customer review.");
+    res.redirect("/seller/my-bids");
+  } catch (error) {
+    console.error("Resubmit defected bid error:", error);
+    req.flash("error", "Error resubmitting bid: " + error.message);
+    res.redirect("/seller/my-bids");
+  }
+};
+
+// Get Round 2 Bidding Form
+exports.getRound2BiddingForm = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const sellerId = req.session.userId;
+
+    console.log('🔄 Loading Round 2 bidding form for project:', projectId);
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash("error", "Project not found");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if project is in Round 2
+    if (project.biddingRounds.currentRound !== 2) {
+      console.log('❌ Project not in Round 2, current round:', project.biddingRounds.currentRound);
+      req.flash("error", "Round 2 bidding not active");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if Round 2 is still active
+    if (new Date() > project.biddingRounds.round2.endDate) {
+      req.flash("error", "Round 2 bidding has ended");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if seller is selected for Round 2
+    const bid = await Bid.findOne({
+      project: projectId,
+      seller: sellerId,
+      selectionStatus: 'selected-round2'
+    });
+
+    if (!bid) {
+      console.log('❌ Seller not selected for Round 2');
+      req.flash("error", "You are not selected for Round 2");
+      return res.redirect("/seller/my-bids");
+    }
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    res.render("seller/round2-bidding-form", {
+      user: userData,
+      currentPage: "my-bids",
+      project: project,
+      bid: bid,
+      bidCount: await Bid.countDocuments({ seller: sellerId, selectionStatus: "submitted" }),
+      moment: require("moment"),
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+  } catch (error) {
+    console.error("Get round 2 bidding form error:", error);
+    req.flash("error", "Error loading round 2 bidding form");
+    res.redirect("/seller/my-bids");
+  }
+};
+// Submit Round 2 Bid
+exports.submitRound2Bid = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const sellerId = req.session.userId;
+    const { amount, proposal } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      req.flash("error", "Project not found");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if project is in Round 2 and active
+    if (project.biddingRounds.currentRound !== 2 || project.biddingRounds.round2.status !== 'active') {
+      req.flash("error", "Round 2 bidding not active");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if Round 2 time hasn't expired
+    if (new Date() > project.biddingRounds.round2.endDate) {
+      req.flash("error", "Round 2 bidding has ended");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Check if seller is selected for Round 2
+    const bid = await Bid.findOne({
+      project: projectId,
+      seller: sellerId,
+      selectionStatus: 'selected-round2'
+    });
+
+    if (!bid) {
+      req.flash("error", "You are not selected for Round 2");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Validate amount
+    const bidAmount = parseFloat(amount);
+    if (isNaN(bidAmount) || bidAmount < project.bidSettings.startingBid) {
+      req.flash("error", `Bid amount must be at least $${project.bidSettings.startingBid}`);
+      return res.redirect(`/seller/project/${projectId}/round2-bidding`);
+    }
+
+    // Submit Round 2 bid using model method
+    await bid.updateForRound2(bidAmount, proposal?.trim() || bid.proposal);
+
+    req.flash("success", "Round 2 bid updated successfully!");
+    res.redirect("/seller/my-bids");
+  } catch (error) {
+    console.error("Submit round 2 bid error:", error);
+    req.flash("error", "Error submitting round 2 bid: " + error.message);
+    res.redirect("/seller/my-bids");
+  }
+};
+
+// Get Bid Details with Enhanced Status
+exports.getBidDetails = async (req, res) => {
+  try {
+    console.log("req params ",req.params)
+    const { id } = req.params;
+    const sellerId = req.session.userId;
+    let bidId = id
+
+    console.log("=== BID DETAILS DEBUG ===");
+    console.log("Bid ID:", bidId);
+    console.log("Seller ID:", sellerId);
+
+    if (!sellerId) {
+      req.flash("error", "Please log in to view bid details");
+      return res.redirect("/auth/login");
+    }
+
+    const bid = await Bid.findById(bidId)
+      .populate('project')
+      .populate('customer', 'name email phone companyName')
+      .populate('agreementResponses.responses.clauseId');
+
+    if (!bid || bid.seller.toString() !== sellerId) {
+      req.flash("error", "Bid not found or unauthorized");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Get agreements for the project category
+    const agreements = await Agreement.findOne({ category: bid.project.category });
+
+    const userData = req.session.user || { name: "Seller", email: "" };
+
+    // Get bid count for notifications
+    const bidCount = await Bid.countDocuments({
+      seller: sellerId,
+      selectionStatus: "submitted",
+    });
+
+    res.render("seller/bid-details", {
+      user: userData,
+      currentPage: "my-bids",
+      project: bid.project,
+      bid: bid,
+      agreements: agreements,
+      bidCount: bidCount,
+      moment: require("moment"),
+    });
+  } catch (error) {
+    console.error("Bid details error:", error);
+    req.flash("error", "Error loading bid details: " + error.message);
+    res.redirect("/seller/my-bids");
   }
 };

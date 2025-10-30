@@ -3,370 +3,522 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Round 1 Selection - Propload</title>
+    <title>Select Top 3 - Propload</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .bid-card.selected {
-            border-color: #10B981;
-            background-color: #F0FDF4;
-        }
-        .bid-card.selected .selection-indicator {
-            display: block;
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 </head>
 <body class="bg-gray-50">
-    <%- include('../partials/header') %>
+    <%- include('./sideNav') %>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <%- include('../partials/flash-messages') %>
+    <!-- Hidden element to store server-side data -->
+    <div id="serverData" 
+         data-waiting-queue-count="<%= project.round1Selections.waitingQueue.length %>"
+         style="display: none;">
+    </div>
 
-        <!-- Header -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="flex justify-between items-start">
+    <div class="ml-0 md:ml-64 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Round 1: Select Top 3 Bids</h1>
-                    <p class="text-gray-600 mt-2">Project: <strong><%= project.title %></strong></p>
-                    <p class="text-gray-500 text-sm mt-1">Select exactly 3 bids to proceed to Round 2</p>
-                    <p class="text-yellow-600 text-sm mt-1">
-                        <i class="fas fa-clock mr-1"></i>
-                        You have 24 hours to make your selection
-                    </p>
+                    <h1 class="text-3xl font-bold text-gray-900">Select Top 3 for Round 2</h1>
+                    <p class="text-gray-600 mt-2">Review and select 3 bids to advance to the final round</p>
                 </div>
-                <div class="text-right">
-                    <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                        Round 1 Selection
-                    </span>
-                    <p class="text-sm text-gray-500 mt-2">
-                        Total Bids: <span class="font-semibold"><%= bids.length %></span>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Selection Instructions -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <div class="flex items-start">
-                <i class="fas fa-info-circle text-blue-600 text-xl mt-1 mr-3"></i>
-                <div>
-                    <h3 class="text-lg font-semibold text-blue-800 mb-2">Selection Process</h3>
-                    <ul class="text-blue-700 space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                            Review all 10 top bids from Round 1 (sorted by amount)
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                            Select exactly 3 bids to proceed to Round 2
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                            Selected sellers will have 24 hours to update their bids in Round 2
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                            After Round 2, you'll select the final winner
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Selection Counter -->
-        <div class="bg-white shadow rounded-lg p-4 mb-6 sticky top-4 z-10">
-            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <span class="text-lg font-semibold text-gray-700">Selected: </span>
-                    <span id="selected-count" class="text-2xl font-bold text-indigo-600">0</span>
-                    <span class="text-gray-500">/ 3 bids</span>
+                    <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                        Round 1.5 - Selection Phase
+                    </span>
+                    <a href="/customer/project/<%= project._id %>" 
+                       class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-300">
+                        Back to Project
+                    </a>
                 </div>
-                <div id="selection-actions" class="hidden">
-                    <form id="selection-form" action="/customer/project/<%= project._id %>/select-top3" method="POST">
-                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                        <div id="selected-bids-container"></div>
-                        <button type="submit" 
-                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold flex items-center">
-                            <i class="fas fa-arrow-right mr-2"></i>
-                            Proceed to Round 2
+            </div>
+
+            <%- include('../partials/flash-messages') %>
+
+            <!-- Selection Info -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                <div class="flex items-center">
+                    <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-blue-800">Selection Instructions</h3>
+                        <p class="text-blue-700 mt-1">
+                            Select exactly 3 bids to advance to Round 2. You have 24 hours to make your selection. 
+                            The selected bidders will have 24 hours to update their bids in the final round.
+                        </p>
+                        <p class="text-blue-600 text-sm mt-2">
+                            <i class="fas fa-clock mr-1"></i>
+                            Defected bids have 24 hours to resubmit. If they don't, the next in waiting queue will be automatically promoted.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Status Updates -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-sync-alt text-green-600 mr-2"></i>
+                        <span class="text-sm text-green-700">Real-time status updates active</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="location.reload()" 
+                                class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition duration-300 flex items-center">
+                            <i class="fas fa-sync-alt mr-1"></i>
+                            Refresh Now
                         </button>
-                    </form>
-                </div>
-                <div id="selection-warning" class="text-orange-600 text-sm">
-                    Select exactly 3 bids to continue
+                        <span class="text-xs text-green-600" id="last-updated">
+                            Updated just now
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Bids Grid -->
-        <div class="grid gap-6" id="bids-container">
-            <% bids.forEach((bid, index) => { %>
-            <div class="bid-card bg-white shadow rounded-lg p-6 border-2 border-gray-200 transition-all duration-300 hover:shadow-lg cursor-pointer selectable-bid"
-                 data-bid-id="<%= bid._id %>">
-                <div class="flex justify-between items-start">
-                    <!-- Selection Indicator -->
-                    <div class="selection-indicator hidden absolute top-4 right-4">
-                        <div class="bg-green-500 text-white p-2 rounded-full">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
+            <!-- Top 3 Bids Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Top 3 Bids (Selected Automatically)</h2>
+                <p class="text-gray-600 mb-6">These are the 3 lowest bids from Round 1. Review each bid and select which ones to advance.</p>
 
-                    <!-- Bid Information -->
-                    <div class="flex-1">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-3 mb-2">
-                                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-                                        Rank #<%= index + 1 %>
-                                    </span>
-                                    <span class="text-2xl font-bold text-green-600">$<%= bid.amount.toLocaleString() %></span>
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                        <i class="fas fa-gavel mr-1"></i>Round 1
-                                    </span>
-                                </div>
-                                
-                                <!-- Seller Information -->
-                                <div class="flex items-center space-x-4 mb-3">
-                                    <% if (bid.seller.profileImage && bid.seller.profileImage.url) { %>
-                                    <img src="<%= bid.seller.profileImage.url %>" 
-                                         alt="<%= bid.seller.companyName || bid.seller.name %>"
-                                         class="w-16 h-16 rounded-full object-cover border-2 border-gray-200">
-                                    <% } else { %>
-                                    <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center border-2 border-gray-200">
-                                        <i class="fas fa-user text-gray-600 text-xl"></i>
+                <form id="selectionForm" action="/customer/project/<%= project._id %>/select-top3" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
+                    <div class="grid gap-6 mb-8">
+                        <% project.round1Selections.top3.forEach((selection, index) => { %>
+                            <% const bid = selection.bid; %>
+                            <div class="bg-white shadow rounded-lg p-6 border-2 <%= selection.status === 'defected' ? 'border-red-300 bg-red-50' : 'border-gray-200' %>"
+                                 data-bid-id="<%= bid._id %>"
+                                 data-needs-refresh="<%= selection.status === 'defected' ? 'true' : 'false' %>">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex items-start space-x-4 flex-1">
+                                        <!-- Selection Checkbox -->
+                                        <div class="flex items-start mt-1">
+                                            <input type="checkbox" 
+                                                   name="selectedBids" 
+                                                   value="<%= bid._id %>" 
+                                                   <%= selection.status !== 'defected' ? 'checked' : 'disabled' %>
+                                                   class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                        </div>
+
+                                        <!-- Bidder Info -->
+                                        <div class="flex-1">
+                                            <div class="flex items-center mb-2">
+                                                <h3 class="text-xl font-semibold text-gray-900">
+                                                    <%= bid.seller.companyName || bid.seller.name %>
+                                                </h3>
+                                                <% if (selection.status === 'defected') { %>
+                                                    <span class="ml-3 px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full flex items-center">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                        DEFECTED
+                                                    </span>
+                                                    <!-- Countdown Timer for Defected Bid -->
+                                                    <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                                                    <span class="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full" 
+                                                          data-deadline="<%= bid.resubmissionDeadline %>"
+                                                          id="countdown-<%= bid._id %>">
+                                                        Resubmission: <span class="font-mono"><%= moment(bid.resubmissionDeadline).fromNow(true) %></span>
+                                                    </span>
+                                                    <% } else if (bid.resubmissionDeadline) { %>
+                                                    <span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                                        Resubmission Expired
+                                                    </span>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <span class="ml-3 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                                                        <i class="fas fa-check mr-1"></i>
+                                                        SELECTED
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                            
+                                            <!-- Rating and Experience -->
+                                            <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                                                <% if (bid.seller.rating) { %>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-star text-yellow-500 mr-1"></i>
+                                                        <span><%= bid.seller.rating.toFixed(1) %> rating</span>
+                                                    </div>
+                                                <% } %>
+                                                <% if (bid.seller.yearsOfExperience) { %>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-briefcase text-blue-500 mr-1"></i>
+                                                        <span><%= bid.seller.yearsOfExperience %> years experience</span>
+                                                    </div>
+                                                <% } %>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-tag text-purple-500 mr-1"></i>
+                                                    <span class="capitalize"><%= bid.seller.specialization || 'General' %></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Defect Information -->
+                                            <% if (selection.status === 'defected') { %>
+                                                <div class="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
+                                                    <div class="flex items-start">
+                                                        <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-2"></i>
+                                                        <div>
+                                                            <p class="text-red-700 text-sm">
+                                                                <strong>Defect Remarks:</strong> <%= selection.defectRemarks %>
+                                                            </p>
+                                                            <p class="text-red-600 text-xs mt-1">
+                                                                Defect Count: <%= selection.defectCount %> of 3 maximum
+                                                            </p>
+                                                            <% if (bid.agreementResponses && bid.agreementResponses.defectCount > 0) { %>
+                                                            <p class="text-red-600 text-xs mt-1">
+                                                                Previous defects: <%= bid.agreementResponses.defectCount %>
+                                                            </p>
+                                                            <% } %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+                                        </div>
                                     </div>
-                                    <% } %>
+
+                                    <!-- Bid Amount -->
+                                    <div class="text-right">
+                                        <p class="text-2xl font-bold text-green-600">$<%= bid.amount.toLocaleString() %></p>
+                                        <p class="text-sm text-gray-500">Bid Amount</p>
+                                        <p class="text-xs text-gray-400 mt-1">
+                                            Submitted: <%= moment(bid.createdAt).format('MMM D, YYYY') %>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Agreement Responses Section -->
+                                <div class="mt-4 bg-gray-50 border border-gray-200 rounded-md p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                        <i class="fas fa-file-contract text-indigo-500 mr-2"></i>
+                                        Agreement Responses
+                                    </h4>
+                                    <div class="space-y-2 text-sm">
+                                        <% if (agreements && agreements.clauses) { %>
+                                            <% agreements.clauses.forEach(clause => { %>
+                                                <% 
+                                                const response = bid.agreementResponses && bid.agreementResponses.responses ? 
+                                                    bid.agreementResponses.responses.find(r => 
+                                                        r.clauseId && r.clauseId.toString() === clause._id.toString()
+                                                    ) : null;
+                                                %>
+                                                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                                                    <div class="flex-1">
+                                                        <span class="text-gray-700 font-medium"><%= clause.clauseNumber %>. <%= clause.title %></span>
+                                                        <% if (clause.required) { %>
+                                                            <span class="ml-2 px-1 py-0.5 bg-red-100 text-red-800 text-xs rounded">Required</span>
+                                                        <% } %>
+                                                        <p class="text-gray-500 text-xs mt-1"><%= clause.description %></p>
+                                                    </div>
+                                                    <span class="px-2 py-1 rounded text-xs font-medium <%= response && response.agreed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                                                        <%= response && response.agreed ? 'AGREED' : 'DISAGREED' %>
+                                                    </span>
+                                                </div>
+                                                <% if (response && !response.agreed && response.remarks) { %>
+                                                    <div class="ml-4 mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                                        <p class="text-xs text-yellow-700">
+                                                            <strong>Remarks:</strong> <%= response.remarks %>
+                                                        </p>
+                                                    </div>
+                                                <% } %>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <p class="text-gray-500 text-sm">No agreement responses available.</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Proposal Preview -->
+                                <div class="mt-4 mb-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Proposal Summary</h4>
+                                    <p class="text-gray-700 line-clamp-3"><%= bid.proposal %></p>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+                                    <div class="flex space-x-3">
+                                        <a href="/customer/project/<%= project._id %>/bid/<%= bid._id %>/details" 
+                                           class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+                                            <i class="fas fa-eye mr-2"></i>View Full Details
+                                        </a>
+                                        <a href="/customer/project/<%= project._id %>/bid/<%= bid._id %>/profile" 
+                                           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-sm flex items-center">
+                                            <i class="fas fa-user mr-2"></i>View Profile
+                                        </a>
+                                    </div>
                                     
-                                    <div class="flex-1">
-                                        <h3 class="text-xl font-semibold text-gray-900">
-                                            <%= bid.seller.companyName || bid.seller.name %>
-                                        </h3>
-                                        <p class="text-gray-600"><%= bid.seller.email %></p>
-                                        <% if (bid.seller.phone) { %>
-                                        <p class="text-gray-500 text-sm"><%= bid.seller.phone %></p>
-                                        <% } %>
-                                    </div>
-                                </div>
-
-                                <!-- Seller Rating -->
-                                <% if (bid.seller.rating) { %>
-                                <div class="flex items-center mb-3">
-                                    <div class="flex items-center">
-                                        <% for (let i = 1; i <= 5; i++) { %>
-                                        <i class="fas fa-star <%= i <= Math.floor(bid.seller.rating) ? 'text-yellow-400' : 'text-gray-300' %> mr-1"></i>
-                                        <% } %>
-                                        <span class="text-gray-700 ml-2 font-medium">
-                                            <%= bid.seller.rating.toFixed(1) %> 
-                                        </span>
-                                    </div>
-                                </div>
-                                <% } %>
-
-                                <!-- Seller Experience -->
-                                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                                    <% if (bid.seller.yearsOfExperience) { %>
-                                    <div class="flex items-center">
-                                        <i class="fas fa-briefcase mr-2 text-blue-500"></i>
-                                        <span><%= bid.seller.yearsOfExperience %> years experience</span>
-                                    </div>
-                                    <% } %>
-                                    <% if (bid.seller.specialization) { %>
-                                    <div class="flex items-center">
-                                        <i class="fas fa-tags mr-2 text-green-500"></i>
-                                        <span><%= bid.seller.specialization %></span>
-                                    </div>
+                                    <!-- Defect Button -->
+                                    <% if (selection.status !== 'defected') { %>
+                                        <button type="button" 
+                                                onclick="defectBid('<%= bid._id %>')"
+                                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300 text-sm flex items-center">
+                                            <i class="fas fa-times mr-2"></i>Mark as Defected
+                                        </button>
+                                    <% } else { %>
+                                        <div class="text-center">
+                                            <span class="text-red-600 text-sm font-medium block">Defected</span>
+                                            <span class="text-xs text-gray-500">
+                                                <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                                                    Resubmission due: <%= moment(bid.resubmissionDeadline).fromNow() %>
+                                                <% } else if (bid.resubmissionDeadline) { %>
+                                                    Resubmission expired
+                                                <% } %>
+                                            </span>
+                                        </div>
                                     <% } %>
                                 </div>
-
-                                <!-- Bid Proposal -->
-                                <div class="mb-4">
-                                    <h4 class="font-semibold text-gray-700 mb-2">Proposal:</h4>
-                                    <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
-                                        <%= bid.proposal %>
-                                    </p>
-                                </div>
                             </div>
-
-                            <!-- Selection Checkbox -->
-                            <div class="ml-6">
-                                <label class="flex items-center space-x-3 cursor-pointer">
-                                    <input type="checkbox" 
-                                           name="selectedBids" 
-                                           value="<%= bid._id %>"
-                                           class="bid-select-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 transition duration-300">
-                                    <span class="text-lg font-semibold text-gray-700">Select</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Seller Documents -->
-                        <% if (bid.seller.companyDocuments && bid.seller.companyDocuments.length > 0) { %>
-                        <div class="border-t border-gray-200 pt-4">
-                            <h4 class="font-semibold text-gray-700 mb-2">Company Documents:</h4>
-                            <div class="flex flex-wrap gap-2">
-                                <% bid.seller.companyDocuments.forEach(doc => { %>
-                                <a href="<%= doc.url %>" 
-                                   target="_blank"
-                                   class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition duration-300">
-                                    <i class="fas fa-file-pdf text-red-500 mr-1"></i>
-                                    <%= doc.documentType || 'Document' %>
-                                </a>
-                                <% }) %>
-                            </div>
-                        </div>
-                        <% } %>
+                        <% }); %>
                     </div>
-                </div>
-            </div>
-            <% }) %>
-        </div>
 
-        <!-- No Bids Message -->
-        <% if (bids.length === 0) { %>
-        <div class="bg-white shadow rounded-lg p-12 text-center">
-            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No Bids Available</h3>
-            <p class="text-gray-500">There are no bids to display for selection.</p>
+                    <!-- Waiting Queue -->
+                    <% if (project.round1Selections.waitingQueue.length > 0) { %>
+                        <div class="bg-white shadow rounded-lg p-6 mb-8">
+                            <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-users text-blue-500 mr-2"></i>
+                                Waiting Queue
+                            </h2>
+                            <p class="text-gray-600 mb-4">
+                                These bids will automatically replace any defected bids that don't resubmit within 24 hours.
+                                Currently <span class="font-semibold"><%= project.round1Selections.waitingQueue.length %></span> bids in queue.
+                            </p>
+                            
+                            <div class="grid gap-4">
+                                <% project.round1Selections.waitingQueue.forEach((queueItem, index) => { %>
+                                    <% const bid = queueItem.bid; %>
+                                    <div class="border border-gray-200 rounded-lg p-4 bg-blue-50" 
+                                         data-needs-refresh="true">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center space-x-4">
+                                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex items-center">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    Position <%= queueItem.position %>
+                                                </span>
+                                                <div>
+                                                    <h4 class="font-semibold text-gray-900"><%= bid.seller.companyName || bid.seller.name %></h4>
+                                                    <p class="text-sm text-gray-600">$<%= bid.amount.toLocaleString() %></p>
+                                                    <p class="text-xs text-gray-500">Waiting for promotion opportunity</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <a href="/customer/project/<%= project._id %>/bid/<%= bid._id %>/details" 
+                                                   class="text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
+                                                    <i class="fas fa-eye mr-1"></i>View Details
+                                                </a>
+                                                <a href="/customer/project/<%= project._id %>/bid/<%= bid._id %>/profile" 
+                                                   class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition duration-300 text-xs flex items-center">
+                                                    <i class="fas fa-user mr-1"></i>Profile
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Selection Summary and Submit -->
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Selection Summary</h3>
+                                <p class="text-gray-600">
+                                    Selected <span id="selectedCount">3</span> of 3 required bids
+                                </p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                                    All 3 selected bids will advance to the final 24-hour Round 2
+                                </p>
+                            </div>
+                            <div class="space-x-4">
+                                <a href="/customer/project/<%= project._id %>" 
+                                   class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition duration-300">
+                                    Cancel
+                                </a>
+                                <button type="submit" 
+                                        id="submitSelection"
+                                        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 font-semibold flex items-center">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    Confirm Selection & Start Round 2
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Important Note -->
+                        <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                            <p class="text-sm text-yellow-700 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Important:</strong> When you start Round 2, all waiting queue bids will be automatically marked as lost and the top 3 selected bids will have 24 hours to update their bids in the final round.
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-        <% } %>
+    </div>
+
+    <!-- Defect Modal -->
+    <div id="defectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-11/12 max-w-md">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-600">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Mark Bid as Defected
+            </h2>
+            <form id="defectForm" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="mb-4">
+                    <label for="defectRemarks" class="block text-sm font-medium text-gray-700 mb-2">
+                        Defect Remarks *
+                    </label>
+                    <textarea id="defectRemarks" 
+                              name="remarks" 
+                              rows="4" 
+                              required
+                              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                              placeholder="Explain why this bid is being marked as defected. The seller will have 24 hours to address these concerns and resubmit..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                        The seller will receive these remarks and have 24 hours to resubmit their bid. If they don't resubmit in time, they will be automatically replaced by the next bidder in the waiting queue.
+                    </p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" 
+                            onclick="closeDefectModal()"
+                            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-300">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300 flex items-center">
+                        <i class="fas fa-times mr-2"></i>
+                        Mark as Defected
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
-        let selectedBids = [];
+    let currentBidId = null;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const bidCards = document.querySelectorAll('.selectable-bid');
-            const selectionActions = document.getElementById('selection-actions');
-            const selectedCount = document.getElementById('selected-count');
-            const selectedBidsContainer = document.getElementById('selected-bids-container');
-            const selectionWarning = document.getElementById('selection-warning');
-            const selectionForm = document.getElementById('selection-form');
+    // Update selected count
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('input[name="selectedBids"]:checked').length;
+        document.getElementById('selectedCount').textContent = selectedCount;
+        
+        const submitBtn = document.getElementById('submitSelection');
+        submitBtn.disabled = selectedCount !== 3;
+        
+        // Update button text based on selection count
+        if (selectedCount === 3) {
+            submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirm Selection & Start Round 2';
+            submitBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        } else {
+            submitBtn.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>Select ${3 - selectedCount} More Bid${3 - selectedCount !== 1 ? 's' : ''}`;
+            submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            submitBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+        }
+    }
 
-            // Add click handlers to bid cards
-            bidCards.forEach(card => {
-                card.addEventListener('click', function(e) {
-                    // Don't trigger if clicking on the checkbox directly
-                    if (e.target.type === 'checkbox') return;
+    // Defect bid functionality
+    function defectBid(bidId) {
+        currentBidId = bidId;
+        document.getElementById('defectForm').action = `/customer/project/<%= project._id %>/bid/${bidId}/defect`;
+        document.getElementById('defectModal').classList.remove('hidden');
+    }
 
-                    const checkbox = this.querySelector('.bid-select-checkbox');
-                    const bidId = this.getAttribute('data-bid-id');
-                    
-                    toggleBidSelection(checkbox, card, bidId);
-                });
+    function closeDefectModal() {
+        document.getElementById('defectModal').classList.add('hidden');
+        document.getElementById('defectRemarks').value = '';
+        currentBidId = null;
+    }
 
-                // Also handle checkbox clicks
-                const checkbox = card.querySelector('.bid-select-checkbox');
-                checkbox.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const bidId = card.getAttribute('data-bid-id');
-                    const cardElement = card;
-                    
-                    toggleBidSelection(this, cardElement, bidId);
-                });
-            });
-
-            function toggleBidSelection(checkbox, card, bidId) {
-                if (checkbox.checked) {
-                    // Deselect
-                    checkbox.checked = false;
-                    card.classList.remove('selected');
-                    selectedBids = selectedBids.filter(id => id !== bidId);
-                } else {
-                    // Select if we have less than 3
-                    if (selectedBids.length < 3) {
-                        checkbox.checked = true;
-                        card.classList.add('selected');
-                        selectedBids.push(bidId);
-                    } else {
-                        showAlert('You can only select 3 bids. Please deselect one first.', 'warning');
-                        return;
-                    }
-                }
-                updateSelectionUI();
-            }
-
-            function updateSelectionUI() {
-                selectedCount.textContent = selectedBids.length;
-                
-                // Update hidden inputs
-                selectedBidsContainer.innerHTML = '';
-                selectedBids.forEach(bidId => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'selectedBids';
-                    input.value = bidId;
-                    selectedBidsContainer.appendChild(input);
-                });
-
-                // Show/hide selection actions
-                if (selectedBids.length <= 3 && selectedBids.length != 0 ) {
-                    selectionActions.classList.remove('hidden');
-                    selectionWarning.classList.add('hidden');
-                } else {
-                    selectionActions.classList.add('hidden');
-                    selectionWarning.classList.remove('hidden');
-                    
-                    if (selectedBids.length > 0) {
-                        selectionWarning.textContent = `Select ${3 - selectedBids.length} more bids to continue`;
-                    } else {
-                        selectionWarning.textContent = 'Select exactly 3 bids to continue';
-                    }
-                }
-            }
-
-            // Form submission validation
-            selectionForm.addEventListener('submit', function(e) {
-                console.log('Submitting form with selected bids:', selectedBids);
-                
-                if (selectedBids.length > 3) {
-                    e.preventDefault();
-                    showAlert('Please select exactly 3 bids before proceeding.', 'error');
-                    return false;
-                }
-                
-                // Additional confirmation
-                const confirmed = confirm('Are you sure you want to proceed with these 3 bids to Round 2? This action cannot be undone.');
-                if (!confirmed) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                return true;
-            });
-
-            function showAlert(message, type) {
-                // Remove any existing alerts
-                const existingAlert = document.querySelector('.fixed-alert');
-                if (existingAlert) {
-                    existingAlert.remove();
-                }
-
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `fixed-alert fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                    type === 'error' ? 'bg-red-500 text-white' : 
-                    type === 'warning' ? 'bg-yellow-500 text-white' : 
-                    'bg-green-500 text-white'
-                }`;
-                alertDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <i class="fas ${
-                            type === 'error' ? 'fa-exclamation-triangle' : 
-                            type === 'warning' ? 'fa-exclamation-circle' : 
-                            'fa-check-circle'
-                        } mr-2"></i>
-                        <span>${message}</span>
-                    </div>
-                `;
-                
-                document.body.appendChild(alertDiv);
-                
-                setTimeout(() => {
-                    alertDiv.remove();
-                }, 5000);
+    // Update countdown timers for defected bids
+    function updateDefectCountdowns() {
+        document.querySelectorAll('[data-deadline]').forEach(element => {
+            const deadline = new Date(element.getAttribute('data-deadline'));
+            const now = new Date();
+            const timeLeft = deadline - now;
+            
+            if (timeLeft <= 0) {
+                element.innerHTML = '<span class="font-mono">Resubmission Expired</span>';
+                element.classList.remove('bg-yellow-100', 'text-yellow-800');
+                element.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                element.querySelector('span').textContent = `${hours}h ${minutes}m`;
             }
         });
-    </script>
+    }
 
-    <%- include('../partials/footer') %>
+    // Form validation
+    document.getElementById('selectionForm').addEventListener('submit', function(e) {
+        const selectedCount = document.querySelectorAll('input[name="selectedBids"]:checked').length;
+        if (selectedCount !== 3) {
+            e.preventDefault();
+            alert('Please select exactly 3 bids to proceed to Round 2.');
+        } else {
+            // Get waiting queue count from data attribute
+            const serverData = document.getElementById('serverData');
+            const waitingQueueCount = serverData ? parseInt(serverData.getAttribute('data-waiting-queue-count')) : 0;
+            
+            if (waitingQueueCount > 0) {
+                const confirmed = confirm(
+                    `Starting Round 2 will automatically mark ${waitingQueueCount} bid(s) in the waiting queue as lost. Are you sure you want to proceed?`
+                );
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            }
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners to checkboxes
+        document.querySelectorAll('input[name="selectedBids"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+        
+        // Initialize counts and timers
+        updateSelectedCount();
+        updateDefectCountdowns();
+        
+        // Update countdowns every minute
+        setInterval(updateDefectCountdowns, 60000);
+        
+        // Update last updated timestamp
+        setInterval(() => {
+            const lastUpdated = document.getElementById('last-updated');
+            if (lastUpdated) {
+                lastUpdated.textContent = 'Updated ' + moment().fromNow();
+            }
+        }, 60000);
+    });
+
+    // Auto-refresh for real-time status updates (every 30 seconds)
+    setInterval(() => {
+        const needsRefresh = document.querySelectorAll('[data-needs-refresh="true"]').length > 0;
+        const hasDefectedBids = document.querySelectorAll('[data-deadline]').length > 0;
+        
+        if (needsRefresh || hasDefectedBids) {
+            console.log('Auto-refreshing for status updates...');
+            location.reload();
+        }
+    }, 30000);
+
+    // Close modal on ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDefectModal();
+        }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('defectModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDefectModal();
+        }
+    });
+    </script>
 </body>
 </html>

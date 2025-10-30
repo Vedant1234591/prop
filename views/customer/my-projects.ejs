@@ -66,7 +66,6 @@
 
         .info-icon {
             color: rgb(215, 64, 41);
-            /* color: var(--propload-secondary); */
             cursor: pointer;
         }
     </style>
@@ -108,10 +107,6 @@
                                     <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
 
                                         <div>
-
-
-
-
                                             <h2 class="uppercase text-2xl font-semibold text-gray-900">
                                                 <%= project.title || 'Untitled Project' %>
                                             </h2>
@@ -125,7 +120,7 @@
                                         <div
                                             class="border border-blue-200 font-semibold rounded p-2 text-center inline-block">
                                             <h2 class="text-lg uppercase text-gray-600">
-                                                PROP/<%= new Date(project.createdAt).getFullYear() %>/<%= project._id %>
+                                                PROP/<%= new Date(project.createdAt).getFullYear() %>/<%= project._id.toString().slice(-6) %>
                                             </h2>
                                         </div>
 
@@ -139,6 +134,17 @@
                                                     project.status.toUpperCase() : 'DRAFT' ) %>
                                             </span>
 
+                                            <!-- Round Status Badge -->
+                                            <% if (project.biddingRounds && project.biddingRounds.currentRound) { %>
+                                                <span class="status-badge 
+                                                    <%= project.biddingRounds.currentRound === 1 ? 'bg-green-100 text-green-700' : '' %>
+                                                    <%= project.biddingRounds.currentRound === 1.5 ? 'bg-purple-100 text-purple-700' : '' %>
+                                                    <%= project.biddingRounds.currentRound === 2 ? 'bg-orange-100 text-orange-700' : '' %>
+                                                    <%= project.biddingRounds.currentRound === 2.5 ? 'bg-red-100 text-red-700' : '' %>">
+                                                    R<%= project.biddingRounds.currentRound %>
+                                                </span>
+                                            <% } %>
+
                                             <% if (project.adminRemarks) { %>
                                                 <i class="fas fa-info-circle info-icon cursor-pointer"
                                                     onclick="showRemarks('<%= project.adminRemarks%>')"></i>
@@ -148,8 +154,6 @@
                                                     Edit & Resubmit
                                                 </a>
                                                 <% } %>
-
-
                                         </div>
                                     </div>
 
@@ -169,7 +173,7 @@
                                             <div
                                                 class="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm text-gray-600 mb-4">
                                                 <div><i class="fas fa-tag mr-2 text-[var(--propload-secondary)]"></i>
-                                                    <%= project.category || 'General' %>
+                                                    <%= project.category ? project.category.replace('-', ' ') : 'General' %>
                                                 </div>
                                                 <div><i class="fas fa-calendar mr-2 text-green-600"></i>Starts: <%=
                                                         project.timeline?.startDate ?
@@ -190,16 +194,17 @@
                                                     <span
                                                         class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
                                                         <i class="fas fa-flag mr-1"></i>
-                                                        <% if (project.biddingRounds.currentRound===1) { %>Round 1 -
-                                                            Active
-                                                            <% } else if (project.biddingRounds.currentRound===1.5) { %>
-                                                                Round 1 Completed - Select Top 3
-                                                                <% } else if (project.biddingRounds.currentRound===2) {
-                                                                    %>Round 2 - Active
-                                                                    <% } else if
-                                                                        (project.biddingRounds.currentRound===2.5) { %>
-                                                                        Round 2 Completed - Select Winner
-                                                                        <% } else { %>Contract Phase<% } %>
+                                                        <% if (project.biddingRounds.currentRound===1) { %>
+                                                            Round 1 - Active
+                                                            (<%= moment(project.biddingRounds.round1.endDate).fromNow() %>)
+                                                        <% } else if (project.biddingRounds.currentRound===1.5) { %>
+                                                            Round 1 Completed - Select Top 3
+                                                        <% } else if (project.biddingRounds.currentRound===2) { %>
+                                                            Round 2 - Active
+                                                            (<%= moment(project.biddingRounds.round2.endDate).fromNow() %>)
+                                                        <% } else if (project.biddingRounds.currentRound===2.5) { %>
+                                                            Round 2 Completed - Select Winner
+                                                        <% } else { %>Contract Phase<% } %>
                                                     </span>
                                                 </div>
                                                 <% } %>
@@ -210,6 +215,19 @@
                                                             class="btn-primary flex items-center gap-2">
                                                             <i class="fas fa-eye"></i> View Details
                                                         </a>
+
+                                                        <!-- NEW: Bid Details Link for Round 1.5 -->
+                                                        <% if (project.biddingRounds?.currentRound===1.5) { %>
+                                                            <a href="/customer/project/<%= project._id %>/round1-selection"
+                                                                class="btn-outline flex items-center gap-2 bg-purple-600 text-white border-purple-600 hover:bg-purple-700">
+                                                                <i class="fas fa-star"></i> Select Top 3
+                                                            </a>
+                                                        <% } else if (project.biddingRounds?.currentRound===2.5) { %>
+                                                            <a href="/customer/project/<%= project._id %>/round2-selection"
+                                                                class="btn-outline flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700">
+                                                                <i class="fas fa-trophy"></i> Select Winner
+                                                            </a>
+                                                        <% } %>
 
                                                         <% if (project.status==='drafted' ||
                                                             project.adminStatus==='defected' ) { %>
@@ -228,19 +246,6 @@
                                                                 </button>
                                                             </form>
                                                             <% } %>
-
-                                                                <% if (project.biddingRounds?.currentRound===1.5) { %>
-                                                                    <a href="/customer/project/<%= project._id %>/round1-selection"
-                                                                        class="btn-outline flex items-center gap-2">
-                                                                        <i class="fas fa-star"></i> Select Top 3
-                                                                    </a>
-                                                                    <% } else if
-                                                                        (project.biddingRounds?.currentRound===2.5) { %>
-                                                                        <a href="/customer/project/<%= project._id %>/round2-selection"
-                                                                            class="btn-outline flex items-center gap-2">
-                                                                            <i class="fas fa-trophy"></i> Select Winner
-                                                                        </a>
-                                                                        <% } %>
                                                     </div>
 
                                                     <!-- Contract Info -->
@@ -293,6 +298,15 @@
             function closeModal() {
                 document.getElementById('remarksModal').classList.add('hidden');
             }
+
+            // Auto-refresh for real-time updates
+            setInterval(() => {
+                const activeProjects = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-purple-100"], [class*="bg-orange-100"]');
+                if (activeProjects.length > 0) {
+                    console.log('Auto-refreshing for active projects...');
+                    location.reload();
+                }
+            }, 30000);
         </script>
 
 </body>

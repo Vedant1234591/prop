@@ -9,41 +9,56 @@ const { upload, uploadProfileImage, uploadContracts, uploadDocuments } = require
 router.use(ensureAuthenticated);
 router.use(ensureSeller);
 
-// Dashboard routes
-router.get('/pending-Approval', sellerController.pendingPage);
+// ==================== DASHBOARD & SYSTEM ====================
 router.get('/dashboard', sellerController.getDashboard);
+router.get('/pending-approval', sellerController.pendingPage);
+router.get('/update-statuses', sellerController.updateStatuses);
+
+// ==================== PROJECT BROWSING ====================
 router.get('/find-bids', sellerController.getFindBids);
-router.get('/my-bids', sellerController.getMyBids);
-router.get('/profile', sellerController.getProfile);
-router.post('/profile', sellerController.updateProfile);
-router.post('/profile/image', uploadProfileImage.single('image'), sellerController.updateProfileImage);
-router.post('/profile/document', uploadDocuments.single('document'), sellerController.uploadCompanyDocument);
-router.get('/notices', sellerController.getNotices);
-router.get('/analytics', sellerController.getBidAnalytics);
-
-// Bid Management - ENHANCED with round awareness
 router.get('/bid-details/:id', sellerController.getBidDetails);
-router.post('/apply-bid/:id', sellerController.postApplyBid); // Round 1 bidding
-router.post('/update-bid/:id', sellerController.updateBid); // General bid update
 
-// NEW: Round-specific bid updates
-router.post('/update-bid-round2/:bidId', sellerController.updateBidForRound2);
+// ==================== BID MANAGEMENT ====================
+router.get('/my-bids', sellerController.getMyBids);
 router.post('/withdraw-bid/:id', sellerController.withdrawBid);
 
-// Contract Management
-router.get('/contract-details/:bidId', sellerController.getContractDetails);
-router.post('/upload-contract', uploadContracts.single('contract'), sellerController.uploadContract);
+// ==================== MULTI-ROUND BIDDING SYSTEM ====================
 
-// Document Downloads
+// ROUND 1 BIDDING
+router.get('/project/:projectId/bid', sellerController.getRound1BiddingForm);
+router.post('/project/:projectId/submit-round1-bid', sellerController.submitRound1Bid);
+router.post('/update-bid/:id', sellerController.updateBid);
+
+// ROUND 2 BIDDING
+router.get('/project/:projectId/round2-bidding', sellerController.getRound2BiddingForm);
+router.post('/project/:projectId/submit-round2-bid', sellerController.submitRound2Bid);
+router.post('/update-bid-round2/:bidId', sellerController.updateBidForRound2);
+
+// DEFECTED BID RESUBMISSION
+router.get('/bid/:bidId/defected-resubmission', sellerController.getDefectedBidResubmission);
+router.post('/bid/:bidId/resubmit-defected', sellerController.resubmitDefectedBid);
+
+// WAITING QUEUE MANAGEMENT
+router.get('/bid/:bidId/waiting-queue', sellerController.getWaitingQueue);
+
+// ==================== CONTRACT MANAGEMENT ====================
+router.get('/contract-details/:bidId', sellerController.getContractDetails);
+router.post('/upload-contract', upload.single('contract'), sellerController.uploadContract);
+
+// Contract Downloads
 router.get('/download-contract-template/:bidId', sellerController.downloadContractTemplate);
 router.get('/download-customer-contract/:bidId', sellerController.downloadCustomerContract);
 router.get('/download-final-certificate/:bidId', sellerController.downloadFinalCertificate);
-router.get('/download-certificate/:bidId', sellerController.downloadCertificate);
-router.get('/download-contract/:bidId', sellerController.downloadContract);
 
-// NEW: Status Updates
-router.get('/update-statuses', sellerController.updateStatuses);
-// Seller Round 2 Bidding Routes// Round 2 Bidding Routes
-router.get('/project/:projectId/round2-bidding', sellerController.getSellerRound2Bidding);
-router.post('/project/:projectId/update-round2-bid', sellerController.updateRound2Bid);
+// ==================== PROFILE MANAGEMENT ====================
+router.get('/profile', sellerController.getProfile);
+router.post('/update-profile', sellerController.updateProfile);
+router.post('/update-profile-image', upload.single('profileImage'), sellerController.updateProfileImage);
+router.post('/upload-company-document', upload.single('document'), sellerController.uploadCompanyDocument);
+
+// ==================== NOTIFICATIONS & ANALYTICS ====================
+router.get('/notices', sellerController.getNotices);
+router.get('/notifications', sellerController.getNotifications);
+router.get('/analytics', sellerController.getBidAnalytics);
+
 module.exports = router;

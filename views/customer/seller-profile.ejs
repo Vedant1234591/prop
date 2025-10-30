@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Profile - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <%- include('./sideNav') %>
+
+    <div class="ml-0 md:ml-64 transition-all duration-300">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Seller Profile</h1>
+                    <p class="text-gray-600 mt-2">Review seller information and credentials</p>
+                </div>
+                <a href="javascript:history.back()" 
+                   class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-300">
+                    Back to Bids
+                </a>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <div class="text-center mb-6">
+                    <% if (seller.profileImage && seller.profileImage.url) { %>
+                        <img src="<%= seller.profileImage.url %>" 
+                             alt="<%= seller.companyName || seller.name %>"
+                             class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-indigo-100 mb-4">
+                    <% } else { %>
+                        <div class="w-32 h-32 bg-gray-300 rounded-full mx-auto flex items-center justify-center border-4 border-indigo-100 mb-4">
+                            <i class="fas fa-user text-gray-600 text-4xl"></i>
+                        </div>
+                    <% } %>
+                    
+                    <h2 class="text-2xl font-bold text-gray-900"><%= seller.companyName || seller.name %></h2>
+                    <p class="text-gray-600"><%= seller.email %></p>
+                    
+                    <% if (seller.rating) { %>
+                    <div class="flex items-center justify-center mt-2">
+                        <i class="fas fa-star text-yellow-500 mr-1"></i>
+                        <span class="font-semibold"><%= seller.rating.toFixed(1) %></span>
+                        <span class="text-gray-500 text-sm ml-1">(<%= seller.ratingCount || 0 %> reviews)</span>
+                    </div>
+                    <% } %>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Company Information</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Experience:</span>
+                                <span class="font-medium"><%= seller.yearsOfExperience || 'Not specified' %> years</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Specialization:</span>
+                                <span class="font-medium capitalize"><%= seller.specialization || 'General' %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Location:</span>
+                                <span class="font-medium"><%= seller.city || 'Not specified' %>, <%= seller.state || '' %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Member Since:</span>
+                                <span class="font-medium"><%= moment(seller.createdAt).format('MMM YYYY') %></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Bid Information</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Bid Amount:</span>
+                                <span class="font-bold text-green-600">$<%= bid.amount %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Round:</span>
+                                <span class="font-medium">Round <%= bid.round %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                    <%= bid.selectionStatus.toUpperCase().replace('-', ' ') %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Documents -->
+                <% if (seller.companyDocuments && seller.companyDocuments.length > 0) { %>
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Company Documents</h3>
+                    <div class="grid gap-3">
+                        <% seller.companyDocuments.forEach(doc => { %>
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-file-pdf text-red-500 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-medium text-gray-900"><%= doc.originalName || doc.filename %></p>
+                                    <p class="text-sm text-gray-500">
+                                        <%= (doc.bytes / 1024 / 1024).toFixed(2) %> MB
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="<%= doc.url %>" target="_blank" 
+                               class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition duration-300">
+                                View
+                            </a>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Seller Description -->
+                <% if (seller.description) { %>
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">About</h3>
+                    <p class="text-gray-700"><%= seller.description %></p>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

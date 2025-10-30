@@ -303,17 +303,17 @@
                                         </span>
                                     </div>
 
-                                    <!-- Enhanced bid button with round awareness -->
-                                    <% if (project.biddingRounds.round1.status === 'active' && project.biddingRounds.round1.endDate && new Date(project.biddingRounds.round1.endDate) > new Date()) { %>
-                                        <a href="/seller/bid-details/<%= project._id %>"
-                                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-xs text-center">
-                                            Submit Bid Now
-                                        </a>
-                                    <% } else { %>
-                                        <span class="bg-gray-400 text-white px-4 py-2 rounded-md text-xs text-center cursor-not-allowed">
-                                            Bidding Closed
-                                        </span>
-                                    <% } %>
+                               <!-- Update the bid button section: -->
+<% if (project.biddingRounds.round1.status === 'active' && project.biddingRounds.round1.endDate && new Date(project.biddingRounds.round1.endDate) > new Date()) { %>
+    <a href="/seller/project/<%= project._id %>/bid" 
+       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-xs text-center">
+        Submit Round 1 Bid
+    </a>
+<% } else { %>
+    <span class="bg-gray-400 text-white px-4 py-2 rounded-md text-xs text-center cursor-not-allowed">
+        Bidding Closed
+    </span>
+<% } %>
                                 </div>
                             </div>
 

@@ -4,6 +4,7 @@ const Bid = require('../models/Bid');
 const Contract = require('../models/Contract');
 const User = require('../models/User');
 const Notice = require('../models/Notice');
+const Agreement = require('../models/Agreement');
 const PDFGenerator = require('../services/pdfGenerator');
 
 class StatusAutomationService {
@@ -34,7 +35,10 @@ class StatusAutomationService {
                 round2Completed: 0,
                 contractsCancelled: 0,
                 projectsFailed: 0,
-                adminApproved: 0
+                adminApproved: 0,
+                agreementsCreated: 0,
+                defectedExpired: 0,
+                waitingPromoted: 0
             };
 
             // 🔄 PHASE 1: Project Verification & Auto-Submission
@@ -43,16 +47,19 @@ class StatusAutomationService {
             // 🔄 PHASE 2: Activate Admin-Approved Projects
             await this.activateApprovedProjects(results, now);
             
-            // 🔄 PHASE 3: Bidding Rounds Management (AUTOMATIC SELECTION)
+            // 🔄 PHASE 3: Bidding Rounds Management
             await this.manageBiddingRounds(results, now);
             
-            // 🔄 PHASE 4: Contract Management
+            // 🔄 PHASE 4: Handle Expired Resubmissions
+            await this.handleExpiredResubmissions(results, now);
+            
+            // 🔄 PHASE 5: Contract Management
             await this.manageContracts(results, now);
             
-            // 🔄 PHASE 5: Project Completion
+            // 🔄 PHASE 6: Project Completion
             await this.completeProjects(results, now);
             
-            // 🔄 PHASE 6: Cleanup Expired Projects
+            // 🔄 PHASE 7: Cleanup Expired Projects
             await this.cleanupExpiredProjects(results, now);
 
             console.log('\n📊 === COMPLETE AUTOMATION SUMMARY ===');
@@ -74,11 +81,6 @@ class StatusAutomationService {
     // ==================== PROJECT VERIFICATION ====================
     async handleProjectVerificationStatus(results, now) {
         try {
-            if (!now || !(now instanceof Date)) {
-                console.error('❌ Invalid date in verification status');
-                return;
-            }
-
             // Auto-submit drafted projects for verification after 24 hours
             const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
             const draftedProjects = await Project.find({
@@ -91,15 +93,11 @@ class StatusAutomationService {
             for (const project of draftedProjects) {
                 try {
                     // Validate required fields
-                    if (!project.contact?.phone) {
-                        console.log(`⏭️ Skipping ${project.title} - missing phone`);
-                        continue;
-                    }
-
-                    // Check all required fields
                     const requiredFields = [
                         'title', 'description', 'requirements', 
-                        'location.address', 'location.city', 'location.state', 'location.zipCode'
+                        'location.address', 'location.city', 'location.state', 'location.zipCode',
+                        'contact.phone', 'timeline.startDate', 'timeline.endDate',
+                        'bidSettings.startingBid', 'bidSettings.bidEndDate'
                     ];
                     
                     let missingFields = [];
@@ -162,6 +160,10 @@ class StatusAutomationService {
 
             for (const project of approvedProjects) {
                 try {
+                    // Create agreements for the project
+                    const agreement = await Agreement.createDefaultAgreements(project);
+                    results.agreementsCreated++;
+
                     // Activate project and start Round 1 bidding
                     project.status = 'active';
                     project.bidSettings.isActive = true;
@@ -182,7 +184,7 @@ class StatusAutomationService {
                     // Notify customer
                     await this.createNotice(
                         `Project Approved and Active - ${project.title}`,
-                        'Your project has been approved and is now active for bidding in Round 1.',
+                        'Your project has been approved and is now active for Round 1 bidding.',
                         'customer',
                         'success',
                         project.customer._id
@@ -219,167 +221,95 @@ class StatusAutomationService {
             
             // 🎯 PHASE 3: Process Round 2 Completion & Winner Selection
             await this.processRound2Completion(results, now);
-            
-            // 🎯 PHASE 4: Handle Expired Selections
-            await this.handleExpiredSelections(results, now);
 
         } catch (error) {
             console.error('❌ Bidding rounds management error:', error);
         }
     }
 
-    // 🎯 ROUND 1 COMPLETION - AUTO SELECT TOP 10
-    async processRound1Completion(results, now) {
-        try {
-            const round1Projects = await Project.find({
-                'biddingRounds.currentRound': 1,
-                'biddingRounds.round1.status': 'active',
-                'biddingRounds.round1.endDate': { $lte: now }
-            }).populate('customer');
-
-            console.log(`📊 Processing ${round1Projects.length} Round 1 projects`);
-
-            for (const project of round1Projects) {
-                try {
-                    console.log(`🔄 Completing Round 1 for: ${project.title}`);
-                    
-                    // 🎯 AUTOMATICALLY SELECT TOP 10 HIGHEST BIDS
-                    const topBids = await Bid.find({
-                        project: project._id,
-                        round: 1,
-                        status: 'submitted'
-                    })
-                    .sort({ amount: -1 }) // Highest amount first
-                    .limit(10)
-                    .select('_id amount seller');
-
-                    console.log(`🎯 Found ${topBids.length} bids for ${project.title}`);
-
-                    if (topBids.length === 0) {
-                        console.log(`❌ No bids - marking project as failed: ${project.title}`);
-                        await project.markAsFailed();
-                        results.projectsFailed++;
-                        continue;
-                    }
-
-                    // ✅ FIXED: Use project method to complete round 1
-                    await project.completeRound1(topBids.map(bid => bid._id));
-
-                    // 🏷️ Mark top 10 bids as selected
-                    await Bid.updateMany(
-                        { _id: { $in: topBids.map(bid => bid._id) } },
-                        { 
-                            selectionStatus: 'selected-round1',
-                            status: 'selected'
-                        }
-                    );
-
-                    // ❌ Mark other bids as lost
-                    await Bid.updateMany(
-                        {
-                            project: project._id,
-                            round: 1,
-                            _id: { $nin: topBids.map(bid => bid._id) },
-                            status: 'submitted'
-                        },
-                        { 
-                            selectionStatus: 'lost', 
-                            status: 'lost' 
-                        }
-                    );
-
-                    // 📢 Notify customer to select top 3
-                    await this.createNotice(
-                        `Round 1 Completed - ${project.title}`,
-                        `Round 1 bidding completed! ${topBids.length} bids were automatically selected. Please select exactly 3 bids to proceed to Round 2 within 24 hours.`,
-                        'customer',
-                        'info',
-                        project.customer._id
-                    );
-
-                    // 📢 Notify selected sellers
-                    for (const bid of topBids) {
-                        await this.createNotice(
-                            `Selected for Top 10 - ${project.title}`,
-                            `Congratulations! Your bid made it to the top 10. Wait for customer to select top 3 for Round 2.`,
-                            'seller',
-                            'success',
-                            bid.seller
-                        );
-                    }
-
-                    console.log(`✅ Round 1 completed: ${project.title} - Selected ${topBids.length} bids`);
-                    results.round1Completed++;
-
-                } catch (error) {
-                    console.error(`❌ Error in Round 1 for ${project.title}:`, error.message);
-                    results.validationErrors++;
-                }
-            }
-        } catch (error) {
-            console.error('❌ Round 1 processing error:', error);
-        }
-    }
-
+   
     // 🎯 SELECTION PHASE - CUSTOMER SELECTS TOP 3 FROM TOP 10
     async processSelectionPhase(results, now) {
         try {
-            // Check for projects where customer has selected top 3 bids
-            const selectionProjects = await Project.find({
+            // Check for projects where selection deadline has passed but customer hasn't selected
+            const expiredSelectionProjects = await Project.find({
                 'biddingRounds.currentRound': 1.5,
-                'biddingRounds.round2.selectedBids': { $exists: true, $ne: [] }
-            }).populate('biddingRounds.round2.selectedBids');
+                'biddingRounds.selectionDeadline': { $lte: now },
+                'biddingRounds.round2.status': 'pending'
+            }).populate('customer');
 
-            console.log(`🎯 Processing ${selectionProjects.length} projects with customer selection`);
+            console.log(`⏰ Processing ${expiredSelectionProjects.length} expired selection projects`);
 
-            for (const project of selectionProjects) {
+            for (const project of expiredSelectionProjects) {
                 try {
-                    const selectedBidIds = project.biddingRounds.round2.selectedBids.map(bid => bid._id);
-                    
-                    if (selectedBidIds.length !== 3) {
-                        console.log(`⏭️ Invalid selection count for ${project.title}: ${selectedBidIds.length}`);
-                        continue;
+                    // Auto-select the current top 3 for Round 2
+                    const currentTop3 = project.round1Selections.top3
+                        .filter(selection => selection.status === 'selected' || selection.status === 'resubmitted')
+                        .slice(0, 3);
+
+                    if (currentTop3.length === 3) {
+                        const selectedBidIds = currentTop3.map(selection => selection.bid);
+                        await project.selectTop3ForRound2(selectedBidIds);
+
+                        console.log(`✅ Auto-selected top 3 for Round 2: ${project.title}`);
+                        results.round2Started++;
+
+                        // Notify customer
+                        await this.createNotice(
+                            `Round 2 Auto-Started - ${project.title}`,
+                            'Round 2 has been automatically started with the current top 3 bids since no selection was made within 24 hours.',
+                            'customer',
+                            'info',
+                            project.customer._id
+                        );
+
+                        // Notify selected sellers
+                        for (const selection of currentTop3) {
+                            const bid = await Bid.findById(selection.bid).populate('seller');
+                            if (bid && bid.seller) {
+                                await this.createNotice(
+                                    `Selected for Round 2 - ${project.title}`,
+                                    `Your bid has been automatically selected for Round 2. You can update your bid within the next 24 hours.`,
+                                    'seller',
+                                    'success',
+                                    bid.seller._id
+                                );
+                            }
+                        }
+
+                        // Notify waiting queue sellers they are now lost
+                        const waitingBids = await Bid.find({
+                            project: project._id,
+                            selectionStatus: 'waiting-queue'
+                        }).populate('seller');
+
+                        for (const bid of waitingBids) {
+                            await this.createNotice(
+                                `Project Completed - ${project.title}`,
+                                'The project has moved to Round 2 and your bid in waiting queue is now marked as lost.',
+                                'seller',
+                                'info',
+                                bid.seller._id
+                            );
+                        }
+
+                    } else {
+                        // Not enough valid bids - project fails
+                        await project.markAsFailed();
+                        console.log(`❌ Project failed - not enough valid bids: ${project.title}`);
+                        results.projectsFailed++;
+
+                        await this.createNotice(
+                            `Project Failed - ${project.title}`,
+                            'Project failed because there were not enough valid bids for Round 2.',
+                            'customer',
+                            'error',
+                            project.customer._id
+                        );
                     }
 
-                    // 🚀 Start Round 2 with selected 3 bids
-                    await project.selectTop3(selectedBidIds);
-
-                    // 🏷️ Mark selected bids for Round 2
-                    await Bid.updateMany(
-                        { _id: { $in: selectedBidIds } },
-                        { 
-                            round: 2,
-                            selectionStatus: 'selected-round2',
-                            status: 'selected'
-                        }
-                    );
-
-                    // 📢 Notify selected sellers
-                    await Bid.find({ _id: { $in: selectedBidIds } }).then(bids => {
-                        bids.forEach(async (bid) => {
-                            await this.createNotice(
-                                `Round 2 Started - ${project.title}`,
-                                `Congratulations! Your bid was selected for Round 2. Round 2 bidding ends in 24 hours.`,
-                                'seller',
-                                'success',
-                                bid.seller
-                            );
-                        });
-                    });
-
-                    // 📢 Notify customer
-                    await this.createNotice(
-                        `Round 2 Started - ${project.title}`,
-                        `Round 2 bidding has started with your 3 selected bids. It will end in 24 hours.`,
-                        'customer',
-                        'info',
-                        project.customer._id
-                    );
-
-                    console.log(`✅ Round 2 started: ${project.title} with 3 selected bids`);
-
                 } catch (error) {
-                    console.error(`❌ Error starting Round 2 for ${project.title}:`, error.message);
+                    console.error(`❌ Error processing expired selection for ${project.title}:`, error.message);
                     results.validationErrors++;
                 }
             }
@@ -388,84 +318,483 @@ class StatusAutomationService {
         }
     }
 
-    // 🎯 ROUND 2 COMPLETION - AUTO SELECT WINNER FROM TOP 3
- // Add this to your statusAutomation service
-async processRound2Completion(results, now) {
+
+
+
+
+    // ==================== ROUND 1 COMPLETION ====================
+// ==================== ROUND 1 COMPLETION ====================
+async processRound1Completion(results, now) {
   try {
-    const round2Projects = await Project.find({
-      'biddingRounds.currentRound': 2,
-      'biddingRounds.round2.status': 'active',
-      'biddingRounds.round2.endDate': { $lte: now }
+    const round1Projects = await Project.find({
+      'biddingRounds.currentRound': 1,
+      'biddingRounds.round1.status': 'active',
+      'biddingRounds.round1.endDate': { $lte: now },
+      'biddingRounds.round1.autoSelectionCompleted': { $ne: true }
     }).populate('customer');
 
-    console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
+    console.log(`🎯 Processing ${round1Projects.length} Round 1 projects for completion`);
 
-    for (const project of round2Projects) {
+    for (const project of round1Projects) {
       try {
-        console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
+        console.log(`🔄 Completing Round 1 for: ${project.title}`);
         
-        // Import seller controller to use autoCompleteRound2
-        const sellerController = require('../controllers/sellerController');
-        await sellerController.autoCompleteRound2(project._id);
+        // Check if there are any bids for this project
+        const bidCount = await Bid.countDocuments({ 
+          project: project._id,
+          $or: [
+            { round: 1 },
+            { round: { $exists: false } }
+          ]
+        });
         
-        console.log(`✅ Round 2 completed and winner selected: ${project.title}`);
-        results.round2Completed++;
-        results.winnersSelected++;
+        console.log(`📊 Found ${bidCount} total bids for project ${project.title}`);
+        
+        if (bidCount === 0) {
+          console.log(`❌ No bids found for project: ${project.title}, marking as failed`);
+          project.status = 'failed';
+          project.biddingRounds.round1.status = 'completed';
+          project.biddingRounds.round1Completed = true;
+          project.biddingRounds.currentRound = 1.5;
+          await project.save();
+          results.projectsFailed++;
+          continue;
+        }
+        
+        // Use project method to complete Round 1 and auto-select top 3 + waiting queue
+        await project.completeRound1();
+        
+        // Reload project to get updated status
+        const updatedProject = await Project.findById(project._id);
+        
+        if (updatedProject.status === 'failed') {
+          console.log(`❌ Project failed after Round 1 completion: ${project.title}`);
+          results.projectsFailed++;
+          
+          await this.createNotice(
+            `Project Failed - ${project.title}`,
+            'The project failed because there were no eligible bids for Round 1 selection.',
+            'customer',
+            'error',
+            project.customer._id
+          );
+        } else {
+          results.round1Completed++;
+          console.log(`✅ Round 1 completed: ${project.title}`);
+          
+          // Notify customer
+          await this.createNotice(
+            `Round 1 Completed - ${project.title}`,
+            'Round 1 bidding has ended. Top 3 bids have been automatically selected for your review. You have 24 hours to select or mark defects.',
+            'customer',
+            'info',
+            project.customer._id
+          );
+
+          // Notify top 3 sellers
+          const top3Bids = await Bid.find({
+            project: project._id,
+            selectionStatus: 'selected-round1'
+          }).populate('seller');
+
+          for (const bid of top3Bids) {
+            await this.createNotice(
+              `Selected for Customer Review - ${project.title}`,
+              'Congratulations! Your bid has been selected in the top 3. Customer will now review your bid and may mark as defected with remarks.',
+              'seller',
+              'success',
+              bid.seller._id
+            );
+          }
+
+          // Notify waiting queue sellers
+          const waitingBids = await Bid.find({
+            project: project._id,
+            selectionStatus: 'waiting-queue'
+          }).populate('seller');
+
+          for (const bid of waitingBids) {
+            await this.createNotice(
+              `Waiting Queue - ${project.title}`,
+              `Your bid is in waiting queue position ${bid.queuePosition}. You may be promoted if any top 3 bids are defected and not resubmitted within 24 hours.`,
+              'seller',
+              'info',
+              bid.seller._id
+            );
+          }
+        }
 
       } catch (error) {
-        console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
+        console.error(`❌ Error completing Round 1 for ${project.title}:`, error.message);
         results.validationErrors++;
+        
+        // Mark project as failed if Round 1 completion fails
+        project.status = 'failed';
+        project.biddingRounds.round1.status = 'completed';
+        await project.save();
+        results.projectsFailed++;
       }
     }
   } catch (error) {
-    console.error('❌ Round 2 completion error:', error);
+    console.error('❌ Round 1 completion error:', error);
   }
 }
-    // 🎯 HANDLE EXPIRED SELECTIONS
-    async handleExpiredSelections(results, now) {
+    // ==================== EXPIRED RESUBMISSIONS ====================
+    async handleExpiredResubmissions(results, now) {
         try {
-            const expiredSelections = await Project.find({
-                'biddingRounds.currentRound': 1.5,
-                selectionDeadline: { $lte: now }
-            }).populate('customer');
+            console.log('⏰ Handling expired resubmissions...');
+            
+            // Handle expired defected bids across all projects
+            await this.handleExpiredDefectedBids(results, now);
+            
+            // Handle projects with expired resubmissions
+            await this.handleProjectExpiredResubmissions(results, now);
 
-            console.log(`⏰ Processing ${expiredSelections.length} expired selections`);
+        } catch (error) {
+            console.error('❌ Expired resubmissions error:', error);
+        }
+    }
 
-            for (const project of expiredSelections) {
+    async handleExpiredDefectedBids(results, now) {
+        try {
+            const expiredDefectedBids = await Bid.find({
+                selectionStatus: 'defected',
+                resubmissionDeadline: { $lte: now }
+            }).populate('project').populate('seller');
+
+            console.log(`⏰ Processing ${expiredDefectedBids.length} expired defected bids`);
+
+            for (const bid of expiredDefectedBids) {
                 try {
-                    // ❌ Mark project as failed due to no selection
-                    await project.markAsFailed();
-
-                    // Mark all top 10 bids as lost
-                    await Bid.updateMany(
-                        {
-                            project: project._id,
-                            selectionStatus: 'selected-round1'
-                        },
-                        { selectionStatus: 'lost', status: 'lost' }
-                    );
-
-                    // 📢 Notify customer
-                    await this.createNotice(
-                        `Project Failed - ${project.title}`,
-                        'Project failed because no selection was made within 24 hours after Round 1.',
-                        'customer',
-                        'error',
-                        project.customer._id
-                    );
-
-                    console.log(`❌ Project failed - no selection: ${project.title}`);
-                    results.projectsFailed++;
-
+                    // Auto-mark as lost using bid method
+                    const wasExpired = await bid.autoMarkAsLostIfExpired();
+                    
+                    if (wasExpired) {
+                        results.defectedExpired++;
+                        console.log(`❌ Bid ${bid._id} expired and marked as lost`);
+                        
+                        // Notify seller
+                        await this.createNotice(
+                            `Resubmission Deadline Passed - ${bid.project.title}`,
+                            'Your bid resubmission deadline has passed. The bid is now marked as lost.',
+                            'seller',
+                            'error',
+                            bid.seller._id
+                        );
+                    }
                 } catch (error) {
-                    console.error(`❌ Error handling expired selection for ${project.title}:`, error.message);
+                    console.error(`❌ Error handling expired defected bid ${bid._id}:`, error.message);
                     results.validationErrors++;
                 }
             }
         } catch (error) {
-            console.error('❌ Expired selections error:', error);
+            console.error('❌ Expired defected bids error:', error);
         }
     }
+
+    async handleProjectExpiredResubmissions(results, now) {
+        try {
+            const projectsWithExpiredResubmissions = await Project.find({
+                'round1Selections.top3.status': 'defected',
+                'round1Selections.top3.resubmissionDeadline': { $lte: now }
+            }).populate('customer');
+
+            for (const project of projectsWithExpiredResubmissions) {
+                try {
+                    // Use project method to handle expired resubmissions
+                    await project.handleExpiredResubmissions();
+                    
+                    // Check if any promotions happened
+                    const updatedProject = await Project.findById(project._id);
+                    const promotedBids = updatedProject.round1Selections.top3.filter(
+                        s => s.status === 'selected' && 
+                        !project.round1Selections.top3.some(os => os.bid.toString() === s.bid.toString())
+                    );
+                    
+                    if (promotedBids.length > 0) {
+                        results.waitingPromoted++;
+                        console.log(`⬆️ Promoted ${promotedBids.length} bids from waiting queue for project: ${project.title}`);
+                        
+                        // Notify promoted sellers
+                        for (const selection of promotedBids) {
+                            await this.createNotice(
+                                `Promoted to Top 3 - ${project.title}`,
+                                'Congratulations! You have been promoted from waiting queue to top 3. Customer will now review your bid.',
+                                'seller',
+                                'success',
+                                selection.seller
+                            );
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ Error handling expired resubmissions for ${project.title}:`, error.message);
+                    results.validationErrors++;
+                }
+            }
+        } catch (error) {
+            console.error('❌ Project expired resubmissions error:', error);
+        }
+    }
+
+
+
+    
+    // ==================== ROUND 2 COMPLETION ====================
+    // async processRound2Completion(results, now) {
+    //     try {
+    //         const round2Projects = await Project.find({
+    //             'biddingRounds.currentRound': 2,
+    //             'biddingRounds.round2.status': 'active',
+    //             'biddingRounds.round2.endDate': { $lte: now },
+    //             'biddingRounds.round2.winnerSelected': false
+    //         }).populate('customer');
+
+    //         console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
+
+    //         for (const project of round2Projects) {
+    //             try {
+    //                 console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
+                    
+    //                 // Use project method to complete Round 2 and select lowest bidder as winner
+    //                 await project.completeRound2();
+                    
+    //                 console.log(`✅ Round 2 completed: ${project.title}`);
+    //                 results.round2Completed++;
+
+    //                 // Get the winning bid
+    //                 const winningBid = await Bid.findById(project.finalWinner.bid).populate('seller');
+                    
+    //                 if (winningBid) {
+    //                     // Notify winner
+    //                     await this.createNotice(
+    //                         `You Won! - ${project.title}`,
+    //                         `Congratulations! Your bid has been selected as the winner for "${project.title}". Contract process will start soon.`,
+    //                         'seller',
+    //                         'success',
+    //                         winningBid.seller._id
+    //                     );
+
+    //                     // Notify customer
+    //                     await this.createNotice(
+    //                         `Winner Selected - ${project.title}`,
+    //                         `A winner has been automatically selected for your project. The lowest bidder in Round 2 has won.`,
+    //                         'customer',
+    //                         'success',
+    //                         project.customer._id
+    //                     );
+
+    //                     // Notify other bidders (losers)
+    //                     const losingBids = await Bid.find({
+    //                         project: project._id,
+    //                         round: 2,
+    //                         selectionStatus: 'lost'
+    //                     }).populate('seller');
+
+    //                     for (const bid of losingBids) {
+    //                         await this.createNotice(
+    //                             `Bid Result - ${project.title}`,
+    //                             `The project "${project.title}" has been awarded to another bidder. Thank you for your participation.`,
+    //                             'seller',
+    //                             'info',
+    //                             bid.seller._id
+    //                         );
+    //                     }
+    //                 }
+
+    //             } catch (error) {
+    //                 console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
+    //                 results.validationErrors++;
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('❌ Round 2 completion error:', error);
+    //     }
+    // }
+    // ==================== ROUND 2 COMPLETION ====================
+async processRound2Completion(results, now) {
+    try {
+        const round2Projects = await Project.find({
+            'biddingRounds.currentRound': 2,
+            'biddingRounds.round2.status': 'active',
+            'biddingRounds.round2.endDate': { $lte: now },
+            'biddingRounds.round2.winnerSelected': false
+        }).populate('customer');
+
+        console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
+
+        for (const project of round2Projects) {
+            try {
+                console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
+                
+                // Use project method to complete Round 2 and select lowest bidder as winner
+                await project.completeRound2();
+                
+                // Get updated project data
+                const updatedProject = await Project.findById(project._id);
+                
+                console.log(`✅ Round 2 completed: ${project.title}, Status: ${updatedProject.status}`);
+                results.round2Completed++;
+
+                // Check if project was awarded and initialize contract
+                if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
+                    const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
+                    
+                    if (winningBid) {
+                        console.log(`📝 Initializing contract for winning bid: ${winningBid._id}`);
+                        
+                        // Initialize contract for winner
+                        await this.initializeContractForWinner(updatedProject, winningBid, results);
+
+                        // Notify winner
+                        await this.createNotice(
+                            `You Won! - ${updatedProject.title}`,
+                            `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
+                            'seller',
+                            'success',
+                            winningBid.seller._id
+                        );
+
+                        // Notify customer
+                        await this.createNotice(
+                            `Winner Selected - ${updatedProject.title}`,
+                            `A winner has been automatically selected for your project. Please download the contract template, sign it, and upload the signed contract to proceed.`,
+                            'customer',
+                            'success',
+                            updatedProject.customer._id
+                        );
+
+                        console.log(`✅ Contract process started for project ${updatedProject._id}`);
+                    }
+                } else {
+                    console.log(`❌ Project not awarded after Round 2: ${updatedProject.title}, Status: ${updatedProject.status}`);
+                }
+
+            } catch (error) {
+                console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
+                results.validationErrors++;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Round 2 completion error:', error);
+    }
+}
+
+    // ==================== EXPIRED SELECTION PHASE ====================
+    async processExpiredSelectionPhase(results, now) {
+        try {
+            // Check for projects where selection deadline has passed but customer hasn't selected
+            const expiredSelectionProjects = await Project.find({
+                'biddingRounds.currentRound': 1.5,
+                'biddingRounds.selectionDeadline': { $lte: now },
+                'biddingRounds.round2.status': 'pending'
+            }).populate('customer');
+
+            console.log(`⏰ Processing ${expiredSelectionProjects.length} expired selection projects`);
+
+            for (const project of expiredSelectionProjects) {
+                try {
+                    // Auto-select the current top 3 for Round 2
+                    const currentTop3 = project.round1Selections.top3
+                        .filter(selection => selection.status === 'selected' || selection.status === 'resubmitted')
+                        .slice(0, 3);
+
+                    if (currentTop3.length === 3) {
+                        const selectedBidIds = currentTop3.map(selection => selection.bid);
+                        await project.selectTop3ForRound2(selectedBidIds);
+
+                        console.log(`✅ Auto-selected top 3 for Round 2: ${project.title}`);
+
+                        // Notify customer
+                        await this.createNotice(
+                            `Round 2 Auto-Started - ${project.title}`,
+                            'Round 2 has been automatically started with the current top 3 bids since no selection was made within 24 hours.',
+                            'customer',
+                            'info',
+                            project.customer._id
+                        );
+
+                        // Notify selected sellers
+                        for (const selection of currentTop3) {
+                            const bid = await Bid.findById(selection.bid).populate('seller');
+                            if (bid && bid.seller) {
+                                await this.createNotice(
+                                    `Selected for Round 2 - ${project.title}`,
+                                    `Your bid has been automatically selected for Round 2. You can update your bid within the next 24 hours.`,
+                                    'seller',
+                                    'success',
+                                    bid.seller._id
+                                );
+                            }
+                        }
+
+                    } else {
+                        // Not enough valid bids - project fails
+                        project.status = 'failed';
+                        await project.save();
+                        
+                        console.log(`❌ Project failed - not enough valid bids: ${project.title}`);
+
+                        await this.createNotice(
+                            `Project Failed - ${project.title}`,
+                            'Project failed because there were not enough valid bids for Round 2.',
+                            'customer',
+                            'error',
+                            project.customer._id
+                        );
+                    }
+
+                } catch (error) {
+                    console.error(`❌ Error processing expired selection for ${project.title}:`, error.message);
+                    results.validationErrors++;
+                }
+            }
+        } catch (error) {
+            console.error('❌ Selection phase error:', error);
+        }
+    }
+
+    // ==================== NOTIFICATION SYSTEM ====================
+    async createNotice(title, content, audience, type, specificUser = null) {
+        try {
+            const notice = new Notice({
+                title,
+                content,
+                targetAudience: audience,
+                specificUser: specificUser,
+                noticeType: type,
+                isActive: true,
+                startDate: new Date(),
+                endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            await notice.save();
+            console.log(`📢 Notice created: ${title} for ${audience}`);
+        } catch (error) {
+            console.error('❌ Notice creation error:', error);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // ==================== CONTRACT MANAGEMENT ====================
     async manageContracts(results, now) {
@@ -585,55 +914,7 @@ async processRound2Completion(results, now) {
             results.validationErrors++;
         }
     }
-// Add the autoCompleteRound2 function to statusAutomation
-async autoCompleteRound2  (projectId) {
-  try {
-    const project = await Project.findById(projectId);
-    if (!project || project.biddingRounds.currentRound !== 2) {
-      return;
-    }
 
-    console.log(`🕒 Processing expired Round 2 for project: ${projectId}`);
-
-    // Get all Round 2 bids that were actually submitted (not just selected)
-    const round2Bids = await Bid.find({
-      project: projectId,
-      round: 2,
-      selectionStatus: 'selected-round2'
-    }).sort({ amount: 1 }); // Sort by lowest amount first
-
-    console.log(`📨 Found ${round2Bids.length} Round 2 bids for project ${projectId}`);
-
-    if (round2Bids.length > 0) {
-      // Auto-select the lowest bid as winner
-      const winningBid = round2Bids[0];
-      await project.completeRound2(winningBid._id);
-      await winningBid.markAsWon();
-
-      // Mark other bids as lost
-      await Bid.updateMany(
-        {
-          project: projectId,
-          round: 2,
-          _id: { $ne: winningBid._id },
-          selectionStatus: 'selected-round2'
-        },
-        { selectionStatus: 'lost', status: 'lost' }
-      );
-
-      console.log(`🏆 Round 2 automatically completed for project ${projectId}. Winner: ${winningBid._id}`);
-      
-      // Initialize contract for winner
-      await exports.initializeContractForWinner(project, winningBid, {});
-    } else {
-      // No bids submitted in Round 2 - project fails
-      await project.markAsFailed();
-      console.log(`❌ Project ${projectId} failed - no bids submitted in Round 2`);
-    }
-  } catch (error) {
-    console.error("Auto complete Round 2 error:", error);
-  }
-};
     // ==================== CONTRACT INITIALIZATION ====================
     async initializeContractForWinner(project, winningBid, results) {
         try {
@@ -666,7 +947,7 @@ async autoCompleteRound2  (projectId) {
                 project: project._id,
                 customer: project.customer,
                 seller: winningBid.seller._id,
-                contractValue: winningBid.amount,
+                contractValue: winningBid.round2Bid?.amount || winningBid.amount,
                 status: 'pending-customer',
                 currentStep: 1,
                 autoGenerated: true,
@@ -691,7 +972,7 @@ async autoCompleteRound2  (projectId) {
                 terms: new Map([
                     ['projectTitle', project.title],
                     ['projectDescription', project.description],
-                    ['contractValue', winningBid.amount.toString()],
+                    ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
                     ['startDate', project.timeline.startDate.toISOString()],
                     ['endDate', project.timeline.endDate.toISOString()],
                     ['category', project.category],
@@ -905,7 +1186,7 @@ async autoCompleteRound2  (projectId) {
         
         const projects = await Project.find({
             'biddingRounds.currentRound': { $in: [1, 1.5, 2] }
-        }).select('title status biddingRounds');
+        }).select('title status biddingRounds round1Selections');
         
         projects.forEach(project => {
             console.log(`📋 Project: ${project.title}`);
@@ -913,8 +1194,8 @@ async autoCompleteRound2  (projectId) {
             console.log(`   Current Round: ${project.biddingRounds.currentRound}`);
             console.log(`   Round1 Status: ${project.biddingRounds.round1.status}`);
             console.log(`   Round2 Status: ${project.biddingRounds.round2.status}`);
-            console.log(`   Round1 End: ${project.biddingRounds.round1.endDate}`);
-            console.log(`   Round2 End: ${project.biddingRounds.round2.endDate}`);
+            console.log(`   Top 3 Count: ${project.round1Selections?.top3?.length || 0}`);
+            console.log(`   Waiting Queue: ${project.round1Selections?.waitingQueue?.length || 0}`);
             console.log('---');
         });
     }
@@ -967,7 +1248,7 @@ async autoCompleteRound2  (projectId) {
             return;
         }
         
-        // Run every 2 minutes for testing (change to appropriate schedule for production)
+        // Run every 2 minutes for testing
         cron.schedule('*/2 * * * *', async () => {
             try {
                 if (this.isRunning) {

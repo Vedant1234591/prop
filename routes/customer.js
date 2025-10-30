@@ -8,7 +8,7 @@ const { upload, uploadImages, uploadDocuments, uploadSingle, uploadContracts } =
 router.use(protect);
 router.use(requireRole('customer'));
 
-// Dashboard and Navigation
+// ==================== DASHBOARD & NAVIGATION ====================
 router.get('/dashboard', customerController.getDashboard);
 router.get('/my-projects', customerController.getMyProjects);
 router.get('/bids', customerController.getBids);
@@ -21,7 +21,7 @@ router.get('/messages', customerController.getMessages);
 router.get('/notices', customerController.getNotices);
 router.get('/support', customerController.getSupport);
 
-// Project Management - ENHANCED with verification workflow
+// ==================== PROJECT MANAGEMENT ====================
 router.get('/add-project', customerController.getAddProject);
 router.get('/project-form/:category', customerController.getProjectForm);
 router.post('/project-step1/:category', customerController.postProjectStep1);
@@ -30,60 +30,64 @@ router.post('/project-step2/:category', upload.fields([
   { name: 'documents', maxCount: 5 }
 ]), customerController.postProjectStep2);
 router.post('/project-step3/:category', customerController.postProjectStep3);
-// Edit project page
+
+// Project CRUD Operations
 router.get('/edit-project/:id', customerController.editProject);
-
-// Update project
 router.post('/update-project/:id', upload.array('images'), customerController.updateProject);
-
-// Delete project
 router.post('/delete-project/:id', customerController.deleteProject);
 
-// Remove image
+// Project File Management
 router.post('/project/:projectId/remove-image/:imageId', customerController.removeImage);
-
-// NEW: Project Verification and Resubmission
-router.post('/project/:projectId/submit-verification', customerController.submitForVerification);
-router.post('/project/:projectId/edit-resubmit', customerController.editAndResubmitProject);
-
-// Project Details and Bids
-router.get('/project/:id', customerController.getProjectDetails);
-router.get('/project-bids/:projectId', customerController.getProjectBids);
-router.post('/select-bid/:bidId', customerController.selectBid);
-
-// File Management
 router.post('/project/:projectId/add-image', upload.single('image'), customerController.addProjectImage);
 router.post('/project/:projectId/remove-image/:publicId', customerController.removeProjectImage);
 router.post('/project/:projectId/remove-document/:publicId', customerController.removeProjectDocument);
 
-// NEW: Multi-Round Bidding System Routes
+// Project Verification and Resubmission
+router.post('/project/:projectId/submit-verification', customerController.submitForVerification);
+router.post('/project/:projectId/edit-resubmit', customerController.editAndResubmitProject);
+
+// ==================== PROJECT DETAILS & BIDS ====================
+router.get('/project/:id', customerController.getProjectDetails);
+router.get('/project-bids/:projectId', customerController.getProjectBids);
+router.post('/select-bid/:bidId', customerController.selectBid);
+
+// ==================== MULTI-ROUND BIDDING SYSTEM ====================
+
+// ROUND 1 SELECTION & DEFECT MANAGEMENT
 router.get('/project/:projectId/round1-selection', customerController.getRound1Selection);
 router.post('/project/:projectId/select-top3', customerController.selectTop3);
-router.get('/project/:projectId/round2-selection', customerController.getRound2Bids);
-router.post('/project/:projectId/select-winner', customerController.selectWinner);
+router.post('/project/:projectId/bid/:bidId/defect', customerController.defectBid);
 
-// Contract Management
+// BID DETAILS & PROFILES
+router.get('/project/:projectId/bid/:bidId/details', customerController.viewBidDetails);
+router.get('/project/:projectId/bid/:bidId/profile', customerController.viewSellerProfile);
+
+// ROUND 2 MANAGEMENT
+router.get('/project/:projectId/round2-selection', customerController.getRound2Selection);
+router.post('/project/:projectId/select-winner', customerController.selectWinner);
+router.post('/project/:projectId/auto-complete-round2', customerController.autoCompleteRound2);
+
+// ==================== CONTRACT MANAGEMENT ====================
 router.get('/contract-status/:projectId', customerController.getContractStatus);
 router.get('/view-contract/:projectId', customerController.viewContract);
+router.get('/contract/:contractId/details', customerController.viewContractDetails);
 router.post('/upload-customer-contract', uploadContracts.single('contract'), customerController.uploadCustomerContract);
 
-// Document Downloads
+// ==================== DOCUMENT DOWNLOADS ====================
+
+// Contract Downloads
 router.get('/download-contract-template/:bidId', customerController.downloadContractTemplate);
-
-router.get('/download-certificate/:bidId', customerController.downloadCertificate);
-
-// NEW: Status Updates
-router.get('/update-statuses', customerController.updateStatuses);
-
-// Contracts
 router.get('/download-customer-contract/:bidId', customerController.downloadCustomerContract);
 router.get('/download-seller-contract/:bidId', customerController.downloadSellerContract);
 
-// Certificates
+// Certificate Downloads
+router.get('/download-certificate/:bidId', customerController.downloadCertificate);
 router.get('/download-customer-certificate/:bidId', customerController.downloadCustomerCertificate);
 router.get('/download-seller-certificate/:bidId', customerController.downloadSellerCertificate);
 router.get('/download-final-certificate/:bidId', customerController.downloadFinalCertificate);
 
-
+// ==================== SYSTEM MANAGEMENT ====================
+router.get('/update-statuses', customerController.updateStatuses);
+router.get('/notifications', customerController.getNotifications);
 
 module.exports = router;
