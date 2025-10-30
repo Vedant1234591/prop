@@ -671,6 +671,151 @@ exports.postSellerData = async (req, res) => {
   }
 };
 
+
+// exports.postSellerData = async (req, res) => {
+//   try {
+//     console.log("=== 🧾 SELLER REGISTRATION START ===");
+
+//     // ✅ 1️⃣ Ensure session is valid
+//     if (!req.session.seller) {
+//       console.log("❌ No seller session found");
+//       req.flash("error", "Session expired. Please register again.");
+//       return res.redirect("/auth/register?role=seller");
+//     }
+
+//     const sessionSeller = req.session.seller;
+
+//     // ✅ 2️⃣ Destructure data safely
+//     const {
+//       BusinessType,
+//       BusinessName,
+//       BusinessDetails,
+//       PersonalDetails,
+//       officeName,
+//       state,
+//       district,
+//       city,
+//       pinCode,
+//       fullAddress,
+//       gstin,
+//       primary,
+//       pan,
+//       itrType,
+//       assessmentYear,
+//       ackNumber,
+//       profitGainFromBusiness,
+//       grossReceipts,
+//     } = req.body;
+
+//     console.log("📦 Received seller form data:", req.body);
+
+//     // ✅ 3️⃣ Create or find the user
+//     let user;
+//     if (!req.session.userId) {
+//       user = await User.create({
+//         name: sessionSeller.name,
+//         email: sessionSeller.email,
+//         password: sessionSeller.password, // plain password from session
+//         role: "seller",
+//         phone: sessionSeller.phone,
+//         companyName: sessionSeller.companyName,
+//       });
+
+//       req.session.userId = user._id;
+//       req.session.userRole = "seller";
+//       console.log("✅ New user created:", user.email);
+//     } else {
+//       user = await User.findById(req.session.userId);
+//       console.log("ℹ️ Existing user found:", user?.email);
+//     }
+
+//     // ✅ 4️⃣ Validate and attach uploaded files
+//     const AadhaarFile = req.files?.Aadhaar?.[0];
+//     const PancardFile = req.files?.Pancard?.[0];
+
+//     if (!AadhaarFile || !PancardFile) {
+//       req.flash("error", "Aadhaar and PAN card uploads are required.");
+//       return res.redirect("/auth/seller-register");
+//     }
+
+//     const fileToObj = (file) => ({
+//       public_id: file.filename,
+//       secure_url: file.path,
+//       format: file.mimetype?.split("/")[1] || "",
+//       resource_type: file.mimetype?.startsWith("image") ? "image" : "raw",
+//       bytes: file.size,
+//       created_at: new Date(),
+//     });
+
+//     const Aadhaar = fileToObj(AadhaarFile);
+//     const Pancard = fileToObj(PancardFile);
+
+//     // ✅ 5️⃣ Optional: tax document uploads
+//     let taxDocs = [];
+//     if (req.files?.["taxAssessments[0][documents]"]) {
+//       taxDocs = req.files["taxAssessments[0][documents]"].map(fileToObj);
+//     }
+
+//     // ✅ 6️⃣ Normalize assessment year (e.g., "23-24" → "2023-24")
+//     let formattedYear = (assessmentYear || "").trim();
+//     if (/^\d{2}-\d{2}$/.test(formattedYear)) {
+//       formattedYear = `20${formattedYear}`;
+//     }
+
+//     // ✅ 7️⃣ Prepare nested objects
+//     const officeLocations = [
+//       {
+//         officeName,
+//         address: { state, district, city, pinCode, fullAddress },
+//         gstin,
+//         primary: primary === "on" || primary === true,
+//       },
+//     ];
+
+//     const taxAssessments = [
+//       {
+//         pan,
+//         itrType,
+//         assessmentYear: formattedYear,
+//         ackNumber,
+//         profitGainFromBusiness: Number(profitGainFromBusiness) || 0,
+//         grossReceipts: Number(grossReceipts) || 0,
+//         documents: taxDocs,
+//       },
+//     ];
+
+//     // ✅ 8️⃣ Create Seller record
+//     const seller = await Seller.create({
+//       userId: user._id,
+//       BusinessType,
+//       BusinessName,
+//       BusinessDetails: Array.isArray(BusinessDetails)
+//         ? BusinessDetails
+//         : [BusinessDetails],
+//       PersonalDetails: Array.isArray(PersonalDetails)
+//         ? PersonalDetails
+//         : [PersonalDetails],
+//       Aadhaar,
+//       Pancard,
+//       officeLocations,
+//       taxAssessments,
+//     });
+
+//     console.log("✅ Seller registered successfully:", seller._id);
+
+//     // ✅ 9️⃣ Update session and redirect
+//     req.session.userId = user._id;
+//     req.session.user = user;
+//     req.session.save(() => {
+//       req.flash("success", "Seller registration completed successfully!");
+//       return res.redirect("/seller/dashboard");
+//     });
+//   } catch (error) {
+//     console.error("❌ Seller registration error:", error);
+//     req.flash("error", `Error during seller registration: ${error.message || error}`);
+//     return res.redirect("/auth/seller-register");
+//   }
+// };
 exports.logout = (req, res) => {
   console.log("Logging out user:", req.session.userId);
   req.session.destroy((err) => {

@@ -1,38 +1,67 @@
-<section id="tax" class="bg-white rounded-2xl shadow p-6">
-  <h2 class="text-xl font-semibold text-[rgb(49,94,113)] mb-4">
-    📄 Tax Assessments
-  </h2>
+<section
+  id="tax"
+  class="bg-white rounded-2xl shadow border border-transparent hover:border-[var(--propload-secondary)] hover:shadow-lg transition-all duration-300 p-8 font-[Poppins]"
+>
+  <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
+    <div>
+      <h2 class="text-2xl font-bold text-secondary flex items-center gap-2">
+        <i class="fas fa-file-invoice text-primary"></i>
+        Tax Assessments
+      </h2>
+      <p class="text-gray-500 text-sm mt-2 font-medium">
+        Your submitted tax assessment details and supporting documents.
+      </p>
+    </div>
+    <a
+      href="/seller/add-tax"
+      class="bg-secondary text-white px-5 py-2.5 rounded-md font-medium text-sm shadow-sm hover:opacity-90 transition duration-300"
+    >
+      Add Tax Record
+    </a>
+  </div>
 
   <% if (seller?.taxAssessments?.length) { %>
-  <div class="space-y-4">
-    <% seller.taxAssessments.forEach(tax => { %>
-    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-      <div class="font-medium text-[rgb(49,94,113)] mb-1">
-        PAN: <%= tax.pan || '—' %>
-      </div>
-      <p class="text-sm text-gray-600">
-        Assessment Year: <%= tax.assessmentYear || '—' %> | ITR Type: <%=
-        tax.itrType || '—' %>
-      </p>
-      <p class="text-xs text-gray-500 mt-1">
-        Ack No: <%= tax.ackNumber || '—' %>
-      </p>
-      <% if (tax.documents?.length) { %>
-      <div class="mt-2 flex flex-wrap gap-3">
-        <% tax.documents.forEach(doc => { %>
-        <a
-          href="<%= doc.secure_url %>"
-          target="_blank"
-          class="text-[rgb(49,94,113)] text-xs underline"
-          >View Document</a
+    <div class="space-y-6">
+      <% seller.taxAssessments.forEach(tax => { %>
+        <div
+          class="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:border-[var(--propload-secondary)] hover:bg-[var(--propload-primary)]/20 transition duration-300 shadow-sm"
         >
-        <% }) %>
-      </div>
-      <% } %>
+          <div class="flex justify-between items-start mb-2">
+            <div class="font-semibold text-secondary">
+              PAN: <%= tax.pan || '—' %>
+            </div>
+            <% if (tax.documents?.length) { %>
+              <span class="text-xs bg-secondary text-white px-3 py-1 rounded-full font-medium shadow-sm">
+                <%= tax.documents.length %> Documents
+              </span>
+            <% } %>
+          </div>
+
+          <p class="text-sm text-gray-700">
+            Assessment Year: <%= tax.assessmentYear || '—' %> |
+            ITR Type: <%= tax.itrType || '—' %>
+          </p>
+          <p class="text-xs text-gray-600 mt-1">
+            Ack No: <%= tax.ackNumber || '—' %>
+          </p>
+
+          <% if (tax.documents?.length) { %>
+            <div class="mt-3 flex flex-wrap gap-3">
+              <% tax.documents.forEach(doc => { %>
+                <a
+                  href="<%= doc.secure_url %>"
+                  target="_blank"
+                  class="text-secondary text-xs font-semibold underline hover:text-[var(--propload-primary)] transition"
+                >
+                  View Document
+                </a>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
     </div>
-    <% }) %>
-  </div>
   <% } else { %>
-  <p class="text-gray-500 text-sm">No tax assessments uploaded yet.</p>
+    <p class="text-gray-500 text-sm mt-2">No tax assessments uploaded yet.</p>
   <% } %>
 </section>

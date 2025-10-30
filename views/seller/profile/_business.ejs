@@ -5,77 +5,60 @@
 
 <section
   id="business"
-  class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition font-[Poppins]"
+  class="bg-white rounded-2xl shadow border border-transparent hover:border-[var(--propload-secondary)] hover:shadow-lg transition-all duration-300 p-8 font-[Poppins]"
 >
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
     <div>
-      <h2 class="text-xl font-semibold text-[rgb(49,94,113)] tracking-wide">
+      <h2 class="text-2xl font-bold text-secondary tracking-tight flex items-center gap-2">
+        <i class="fas fa-briefcase text-primary"></i>
         Business Details
       </h2>
-      <div class="w-10 h-[3px] bg-[rgb(49,94,113)] rounded-full mt-2"></div>
       <p class="text-gray-500 text-sm mt-2 font-medium">
-        Your verified business identity and key registration information.
+        Your verified business identity and registration information.
       </p>
     </div>
+
     <a
       href="/seller/edit-business"
-      class="text-sm text-white bg-[rgb(49,94,113)] px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transition"
+      class="bg-secondary text-white px-5 py-2.5 rounded-md font-medium text-sm shadow-sm hover:opacity-90 transition duration-300"
     >
       Edit
     </a>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6 text-[15px]">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6 text-[15px] text-gray-800">
     <div>
-      <p
-        class="text-gray-500 uppercase text-xs font-semibold tracking-wider mb-1"
-      >
-        Business Name
-      </p>
-      <p class="text-gray-800 font-semibold">
-        <%= seller?.BusinessName || "—" %>
-      </p>
+      <p class="text-secondary text-sm font-semibold mb-1">Business Name</p>
+      <p class="font-medium"><%= seller?.BusinessName || "—" %></p>
     </div>
 
     <div>
-      <p
-        class="text-gray-500 uppercase text-xs font-semibold tracking-wider mb-1"
-      >
-        Business Type
-      </p>
-      <p class="text-gray-800 font-semibold">
-        <%= seller?.BusinessType || "—" %>
-      </p>
+      <p class="text-secondary text-sm font-semibold mb-1">Business Type</p>
+      <p class="font-medium"><%= seller?.BusinessType || "—" %></p>
     </div>
 
     <div>
-      <p
-        class="text-gray-500 uppercase text-xs font-semibold tracking-wider mb-1"
-      >
-        Verification Status
-      </p>
+      <p class="text-secondary text-sm font-semibold mb-1">Verification Status</p>
       <% if (seller?.adminVerified) { %>
-      <p class="text-green-700 font-semibold">Verified</p>
+        <p class="font-semibold text-green-700">Verified</p>
       <% } else { %>
-      <p class="text-yellow-700 font-semibold">Pending Review</p>
+        <p class="font-semibold text-yellow-700">Pending Review</p>
       <% } %>
     </div>
   </div>
 
   <% if (seller?.BusinessDetails?.length) { %>
-  <div class="mt-8">
-    <p
-      class="text-gray-500 uppercase text-xs font-semibold tracking-wider mb-2"
-    >
-      Additional Business Details
-    </p>
-    <div
-      class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-[15px] leading-relaxed text-gray-800 font-medium"
-    >
-      <% seller.BusinessDetails.forEach(detail => { %>
-      <p class="mb-1">• <%= detail %></p>
-      <% }) %>
+    <div class="mt-8 pt-4 border-t border-gray-200">
+      <p class="text-secondary text-sm font-semibold mb-3">
+        Additional Business Details
+      </p>
+      <div
+        class="bg-[var(--propload-primary)] border border-[var(--propload-secondary)] rounded-xl p-5 text-[15px] leading-relaxed text-[var(--propload-secondary)] font-medium shadow-sm"
+      >
+        <% seller.BusinessDetails.forEach(detail => { %>
+          <p class="mb-1">• <%= detail %></p>
+        <% }) %>
+      </div>
     </div>
-  </div>
   <% } %>
 </section>
