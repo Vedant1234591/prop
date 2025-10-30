@@ -160,6 +160,62 @@ exports.getDashboard = async (req, res) => {
 };
 
 // ======================== FIND BIDS PAGE ========================
+// exports.getFindBids = async (req, res) => {
+//   try {
+//     const sellerId = req.session.userId;
+
+//     if (!sellerId) {
+//       req.flash("error", "Please log in to view projects");
+//       return res.redirect("/auth/login");
+//     }
+
+//     const { state, city, category } = req.query;
+//     const filters = {};
+
+//     if (state) filters["location.state"] = new RegExp(state, "i");
+//     if (city) filters["location.city"] = new RegExp(city, "i");
+//     if (category) filters.category = category;
+
+//     // ✅ Always update project statuses before listing
+//     await statusAutomation.updateAllProjectStatuses();
+
+//     const activeProjects = await Project.find({
+//       ...filters,
+//       status: { $in: ["drafted", "in-progress"] },
+//       "bidSettings.bidEndDate": { $gt: new Date() },
+//       "bidSettings.isActive": true,
+//     })
+//       .populate("customer", "name companyName")
+//       .populate("bids")
+//       .sort({ createdAt: -1 });
+
+//     const userData = req.session.user || { name: "Seller", email: "" };
+
+//     // ✅ Bid count for notification
+//     const bidCount = await Bid.countDocuments({
+//       seller: sellerId,
+//       status: "submitted",
+//     });
+
+//     // ✅ Render find-bids page
+//     res.render("seller/find-bids", {
+//       user: userData,
+//       currentPage: "find-bids",
+        
+
+//       projects: activeProjects || [],
+//       filters: { state, city, category },
+//       bidCount,
+//       moment,
+//     });
+//   } catch (error) {
+//     console.error("Find bids error:", error);
+//     req.flash("error", "Error loading projects: " + error.message);
+//     res.redirect("/seller/dashboard");
+//   }
+// };
+
+
 exports.getFindBids = async (req, res) => {
   try {
     const sellerId = req.session.userId;
@@ -169,12 +225,42 @@ exports.getFindBids = async (req, res) => {
       return res.redirect("/auth/login");
     }
 
-    const { state, city, category } = req.query;
-    const filters = {};
+   const { state, city, category, pincode } = req.query;
+const filters = {};
 
-    if (state) filters["location.state"] = new RegExp(state, "i");
-    if (city) filters["location.city"] = new RegExp(city, "i");
-    if (category) filters.category = category;
+// Helper to safely escape regex special characters
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// --- 1️⃣ Handle State ---
+if (state) {
+  const cleanState = state.trim();
+  filters["location.state"] = { $regex: new RegExp(escapeRegex(cleanState), "i") };
+}
+
+// --- 2️⃣ Handle City/District ---
+if (city) {
+  const cleanCity = city
+    .replace(/\s*\([^)]*\)\s*/g, "") // remove anything inside parentheses
+    .trim();
+
+  // Match either "Kaimur" or "Kaimur (Bhabua)" or "Bhabua"
+  filters["$or"] = [
+    { "location.city": { $regex: new RegExp(escapeRegex(cleanCity), "i") } },
+    { "location.city": { $regex: new RegExp(`${escapeRegex(cleanCity)}\\s*\\([^)]*\\)`, "i") } },
+    { "location.city": { $regex: new RegExp(`\\([^)]*${escapeRegex(cleanCity)}[^)]*\\)`, "i") } },
+  ];
+}
+
+// --- 3️⃣ Handle Category ---
+if (category) {
+  filters.category = { $regex: new RegExp(escapeRegex(category), "i") };
+}
+
+// --- 4️⃣ Handle Pincode ---
+if (pincode && /^\d{6}$/.test(pincode)) {
+  filters["location.pincode"] = pincode;
+}
+
 
     // ✅ Always update project statuses before listing
     await statusAutomation.updateAllProjectStatuses();
@@ -191,13 +277,11 @@ exports.getFindBids = async (req, res) => {
 
     const userData = req.session.user || { name: "Seller", email: "" };
 
-    // ✅ Bid count for notification
     const bidCount = await Bid.countDocuments({
       seller: sellerId,
       status: "submitted",
     });
 
-    // ✅ Render find-bids page
     res.render("seller/find-bids", {
       user: userData,
       currentPage: "find-bids",
@@ -212,6 +296,9 @@ exports.getFindBids = async (req, res) => {
     res.redirect("/seller/dashboard");
   }
 };
+
+
+
 
 
 // Bid Details - Enhanced with real-time updates
