@@ -1,7 +1,5 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -30,7 +28,7 @@
     main {
       flex: 1;
       padding: 2rem;
-      margin-left: 16rem; 
+      margin-left: 16rem;
     }
 
     .card {
@@ -74,14 +72,13 @@
 </head>
 
 <body class="antialiased">
- 
+
   <%- include('./sideNav', { currentPage: 'find-bids' }) %>
 
-  
   <main>
     <%- include('../partials/flash-messages') %>
 
-   
+    <!-- Header -->
     <div class="card p-4 mb-6 border-l-4 border-[var(--propload-secondary)]">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center gap-2">
@@ -91,7 +88,8 @@
           </span>
         </div>
         <div class="flex items-center gap-3">
-          <a href="/seller/update-statuses" class="btn-primary text-sm px-3 py-1 rounded-md flex items-center gap-1 shadow">
+          <a href="/seller/update-statuses"
+             class="btn-primary text-sm px-3 py-1 rounded-md flex items-center gap-1 shadow">
             <i class="fas fa-sync-alt"></i> Update Now
           </a>
           <span class="text-xs text-[var(--propload-secondary)]" id="last-updated">Updated just now</span>
@@ -99,7 +97,7 @@
       </div>
     </div>
 
-   
+    <!-- Page Header -->
     <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
       <div>
         <h1 class="text-3xl font-bold text-gray-800">Find Projects to Bid On</h1>
@@ -116,7 +114,7 @@
       </div>
     </div>
 
-   
+    <!-- Filters -->
     <div class="card p-6 mb-8">
       <h2 class="section-header text-lg mb-4 flex items-center">
         <i class="fas fa-filter mr-2"></i> Smart Filtering
@@ -129,6 +127,7 @@
             class="w-full border border-gray-200 rounded-md py-2 px-3 focus:ring-2 focus:ring-[var(--propload-secondary)]"
             placeholder="e.g. 821108" />
         </div>
+
         <div>
           <label for="state" class="block text-sm muted mb-1">State</label>
           <input type="text" id="state" name="state" value="<%= filters.state || '' %>"
@@ -148,22 +147,23 @@
           <select id="category" name="category"
             class="w-full border border-gray-200 rounded-md py-2 px-3 focus:ring-2 focus:ring-[var(--propload-secondary)]">
             <option value="">All Categories</option>
-            <option value="electrification" <%= filters.category==='electrification' ? 'selected' : '' %>>Electrification</option>
-            <option value="architecture" <%= filters.category==='architecture' ? 'selected' : '' %>>Architecture</option>
-            <option value="interior-design" <%= filters.category==='interior-design' ? 'selected' : '' %>>Interior Design</option>
-            <option value="general-construction" <%= filters.category==='general-construction' ? 'selected' : '' %>>General Construction</option>
+            <option value="electrification" <%= filters.category === 'electrification' ? 'selected' : '' %>>Electrification</option>
+            <option value="architecture" <%= filters.category === 'architecture' ? 'selected' : '' %>>Architecture</option>
+            <option value="interior-design" <%= filters.category === 'interior-design' ? 'selected' : '' %>>Interior Design</option>
+            <option value="general-construction" <%= filters.category === 'general-construction' ? 'selected' : '' %>>General Construction</option>
           </select>
         </div>
 
         <div class="flex items-end gap-2">
-          <button type="submit" class="flex-1 btn-primary px-4 py-2 rounded-md flex items-center justify-center shadow">
+          <button type="submit"
+            class="flex-1 btn-primary px-4 py-2 rounded-md flex items-center justify-center shadow">
             <i class="fas fa-search mr-2"></i> Apply Filters
           </button>
           <% if (filters.state || filters.city || filters.category) { %>
-          <a href="/seller/find-bids"
-            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center hover:bg-gray-300">
-            <i class="fas fa-times mr-2"></i> Clear
-          </a>
+            <a href="/seller/find-bids"
+              class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center hover:bg-gray-300">
+              <i class="fas fa-times mr-2"></i> Clear
+            </a>
           <% } %>
         </div>
       </form>
@@ -172,38 +172,48 @@
       <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
         <span class="muted">Active filters:</span>
         <% if (filters.state) { %>
-        <span class="badge bg-[var(--propload-primary)] text-[var(--propload-secondary)]">
-          <i class="fas fa-map-marker-alt mr-1"></i> <%= filters.state %>
-        </span>
+          <span class="badge bg-[var(--propload-primary)] text-[var(--propload-secondary)]">
+            <i class="fas fa-map-marker-alt mr-1"></i>
+            <%= filters.state %>
+          </span>
         <% } %>
         <% if (filters.city) { %>
-        <span class="badge bg-green-100 text-green-800">
-          <i class="fas fa-city mr-1"></i> <%= filters.city %>
-        </span>
+          <span class="badge bg-green-100 text-green-800">
+            <i class="fas fa-city mr-1"></i>
+            <%= filters.city %>
+          </span>
         <% } %>
         <% if (filters.category) { %>
-        <span class="badge bg-yellow-100 text-yellow-800">
-          <i class="fas fa-tag mr-1"></i> <%= filters.category %>
-        </span>
+          <span class="badge bg-yellow-100 text-yellow-800">
+            <i class="fas fa-tag mr-1"></i>
+            <%= filters.category %>
+          </span>
         <% } %>
       </div>
       <% } %>
     </div>
 
-   
-        <!-- Project Cards Section -->
+    <!-- Projects Section -->
     <section class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <% if (projects && projects.length > 0) { %>
         <% projects.forEach(project => { %>
           <% if (project.adminStatus === 'approved' && project.status === 'active' && project.biddingRounds.currentRound === 1) { %>
             <div class="card p-5 flex flex-col justify-between">
               <div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2"><%= project.projectName %></h3>
-                <p class="text-sm muted mb-3"><%= project.description ? project.description.substring(0, 100) : 'No description available.' %></p>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                  <%= project.projectName %>
+                </h3>
+                <p class="text-sm muted mb-3">
+                  <%= project.description ? project.description.substring(0, 100) : 'No description available.' %>
+                </p>
 
                 <div class="flex flex-wrap gap-2 text-sm mb-3">
-                  <span class="badge bg-gray-100 text-gray-700"><i class="fas fa-map-marker-alt mr-1"></i> <%= project.location.city %>, <%= project.location.state %></span>
-                  <span class="badge bg-yellow-100 text-yellow-800"><i class="fas fa-tag mr-1"></i> <%= project.category %></span>
+                  <span class="badge bg-gray-100 text-gray-700"><i class="fas fa-map-marker-alt mr-1"></i>
+                    <%= project.location.city %>, <%= project.location.state %>
+                  </span>
+                  <span class="badge bg-yellow-100 text-yellow-800"><i class="fas fa-tag mr-1"></i>
+                    <%= project.category %>
+                  </span>
                   <% if (project.bidSettings && project.bidSettings.isActive) { %>
                     <span class="badge bg-green-100 text-green-800"><i class="fas fa-gavel mr-1"></i> Accepting Bids</span>
                   <% } %>
@@ -217,415 +227,88 @@
                 </div>
                 <div>
                   <p class="text-xs muted">Ends</p>
-                  <p class="font-semibold"><%= moment(project.biddingRounds.round1.endDate).format('MMM D, YYYY') %></p>
+                  <p class="font-semibold">
+                    <%= moment(project.biddingRounds.round1.endDate).format('MMM D, YYYY') %>
+                  </p>
                 </div>
               </div>
 
               <div class="mt-4 flex justify-end">
-                <a href="/seller/bid-details/<%= project._id %>" class="btn-primary px-4 py-2 rounded-md text-sm flex items-center gap-1">
-                  <i class="fas fa-eye"></i> View Details
-                </a>
+                <% if (
+                  project.biddingRounds.round1.status === 'active' &&
+                  project.biddingRounds.round1.endDate &&
+                  new Date(project.biddingRounds.round1.endDate) > new Date()
+                ) { %>
+                  <a href="/seller/project/<%= project._id %>/bid"
+                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-xs text-center">
+                    Submit Round 1 Bid
+                  </a>
+                <% } else { %>
+                  <span class="bg-gray-400 text-white px-4 py-2 rounded-md text-xs text-center cursor-not-allowed">
+                    Bidding Closed
+                  </span>
+                <% } %>
               </div>
             </div>
-
-            <!-- Projects Grid -->
-            <div class="grid gap-6">
-                <% if (approvedActiveProjects.length > 0) { %>
-                    <% approvedActiveProjects.forEach(project => { %>
-                        <div class="bg-white shadow rounded-lg p-6 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border-l-4 border-green-400">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex-1">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <h3
-                                            class="text-xl font-semibold text-gray-900 hover:text-indigo-600 transition duration-300">
-                                            <%= project.title %>
-                                        </h3>
-                                        <div class="flex items-center space-x-2">
-                                            <span
-                                                class="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center">
-                                                <i class="fas fa-play-circle mr-1"></i>
-                                                Round 1 Active
-                                            </span>
-                                            <span
-                                                class="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                                <%= project.bids ? project.bids.length : 0 %> bids
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <p class="text-gray-600 mb-4 line-clamp-2">
-                                        <%= project.description %>
-                                    </p>
-
-                                    <div class="grid md:grid-cols-4 gap-4 text-sm text-gray-500 mb-4">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-tag mr-2 text-indigo-500"></i>
-                                            <span class="capitalize">
-                                                <%= project.category ? project.category.replace('-', ' ') : 'Not specified' %>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
-                                            <span>
-                                                <%= project.location ? `${project.location.city}, ${project.location.state}` : 'Location not specified' %>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-clock mr-2 text-orange-500"></i>
-                                            <span>Round 1 ends: <%= project.biddingRounds.round1.endDate ? moment(project.biddingRounds.round1.endDate).fromNow() : 'Not specified' %>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
-                                            <span class="font-semibold">Starting at $<%=
-                                                    project.bidSettings ? project.bidSettings.startingBid : 'N/A' %></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center text-sm text-gray-500 mb-4">
-                                        <i class="fas fa-user mr-2 text-blue-500"></i>
-                                        <span>Posted by: <%= project.customer ? project.customer.name : 'Unknown' %></span>
-                                        <% if (project.customer && project.customer.companyName) { %>
-                                            <span class="mx-2">•</span>
-                                            <span>
-                                                <%= project.customer.companyName %>
-                                            </span>
-                                            <% } %>
-                                    </div>
-                                
-                                    <!-- Round status display -->
-                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
-                                        <div class="flex items-center text-sm text-blue-700">
-                                            <i class="fas fa-info-circle mr-2"></i>
-                                            <% if (project.biddingRounds.currentRound === 1) { %>
-                                                <span>Round 1 Active - Top 10 will be selected automatically when bidding ends</span>
-                                            <% } else if (project.biddingRounds.currentRound === 1.5) { %>
-                                                <span>Round 1 Completed - Customer selecting top 3</span>
-                                            <% } else if (project.biddingRounds.currentRound === 2) { %>
-                                                <span>Round 2 Active - 24 hours remaining for top 3 bidders</span>
-                                            <% } else if (project.biddingRounds.currentRound === 3) { %>
-                                                <span>Completed - Winner selected</span>
-                                            <% } else { %>
-                                                <span>Project <%= project.status %></span>
-                                            <% } %>
-                                        </div>
-                                    </div>
-
-                                    <!-- Real-time Status & Auto Selection Info -->
-                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-3">
-                                        <div class="flex items-center text-sm text-blue-700 mb-2">
-                                            <i class="fas fa-info-circle mr-2"></i>
-                                            Project is <strong class="text-green-600 mx-1">active and accepting bids in Round 1</strong>
-                                            <span class="text-blue-600 ml-2">
-                                                • Round 1 ends <%= project.biddingRounds.round1.endDate ? moment(project.biddingRounds.round1.endDate).fromNow() : 'Date not set' %>
-                                            </span>
-                                        </div>
-                                        <div class="text-xs text-blue-600 space-y-1">
-                                            <div class="flex items-center">
-                                                <i class="fas fa-bolt mr-2"></i>
-                                                <span>Top 10 bidders by amount will be selected for Round 2</span>
-                                            </div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-sync-alt mr-2"></i>
-                                                <span>Real-time status updates and notifications</span>
-                                            </div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-shield-alt mr-2"></i>
-                                                <span>Secure bidding process with contract automation</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Urgency Indicator -->
-                                        <% if (project.biddingRounds.round1.endDate) { %>
-                                            <% const hoursUntilEnd = (new Date(project.biddingRounds.round1.endDate) - new Date()) / (1000 * 60 * 60); %>
-                                            <% if (hoursUntilEnd < 24 && project.biddingRounds.round1.status === 'active') { %>
-                                                <div
-                                                    class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center">
-                                                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                                                    <span>Round 1 ends soon! Only <%= Math.ceil(hoursUntilEnd) %>
-                                                            hours left.</span>
-                                                </div>
-                                            <% } %>
-                                        <% } %>
-                                    </div>
-                                </div>
-
-                                <div class="ml-6 flex flex-col space-y-3 min-w-[120px]">
-                                    <a href="/seller/bid-details/<%= project._id %>"
-                                        class="bg-indigo-600 text-white px-4 py-3 rounded-md hover:bg-indigo-700 transition duration-300 text-sm text-center flex items-center justify-center group">
-                                        <i
-                                            class="fas fa-gavel mr-2 group-hover:scale-110 transition duration-300"></i>
-                                        View Details
-                                    </a>
-
-                                    <div class="text-center space-y-1">
-                                        <span
-                                            class="text-xs <%= project.biddingRounds.round1.status === 'active' ? 'text-green-600' : 'text-red-600' %> font-medium block">
-                                            <i class="fas fa-circle mr-1 text-xs"></i>
-                                            <%= project.biddingRounds.round1.status === 'active' ? 'Active' : 'Closed' %>
-                                        </span>
-                                        <span class="text-xs text-blue-600 block">
-                                            <i class="fas fa-users mr-1"></i>
-                                            <%= project.bids ? project.bids.length : 0 %> bids
-                                        </span>
-                                        <span class="text-xs text-gray-500 block">
-                                            <i class="fas fa-eye mr-1"></i>
-                                            <%= project.viewCount || 0 %> views
-                                        </span>
-                                    </div>
-
-                               <!-- Update the bid button section: -->
-<% if (project.biddingRounds.round1.status === 'active' && project.biddingRounds.round1.endDate && new Date(project.biddingRounds.round1.endDate) > new Date()) { %>
-    <a href="/seller/project/<%= project._id %>/bid" 
-       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-xs text-center">
-        Submit Round 1 Bid
-    </a>
-<% } else { %>
-    <span class="bg-gray-400 text-white px-4 py-2 rounded-md text-xs text-center cursor-not-allowed">
-        Bidding Closed
-    </span>
-<% } %>
-                                </div>
-                            </div>
-
-                            <!-- Quick Stats Footer -->
-                            <div
-                                class="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-4">
-                                <div class="flex items-center space-x-4">
-                                    <span class="flex items-center">
-                                        <i class="fas fa-calendar mr-1"></i>
-                                        Posted: <%= moment(project.createdAt).fromNow() %>
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-hourglass-half mr-1"></i>
-                                        Duration: <%= project.timeline ? project.timeline.duration : 'N/A' %> days
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-flag mr-1"></i>
-                                        Status: <span
-                                            class="capitalize ml-1 <%= project.status === 'active' ? 'text-green-600' : 'text-gray-600' %>">
-                                            <%= project.status %>
-                                        </span>
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-indigo-600 flex items-center">
-                                        <i class="fas fa-layer-group mr-1"></i>
-                                        Round <%= project.biddingRounds.currentRound %>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
-                <% } else { %>
-                    <div
-                        class="bg-white shadow rounded-lg p-12 text-center hover:shadow-lg transition duration-300">
-                        <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No active projects found</h3>
-                        <p class="text-gray-500 mb-6 max-w-md mx-auto">
-                            <% if (filters.state || filters.city || filters.category) { %>
-                                Try adjusting your filters to find more projects. New projects are added after admin approval.
-                                <% } else { %>
-                                    There are no active projects in Round 1 bidding at the moment.
-                                    Check back soon as new projects are added after admin approval.
-                                    <% } %>
-                        </p>
-                        <div class="space-x-4">
-                            <% if (filters.state || filters.city || filters.category) { %>
-                                <a href="/seller/find-bids"
-                                    class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
-                                    Clear Filters
-                                </a>
-                                <% } %>
-                                    <a href="/seller/dashboard"
-                                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-300">
-                                        Back to Dashboard
-                                    </a>
-                        </div>
-
-                        <!-- Tips for Better Results -->
-                        <div
-                            class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                            <h4 class="font-semibold text-blue-800 text-sm mb-2 flex items-center">
-                                <i class="fas fa-lightbulb mr-2"></i>
-                                Pro Tips for Finding Projects
-                            </h4>
-                            <ul class="text-xs text-blue-700 space-y-1 text-left">
-                                <li class="flex items-start">
-                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
-                                    Complete your seller profile with detailed expertise
-                                </li>
-                                <li class="flex items-start">
-                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
-                                    Check back regularly - new projects added after admin approval
-                                </li>
-                                <li class="flex items-start">
-                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
-                                    Use broader location filters for more results
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                <% } %>
-            </div>
-
-            <!-- Pagination or Load More -->
-            <% if (approvedActiveProjects.length > 0) { %>
-                <div class="mt-8 text-center">
-                    <div class="bg-white shadow rounded-lg p-4 inline-flex items-center space-x-4">
-                        <span class="text-sm text-gray-600">
-                            Showing <%= approvedActiveProjects.length %> of <%= approvedActiveProjects.length %> projects
-                        </span>
-                        <div class="flex space-x-2">
-                            <button
-                                class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button
-                                class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition duration-300">
-                                1
-                            </button>
-                            <button
-                                class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <% } %>
+          <% } %>
+        <% }) %>
+      <% } else { %>
+        <div class="bg-white shadow rounded-lg p-12 text-center hover:shadow-lg transition duration-300">
+          <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No active projects found</h3>
+          <p class="text-gray-500 mb-6 max-w-md mx-auto">
+            <% if (filters.state || filters.city || filters.category) { %>
+              Try adjusting your filters to find more projects.
+            <% } else { %>
+              There are no active projects in Round 1 bidding at the moment. Check back soon.
+            <% } %>
+          </p>
+          <div class="space-x-4">
+            <% if (filters.state || filters.city || filters.category) { %>
+              <a href="/seller/find-bids"
+                 class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                Clear Filters
+              </a>
+            <% } %>
+            <a href="/seller/dashboard"
+               class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-300">
+              Back to Dashboard
+            </a>
+          </div>
         </div>
       <% } %>
     </section>
 
-    <!-- Pagination -->
-<% 
-  const approvedActiveProjects = projects.filter(
-    p => p.adminStatus === 'approved' && p.status === 'active' && p.biddingRounds.currentRound === 1
-  ); 
-
-  const itemsPerPage = 3;
-  const totalPages = Math.ceil(approvedActiveProjects.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedProjects = approvedActiveProjects.slice(startIndex, endIndex);
-%>
-
-<!-- Project cards -->
-<% if (paginatedProjects.length > 0) { %>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-    <% paginatedProjects.forEach(project => { %>
-      <!-- Project Card -->
-      <div class="bg-white shadow rounded-lg p-4 hover:shadow-lg transition duration-300">
-        <h3 class="text-lg font-semibold text-gray-800"><%= project.title %></h3>
-        <p class="text-sm text-gray-600 mt-1"><%= project.description %></p>
-        <div class="text-sm text-gray-500 mt-2">
-          <strong>Location:</strong> <%= project.city %>, <%= project.state %>
-        </div>
-        <div class="text-sm text-gray-500">
-          <strong>Category:</strong> <%= project.category %>
-        </div>
-      </div>
-    <% }) %>
-  </div>
-<% } else { %>
-  <p class="text-gray-500 text-center mt-6">No projects found.</p>
-<% } %>
-
-<!-- Pagination -->
-<% if (approvedActiveProjects.length > 0 && totalPages > 1) { %>
-  <div class="mt-8 text-center">
-    <div class="bg-white shadow rounded-lg p-4 inline-flex items-center space-x-4">
-      <span class="text-sm text-gray-600">
-        Showing <%= paginatedProjects.length %> of <%= approvedActiveProjects.length %> projects
-      </span>
-
-      <div class="flex space-x-2">
-        <!-- Prev -->
-        <% if (currentPage > 1) { %>
-          <a
-            href="?page=<%= currentPage - 1 %><%= filters.state ? '&state=' + filters.state : '' %><%= filters.city ? '&city=' + filters.city : '' %><%= filters.category ? '&category=' + filters.category : '' %>"
-            class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
-            <i class="fas fa-chevron-left"></i>
-          </a>
-        <% } else { %>
-          <button class="bg-gray-100 text-gray-400 px-3 py-1 rounded text-sm cursor-not-allowed">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-        <% } %>
-
-        <!-- Page numbers -->
-        <% for (let i = 1; i <= totalPages; i++) { %>
-          <a
-            href="?page=<%= i %><%= filters.state ? '&state=' + filters.state : '' %><%= filters.city ? '&city=' + filters.city : '' %><%= filters.category ? '&category=' + filters.category : '' %>"
-            class="<%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300' %> px-3 py-1 rounded text-sm transition duration-300">
-            <%= i %>
-          </a>
-        <% } %>
-
-        <!-- Next -->
-        <% if (currentPage < totalPages) { %>
-          <a
-            href="?page=<%= currentPage + 1 %><%= filters.state ? '&state=' + filters.state : '' %><%= filters.city ? '&city=' + filters.city : '' %><%= filters.category ? '&category=' + filters.category : '' %>"
-            class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
-            <i class="fas fa-chevron-right"></i>
-          </a>
-        <% } else { %>
-          <button class="bg-gray-100 text-gray-400 px-3 py-1 rounded text-sm cursor-not-allowed">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        <% } %>
-      </div>
-    </div>
-  </div>
-<% } %>
-
-
-
-
   </main>
 
   <script>
-
- document.getElementById("pincode").addEventListener("input", async function () {
-    const pin = this.value.trim();
-
-    // Proceed only if PIN code is 6 digits
-    if (pin.length === 6 && /^\d{6}$/.test(pin)) {
-      try {
-        const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-        const data = await response.json();
-
-        if (data[0].Status === "Success") {
-          const postOffice = data[0].PostOffice[0];
-          document.getElementById("state").value = postOffice.State;
-          document.getElementById("city").value = postOffice.District;
-        } else {
-          document.getElementById("state").value = "";
-          document.getElementById("city").value = "";
-          alert("Invalid PIN code. Please check and try again.");
+    // Auto-fill state and city from pincode
+    document.getElementById("pincode").addEventListener("input", async function () {
+      const pin = this.value.trim();
+      if (pin.length === 6 && /^\d{6}$/.test(pin)) {
+        try {
+          const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+          const data = await response.json();
+          if (data[0].Status === "Success") {
+            const postOffice = data[0].PostOffice[0];
+            document.getElementById("state").value = postOffice.State;
+            document.getElementById("city").value = postOffice.District;
+          } else {
+            document.getElementById("state").value = "";
+            document.getElementById("city").value = "";
+            alert("Invalid PIN code. Please check and try again.");
+          }
+        } catch (err) {
+          console.error("Error fetching location:", err);
+          alert("Unable to fetch location. Please try again later.");
         }
-      } catch (err) {
-        console.error("Error fetching location:", err);
-        alert("Unable to fetch location. Please try again later.");
+      } else {
+        document.getElementById("state").value = "";
+        document.getElementById("city").value = "";
       }
-    } else {
-      // Reset fields if PIN is not valid
-      document.getElementById("state").value = "";
-      document.getElementById("city").value = "";
-    }
-  });
+    });
 
-
-
-
-
-
-
-
-
-
-
-
+    // Auto refresh every minute
     setInterval(() => location.reload(), 60000);
     setInterval(() => {
       const lastUpdated = document.getElementById('last-updated');

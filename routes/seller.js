@@ -56,6 +56,7 @@ router.post('/upload-contract', upload.single('contract'), sellerController.uplo
 // Contract Downloads
 router.get('/download-contract-template/:bidId', sellerController.downloadContractTemplate);
 router.get('/download-customer-contract/:bidId', sellerController.downloadCustomerContract);
+router.get('/download-seller-contract/:bidId', sellerController.downloadContract);
 router.get('/download-final-certificate/:bidId', sellerController.downloadFinalCertificate);
 
 // ==================== PROFILE MANAGEMENT ====================
