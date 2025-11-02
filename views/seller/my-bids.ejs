@@ -170,10 +170,10 @@
                                 </span>
                             </div>
                             <div class="flex space-x-2">
-                                <a href="/seller/bid-details/<%= bid.project ? bid.project._id : '' %>" 
-                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
-                                    <i class="fas fa-eye mr-2"></i>View Details
-                                </a>
+<a href="/seller/bid/<%= bid._id %>" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+    <i class="fas fa-eye mr-2"></i>View Bid Details
+</a>
                                 <!-- Round-specific actions -->
                                 <% if (bid.isActiveInRound && bid.project && bid.project.biddingRounds && bid.project.biddingRounds.currentRound === bid.round && bid.project.biddingRounds.round1 && bid.project.biddingRounds.round1.status === 'active') { %>
                                 <a href="/seller/bid-details/<%= bid.project._id %>" 
@@ -374,10 +374,10 @@
                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm flex items-center">
                                     <i class="fas fa-info-circle mr-2"></i>Queue Details
                                 </a>
-                                <a href="/seller/bid-details/<%= bid.project._id %>" 
-                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
-                                    <i class="fas fa-eye mr-2"></i>View Project
-                                </a>
+                            <a href="/seller/bid/<%= bid._id %>" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+    <i class="fas fa-eye mr-2"></i>View Bid Details
+</a>
                             </div>
                         </div>
                     </div>
@@ -466,10 +466,10 @@
                                 <span class="font-medium text-orange-600">Waiting for Customer Selection</span>
                             </div>
                             <div class="flex space-x-2">
-                                <a href="/seller/bid-details/<%= bid.project ? bid.project._id : '' %>" 
-                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
-                                    <i class="fas fa-eye mr-2"></i>View Project
-                                </a>
+                              <a href="/seller/bid/<%= bid._id %>" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+    <i class="fas fa-eye mr-2"></i>View Bid Details
+</a>
                             </div>
                         </div>
                     </div>
@@ -583,10 +583,10 @@
                                 </span>
                             </div>
                             <div class="flex space-x-2">
-                                <a href="/seller/bid-details/<%= bid.project ? bid.project._id : '' %>" 
-                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
-                                    <i class="fas fa-eye mr-2"></i>View Project
-                                </a>
+                            <a href="/seller/bid/<%= bid._id %>" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+    <i class="fas fa-eye mr-2"></i>View Bid Details
+</a>
                                 <% if (bid.project.biddingRounds && bid.project.biddingRounds.round2 && bid.project.biddingRounds.round2.endDate && new Date(bid.project.biddingRounds.round2.endDate) > new Date()) { %>
                                 <a href="/seller/project/<%= bid.project._id %>/round2-bidding" 
                                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-sm flex items-center">
@@ -869,10 +869,10 @@
                                 </span>
                             </div>
                             <div class="flex space-x-2">
-                                <a href="/seller/bid-details/<%= bid.project ? bid.project._id : '' %>" 
-                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
-                                    <i class="fas fa-eye mr-2"></i>View Project
-                                </a>
+                              <a href="/seller/bid/<%= bid._id %>" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 text-sm flex items-center">
+    <i class="fas fa-eye mr-2"></i>View Bid Details
+</a>
                                 <% if (bid.contract) { %>
                                 <a href="/seller/contract-details/<%= bid._id %>" 
                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm flex items-center">

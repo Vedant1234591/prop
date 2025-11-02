@@ -13,680 +13,882 @@
 <body class="bg-gray-50">
     <%- include('../partials/header', { user: user, currentPage: 'my-bids' , bidCount: bidCount || 0 }) %>
 
-        <div class="max-w-6xl mx-auto px-4 py-8">
-            <%- include('../partials/flash-messages') %>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
 
-                <!-- Real-time Status Header -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
-                            <span class="text-sm text-blue-700">Real-time bid status updates active • Multi-round
-                                bidding system</span>
+        <!-- Real-time Status Header -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-sync-alt text-blue-600 mr-2"></i>
+                    <span class="text-sm text-blue-700">Real-time bid status updates active • Multi-round bidding system</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="location.reload()"
+                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center">
+                        <i class="fas fa-sync-alt mr-1"></i>
+                        Refresh Now
+                    </button>
+                    <span class="text-xs text-blue-600" id="last-updated">
+                        Updated just now
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bid Status and Actions -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        <%= project.title %>
+                    </h1>
+                    <p class="text-gray-600 mt-2">
+                        <%= project.description %>
+                    </p>
+
+                    <!-- Bid Status Badge - FIXED SYNTAX -->
+                    <div class="mt-4">
+                        <% if (bid.status === 'submitted') { %>
+                            <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                SUBMITTED - ROUND 1
+                            </span>
+                            <p class="text-sm text-gray-600 mt-2">
+                                Waiting for Round 1 to end. Top 3 lowest bidders will be automatically selected.
+                            </p>
+                        <% } else if (bid.status === 'defected') { %>
+                            <span class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                DEFECTED - RESUBMISSION REQUIRED
+                            </span>
+                            <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                                <span class="ml-2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full" id="defect-countdown">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Resubmit in: <span class="font-mono">
+                                        <%= moment(bid.resubmissionDeadline).fromNow(true) %>
+                                    </span>
+                                </span>
+                            <% } %>
+                        <% } else if (bid.status === 'waiting') { %>
+                            <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-clock mr-2"></i>
+                                WAITING QUEUE - POSITION <%= bid.queuePosition %>
+                            </span>
+                            <p class="text-sm text-gray-600 mt-2">
+                                You may be promoted if any top 3 bids are defected and not resubmitted within 24 hours.
+                            </p>
+                        <% } else if (bid.status === 'selected-round1') { %>
+                            <span class="px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-trophy mr-2"></i>
+                                SELECTED ROUND 1 - TOP 3
+                            </span>
+                            <p class="text-sm text-gray-600 mt-2">
+                                Customer is reviewing your bid. They may mark as defected or select for Round 2.
+                            </p>
+                        <% } else if (bid.status === 'selected-round2') { %>
+                            <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-flag-checkered mr-2"></i>
+                                SELECTED ROUND 2 - FINAL ROUND
+                            </span>
+                            <% if (project.biddingRounds && project.biddingRounds.round2 && project.biddingRounds.round2.status === 'active') { %>
+                                <span class="ml-2 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full" id="round2-countdown">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Ends: <span class="font-mono">
+                                        <%= moment(project.biddingRounds.round2.endDate).fromNow(true) %>
+                                    </span>
+                                </span>
+                            <% } %>
+                        <% } else if (bid.status === 'won') { %>
+                            <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-crown mr-2"></i>
+                                PROJECT WON
+                            </span>
+                        <% } else if (bid.status === 'lost') { %>
+                            <span class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                NOT SELECTED
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <p class="text-3xl font-bold text-green-600">
+                        <% if (bid.round2Bid && bid.round2Bid.amount) { %>
+                            $<%= bid.round2Bid.amount.toLocaleString() %>
+                        <% } else { %>
+                            $<%= bid.amount.toLocaleString() %>
+                        <% } %>
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        <% if (bid.round2Bid && bid.round2Bid.amount) { %>
+                            Current Bid (Round 2)
+                        <% } else { %>
+                            Bid Amount (Round 1)
+                        <% } %>
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Submitted: <%= moment(bid.createdAt).format('MMM D, YYYY h:mm A') %>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Round Information -->
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
+                <h3 class="font-semibold text-blue-800 mb-2">Bidding Round Information</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
+                    <div class="flex items-center">
+                        <i class="fas fa-layer-group mr-2"></i>
+                        <span>Current Round: <strong>Round <%= project.biddingRounds.currentRound %></strong></span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Round Status: <strong class="uppercase">
+                            <%= project.biddingRounds.round1.status %>
+                        </strong></span>
+                    </div>
+                </div>
+                <p class="text-xs text-blue-600 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Multi-round bidding process: Top 3 lowest bidders selected for customer review, with waiting queue for replacements.
+                </p>
+            </div>
+
+            <!-- Defect Information -->
+            <% if (bid.status === 'defected') { %>
+                <div class="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+                    <h3 class="font-semibold text-red-800 mb-2 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Bid Marked as Defected
+                    </h3>
+                    <div class="space-y-2 text-sm text-red-700">
+                        <p><strong>Customer Remarks:</strong>
+                            <%= bid.defectRemarks || 'No remarks provided' %>
+                        </p>
+                        <p><strong>Defect Count:</strong>
+                            <%= bid.defectCount || 0 %> of 3 maximum allowed
+                        </p>
+                        <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                            <p><strong>Resubmission Deadline:</strong>
+                                <%= moment(bid.resubmissionDeadline).format('MMM D, YYYY h:mm A') %>
+                            </p>
+                            <p class="text-xs">If you don't resubmit within 24 hours, you will be moved to Lost and replaced by the next bidder in waiting queue.</p>
+                        <% } else if (bid.resubmissionDeadline) { %>
+                            <p class="font-bold">Resubmission deadline has passed. You have been moved to Lost section.</p>
+                        <% } %>
+                    </div>
+
+                    <!-- Resubmission Action -->
+                    <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                        <div class="mt-4">
+                            <a href="/seller/bid/<%= bid._id %>/defected-resubmission"
+                                class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-300 font-semibold inline-flex items-center">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Resubmit Bid Form
+                            </a>
+                            <p class="text-xs text-red-600 mt-2">
+                                You need to fill the Round 1 submission form again with corrections
+                            </p>
                         </div>
-                        <div class="flex space-x-2">
-                            <button onclick="location.reload()"
-                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300 flex items-center">
-                                <i class="fas fa-sync-alt mr-1"></i>
-                                Refresh Now
-                            </button>
-                            <span class="text-xs text-blue-600" id="last-updated">
-                                Updated just now
+                    <% } %>
+                </div>
+            <% } %>
+
+            <!-- Waiting Queue Information -->
+            <% if (bid.status === 'waiting') { %>
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        Waiting Queue Position <%= bid.queuePosition %>
+                    </h3>
+                    <div class="space-y-2 text-sm text-blue-700">
+                        <p>You are position <strong>#<%= bid.queuePosition %></strong> in the waiting queue.</p>
+                        <p>If any of the top 3 bids are marked as defected and not resubmitted within 24 hours, you will be automatically promoted.</p>
+                        <p class="text-xs">The customer has 24 hours to review and select the top 3 bids for Round 2.</p>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Round 2 Action Required -->
+            <% if (bid.status === 'selected-round2') { %>
+                <div class="mt-4 bg-purple-50 border border-purple-200 rounded-md p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2 flex items-center">
+                        <i class="fas fa-flag-checkered mr-2"></i>
+                        Final Round - Update Your Bid!
+                    </h3>
+                    <p class="text-sm text-purple-700 mb-3">
+                        You're in the final round! You have 24 hours to update your bid amount and proposal.
+                        The <strong class="text-green-600">lowest bidder</strong> in Round 2 wins the project.
+                    </p>
+
+                    <% if (project.biddingRounds && project.biddingRounds.round2 && project.biddingRounds.round2.status === 'active' && new Date(project.biddingRounds.round2.endDate) > new Date()) { %>
+                        <a href="/seller/project/<%= project._id %>/round2-bidding"
+                            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold inline-flex items-center">
+                            <i class="fas fa-edit mr-2"></i>
+                            Update Bid for Round 2
+                        </a>
+                    <% } else if (project.biddingRounds && project.biddingRounds.round2 && project.biddingRounds.round2.status === 'completed') { %>
+                        <p class="text-sm text-purple-600 flex items-center">
+                            <i class="fas fa-clock mr-2"></i>
+                            Round 2 has ended. Waiting for winner selection.
+                        </p>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <!-- Won Project Information -->
+            <% if (bid.status === 'won') { %>
+                <div class="mt-4 bg-green-50 border border-green-200 rounded-md p-4">
+                    <h3 class="font-semibold text-green-800 mb-2 flex items-center">
+                        <i class="fas fa-crown mr-2"></i>
+                        Congratulations! You Won the Project
+                    </h3>
+                    <p class="text-sm text-green-700">
+                        You are the lowest bidder in Round 2 and have won this project!
+                    </p>
+                    
+                    <!-- Contract Process Section for Seller -->
+                    <% if (bid.contract) { %>
+                        <div class="mt-4 bg-white border border-green-300 rounded-lg p-4">
+                            <h4 class="font-semibold text-green-800 mb-3 flex items-center">
+                                <i class="fas fa-file-contract mr-2"></i>
+                                Contract Process Status
+                            </h4>
+                            
+                            <!-- Contract Steps Visualization -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between">
+                                    <% 
+                                    const contractSteps = [
+                                        { number: 1, title: 'Customer Upload', description: 'Customer uploads signed contract' },
+                                        { number: 2, title: 'Seller Upload', description: 'You upload signed contract' },
+                                        { number: 3, title: 'Admin Approval', description: 'Admin reviews and approves' },
+                                        { number: 4, title: 'Completed', description: 'Contract fully executed' }
+                                    ];
+                                    
+                                    let currentContractStep = 0;
+                                    if (bid.contract) {
+                                        if (bid.contract.status === 'pending-customer') {
+                                            currentContractStep = 1;
+                                        } else if (bid.contract.status === 'pending-seller') {
+                                            currentContractStep = 2;
+                                        } else if (bid.contract.status === 'pending-admin' || bid.contract.status === 'correcting') {
+                                            currentContractStep = 3;
+                                        } else if (bid.contract.status === 'completed') {
+                                            currentContractStep = 4;
+                                        }
+                                    }
+                                    %>
+                                    
+                                    <% contractSteps.forEach((step, index) => { %>
+                                        <div class="flex flex-col items-center flex-1">
+                                            <div class="w-8 h-8 rounded-full 
+                                                <%= currentContractStep >= step.number ? 'bg-green-500' : 'bg-gray-300' %> 
+                                                text-white flex items-center justify-center mb-2 text-sm">
+                                                <%= currentContractStep >= step.number ? '✓' : step.number %>
+                                            </div>
+                                            <p class="text-xs font-medium text-gray-700 text-center"><%= step.title %></p>
+                                            <p class="text-xs text-gray-500 text-center hidden md:block"><%= step.description %></p>
+                                            <% if (index < contractSteps.length - 1) { %>
+                                                <div class="hidden md:block w-full h-1 mt-2 
+                                                    <%= currentContractStep > step.number ? 'bg-green-500' : 'bg-gray-300' %>">
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Contract Actions Based on Status -->
+                            <% if (bid.contract.status === 'pending-customer') { %>
+                                <!-- Step 1: Waiting for customer to upload -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h5 class="font-semibold text-blue-800 mb-2">Waiting for Customer</h5>
+                                    <p class="text-sm text-blue-700 mb-3">
+                                        The customer needs to download, sign, and upload their contract first. 
+                                        You will be notified when it's your turn to upload your contract.
+                                    </p>
+                                    <div class="flex items-center text-blue-600">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        <span class="text-sm">Status: Waiting for customer upload</span>
+                                    </div>
+                                </div>
+                            <% } else if (bid.contract.status === 'pending-seller') { %>
+                                <!-- Step 2: Seller needs to upload -->
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <h5 class="font-semibold text-yellow-800 mb-2">Your Turn to Upload Contract</h5>
+                                    <p class="text-sm text-yellow-700 mb-3">
+                                        Customer has uploaded their contract. Please download the template, sign it, and upload your signed version.
+                                    </p>
+                                    
+                                    <div class="flex flex-wrap gap-3 mb-4">
+                                        <% if (bid.contract.sellerTemplate && bid.contract.sellerTemplate.url) { %>
+                                            <a href="<%= bid.contract.sellerTemplate.url %>" target="_blank" 
+                                               class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 inline-flex items-center">
+                                                <i class="fas fa-download mr-2"></i>Download Template
+                                            </a>
+                                        <% } %>
+                                        <% if (bid.contract.customerSignedContract && bid.contract.customerSignedContract.url) { %>
+                                            <a href="<%= bid.contract.customerSignedContract.url %>" target="_blank" 
+                                               class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 inline-flex items-center">
+                                                <i class="fas fa-eye mr-2"></i>View Customer Contract
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                    
+                                    <!-- Upload Form -->
+                                    <form action="/seller/upload-contract" method="POST" enctype="multipart/form-data" class="space-y-3">
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                        <input type="hidden" name="bidId" value="<%= bid._id %>">
+                                        
+                                        <div class="flex gap-2 items-center">
+                                            <input type="file" name="contract" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required 
+                                                   class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                            <button type="submit" 
+                                                    class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 flex items-center">
+                                                <i class="fas fa-upload mr-2"></i>Upload Signed Contract
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-gray-500">Supported formats: PDF, Word documents, JPEG, PNG (Max 10MB)</p>
+                                    </form>
+                                </div>
+                            <% } else if (bid.contract.status === 'correcting' && bid.contract.currentRejection) { %>
+                                <!-- Contract requires correction -->
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <h5 class="font-semibold text-red-800 mb-2">⚠️ Contract Requires Correction</h5>
+                                    <p class="text-red-700 mb-2"><strong>Reason:</strong> <%= bid.contract.currentRejection.reason %></p>
+                                    <p class="text-red-700 mb-4">
+                                        <strong>Time Remaining:</strong> 
+                                        <span class="font-bold">48h</span>
+                                    </p>
+                                    
+                                    <% if (bid.contract.currentRejection.partyRequired === 'seller' || bid.contract.currentRejection.partyRequired === 'both') { %>
+                                        <div class="mt-4">
+                                            <h6 class="font-semibold text-red-800 mb-2">Your Action Required:</h6>
+                                            <form action="/seller/upload-contract" method="POST" enctype="multipart/form-data" class="space-y-3">
+                                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                <input type="hidden" name="bidId" value="<%= bid._id %>">
+                                                
+                                                <input type="file" name="contract" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required 
+                                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+                                                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 w-full flex items-center justify-center">
+                                                    <i class="fas fa-upload mr-2"></i>Upload Corrected Contract
+                                                </button>
+                                            </form>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } else if (bid.contract.status === 'pending-admin') { %>
+                                <!-- Waiting for admin approval -->
+                                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                    <h5 class="font-semibold text-purple-800 mb-2">Waiting for Admin Approval</h5>
+                                    <p class="text-sm text-purple-700 mb-3">
+                                        Both contracts have been uploaded. Waiting for <strong>manual admin approval</strong>. 
+                                        This process typically takes 1-2 business days.
+                                    </p>
+                                    <div class="flex gap-2 flex-wrap">
+                                        <% if (bid.contract.customerSignedContract && bid.contract.customerSignedContract.url) { %>
+                                            <a href="<%= bid.contract.customerSignedContract.url %>" target="_blank" 
+                                               class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 flex items-center">
+                                                <i class="fas fa-download mr-1"></i>Customer Contract
+                                            </a>
+                                        <% } %>
+                                        <% if (bid.contract.sellerSignedContract && bid.contract.sellerSignedContract.url) { %>
+                                            <a href="<%= bid.contract.sellerSignedContract.url %>" target="_blank"
+                                               class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 flex items-center">
+                                                <i class="fas fa-download mr-1"></i>Your Contract
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% } else if (bid.contract.status === 'completed') { %>
+                                <!-- Contract completed -->
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <h5 class="font-semibold text-green-800 mb-2">✓ Contract Successfully Completed</h5>
+                                    <p class="text-sm text-green-700 mb-3">
+                                        The contract has been fully executed and approved by admin. You can download your completion certificate.
+                                    </p>
+                                    <div class="flex gap-2 flex-wrap">
+                                        <% if (bid.contract.finalCertificate && bid.contract.finalCertificate.url) { %>
+                                            <a href="<%= bid.contract.finalCertificate.url %>" target="_blank"
+                                               class="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700 flex items-center">
+                                                <i class="fas fa-award mr-1"></i>Certificate
+                                            </a>
+                                        <% } %>
+                                        <% if (bid.contract.customerSignedContract && bid.contract.customerSignedContract.url) { %>
+                                            <a href="<%= bid.contract.customerSignedContract.url %>" target="_blank" 
+                                               class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 flex items-center">
+                                                <i class="fas fa-file-contract mr-1"></i>Customer Contract
+                                            </a>
+                                        <% } %>
+                                        <% if (bid.contract.sellerSignedContract && bid.contract.sellerSignedContract.url) { %>
+                                            <a href="<%= bid.contract.sellerSignedContract.url %>" target="_blank"
+                                               class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 flex items-center">
+                                                <i class="fas fa-file-signature mr-1"></i>Your Contract
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="mt-3">
+                            <% if (bid.contract) { %>
+                                <a href="/seller/contract-details/<%= bid._id %>" 
+                                   class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-sm flex items-center">
+                                    <i class="fas fa-file-contract mr-2"></i>View Contract Details
+                                </a>
+                            <% } %>
+                        </div>
+                    <% } else { %>
+                        <!-- Contract being prepared -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h5 class="font-semibold text-yellow-800 mb-2">Contract Being Prepared</h5>
+                            <p class="text-sm text-yellow-700 mb-3">
+                                <i class="fas fa-clock mr-2"></i>
+                                Contract is being prepared. You will be notified when the customer uploads their contract.
+                            </p>
+                            <p class="text-xs text-yellow-600">
+                                This process is automatic and usually takes less than 5 minutes. Please refresh the page.
+                            </p>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column - Bid Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Proposal -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-file-alt text-green-500 mr-2"></i>
+                        Proposal
+                    </h2>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p class="text-gray-700 whitespace-pre-wrap">
+                            <%= bid.proposal %>
+                        </p>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2 text-right">
+                        <%= bid.proposal ? bid.proposal.length : 0 %> characters
+                    </p>
+                </div>
+
+                <!-- Agreement Responses -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-file-contract text-indigo-500 mr-2"></i>
+                        Agreement Responses
+                    </h2>
+                    <div class="space-y-4">
+                        <% if (agreements && agreements.clauses) { %>
+                            <% agreements.clauses.forEach(clause => { %>
+                                <% 
+                                let response;
+                                if (bid.agreementResponses && bid.agreementResponses.responses) {
+                                    response = bid.agreementResponses.responses.find(r => 
+                                        r.clauseId && r.clauseId.toString() === clause._id.toString()
+                                    );
+                                }
+                                %>
+                                <div class="border border-gray-200 rounded-lg p-4 <%= clause.required ? 'bg-blue-50 border-blue-200' : '' %>">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-gray-900 flex items-center">
+                                                <%= clause.clauseNumber %>. <%= clause.title %>
+                                                <% if (clause.required) { %>
+                                                    <span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Required</span>
+                                                <% } %>
+                                            </h3>
+                                            <p class="text-gray-600 mt-1 text-sm">
+                                                <%= clause.description %>
+                                            </p>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium <%= response && response.agreed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %> flex items-center">
+                                            <% if (response && response.agreed) { %>
+                                                <i class="fas fa-check mr-1"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-times mr-1"></i>
+                                            <% } %>
+                                            <%= response && response.agreed ? 'AGREED' : 'DISAGREED' %>
+                                        </span>
+                                    </div>
+                                    <% if (response && !response.agreed && response.remarks) { %>
+                                        <div class="mt-2 bg-yellow-50 border border-yellow-200 rounded p-3">
+                                            <p class="text-sm text-yellow-700">
+                                                <strong>Remarks:</strong>
+                                                <%= response.remarks %>
+                                            </p>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-file-contract text-4xl mb-2"></i>
+                                <p>No agreement responses available.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Round 2 Bid History -->
+                <% if (bid.round2Bid) { %>
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-history text-purple-500 mr-2"></i>
+                            Round 2 Bid History
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
+                                <div>
+                                    <p class="font-semibold text-purple-800">Current Round 2 Bid</p>
+                                    <p class="text-sm text-purple-600">
+                                        $<%= bid.round2Bid && bid.round2Bid.amount ? bid.round2Bid.amount.toLocaleString() : '0' %>
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500">Submitted</p>
+                                    <p class="text-xs text-gray-400">
+                                        <%= bid.round2Bid && bid.round2Bid.submittedAt ? moment(bid.round2Bid.submittedAt).format('MMM D, YYYY h:mm A') : 'Not submitted' %>
+                                    </p>
+                                </div>
+                            </div>
+                            <% if (bid.round2Bid && bid.round2Bid.revisionCount > 0) { %>
+                                <p class="text-sm text-gray-600 text-center">
+                                    <i class="fas fa-sync-alt mr-1"></i>
+                                    Updated <%= bid.round2Bid.revisionCount %> time<%= bid.round2Bid.revisionCount !== 1 ? 's' : '' %> in Round 2
+                                </p>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Right Column - Project & Process Information -->
+            <div class="space-y-6">
+                <!-- Project Information -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex items-center">
+                            <i class="fas fa-tag mr-3 text-indigo-500"></i>
+                            <div>
+                                <p class="text-gray-500">Category</p>
+                                <p class="font-medium capitalize">
+                                    <%= project.category ? project.category.replace('-', ' ') : 'general' %>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-3 text-red-500"></i>
+                            <div>
+                                <p class="text-gray-500">Location</p>
+                                <p class="font-medium">
+                                    <%= project.location && project.location.city ? project.location.city : 'N/A' %>, 
+                                    <%= project.location && project.location.state ? project.location.state : 'N/A' %>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-dollar-sign mr-3 text-green-500"></i>
+                            <div>
+                                <p class="text-gray-500">Starting Bid</p>
+                                <p class="font-medium">$<%= project.bidSettings && project.bidSettings.startingBid ? project.bidSettings.startingBid : '0' %></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-3 text-orange-500"></i>
+                            <div>
+                                <p class="text-gray-500">Round 1 Deadline</p>
+                                <p class="font-medium">
+                                    <%= project.biddingRounds && project.biddingRounds.round1 && project.biddingRounds.round1.endDate ? 
+                                        moment(project.biddingRounds.round1.endDate).format('MMM D, YYYY h:mm A') : 
+                                        'Not set' %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bidding Process Flow -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bidding Process Flow</h3>
+                    <div class="space-y-4 text-sm text-gray-600">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</div>
+                            <div>
+                                <strong>Round 1:</strong> Submit bid with agreements. Top 3 lowest bidders selected automatically.
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</div>
+                            <div>
+                                <strong>Customer Review:</strong> Customer reviews top 3 bids and can mark as defected with remarks.
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</div>
+                            <div>
+                                <strong>Defect Resolution:</strong> Defected bids have 24 hours to resubmit with corrections.
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">4</div>
+                            <div>
+                                <strong>Round 2:</strong> Customer selects 3 bids for final 24-hour round where bids can be updated.
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">5</div>
+                            <div>
+                                <strong>Winner Selection:</strong> Lowest bidder in Round 2 wins the project.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center">
+                            <i class="fas fa-user mr-3 text-blue-500"></i>
+                            <div>
+                                <p class="font-medium">
+                                    <%= project.customer && project.customer.name ? project.customer.name : 'N/A' %>
+                                </p>
+                                <p class="text-gray-600">
+                                    <%= project.customer && project.customer.email ? project.customer.email : 'N/A' %>
+                                </p>
+                            </div>
+                        </div>
+                        <% if (project.customer && project.customer.companyName) { %>
+                            <div class="flex items-center">
+                                <i class="fas fa-building mr-3 text-gray-500"></i>
+                                <span>
+                                    <%= project.customer.companyName %>
+                                </span>
+                            </div>
+                        <% } %>
+                        <div class="flex items-center">
+                            <i class="fas fa-phone mr-3 text-green-500"></i>
+                            <span>
+                                <%= project.contact && project.contact.phone ? project.contact.phone : 'N/A' %>
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Bid Status and Actions -->
-                <div class="bg-white shadow rounded-lg p-6 mb-6">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h1 class="text-3xl font-bold text-gray-900">
-                                <%= project.title %>
-                            </h1>
-                            <p class="text-gray-600 mt-2">
-                                <%= project.description %>
-                            </p>
+                <!-- Action Buttons -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                    <div class="space-y-3">
+                        <a href="/seller/my-bids"
+                            class="w-full bg-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-400 transition duration-300 flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to My Bids
+                        </a>
 
-                            <!-- Bid Status Badge -->
-                            <div class="mt-4">
-                                <% if (bid.status==='submitted' ) { %>
-                                    <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                        <i class="fas fa-paper-plane mr-2"></i>
-                                        SUBMITTED - ROUND 1
-                                    </span>
-                                    <p class="text-sm text-gray-600 mt-2">
-                                        Waiting for Round 1 to end. Top 3 lowest bidders will be automatically selected.
-                                    </p>
-                                    <% } else if (bid.status==='defected' ) { %>
-                                        <span
-                                            class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                                            DEFECTED - RESUBMISSION REQUIRED
-                                        </span>
-                                        <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline)> new
-                                            Date()) { %>
-                                            <span
-                                                class="ml-2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full"
-                                                id="defect-countdown">
-                                                <i class="fas fa-clock mr-1"></i>
-                                                Resubmit in: <span class="font-mono">
-                                                    <%= moment(bid.resubmissionDeadline).fromNow(true) %>
-                                                </span>
-                                            </span>
-                                            <% } %>
-                                                <% } else if (bid.status==='waiting' ) { %>
-                                                    <span
-                                                        class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                                        <i class="fas fa-clock mr-2"></i>
-                                                        WAITING QUEUE - POSITION <%= bid.queuePosition %>
-                                                    </span>
-                                                    <p class="text-sm text-gray-600 mt-2">
-                                                        You may be promoted if any top 3 bids are defected and not
-                                                        resubmitted within 24 hours.
-                                                    </p>
-                                                    <% } else if (bid.status==='selected-round1' ) { %>
-                                                        <span
-                                                            class="px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-                                                            <i class="fas fa-trophy mr-2"></i>
-                                                            SELECTED ROUND 1 - TOP 3
-                                                        </span>
-                                                        <p class="text-sm text-gray-600 mt-2">
-                                                            Customer is reviewing your bid. They may mark as defected or
-                                                            select for Round 2.
-                                                        </p>
-                                                        <% } else if (bid.status==='selected-round2' ) { %>
-                                                            <span
-                                                                class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                                                                <i class="fas fa-flag-checkered mr-2"></i>
-                                                                SELECTED ROUND 2 - FINAL ROUND
-                                                            </span>
-                                                            <% if (project.biddingRounds.round2.status==='active' ) { %>
-                                                                <span
-                                                                    class="ml-2 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
-                                                                    id="round2-countdown">
-                                                                    <i class="fas fa-clock mr-1"></i>
-                                                                    Ends: <span class="font-mono">
-                                                                        <%= moment(project.biddingRounds.round2.endDate).fromNow(true)
-                                                                            %>
-                                                                    </span>
-                                                                </span>
-                                                                <% } %>
-                                                                    <% } else if (bid.status==='won' ) { %>
-                                                                        <span
-                                                                            class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                                                            <i class="fas fa-crown mr-2"></i>
-                                                                            PROJECT WON
-                                                                        </span>
-                                                                        <% } else if (bid.status==='lost' ) { %>
-                                                                            <span
-                                                                                class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                                                                                <i class="fas fa-times-circle mr-2"></i>
-                                                                                NOT SELECTED
-                                                                            </span>
-                                                                            <% } %>
-                            </div>
-                        </div>
-
-                        <div class="text-right">
-                            <p class="text-3xl font-bold text-green-600">
-                                <% if (bid.round2Bid && bid.round2Bid.amount) { %>
-                                    $<%= bid.round2Bid.amount.toLocaleString() %>
-                                        <% } else { %>
-                                            $<%= bid.amount.toLocaleString() %>
-                                                <% } %>
-                            </p>
-                            <p class="text-sm text-gray-500">
-                                <% if (bid.round2Bid && bid.round2Bid.amount) { %>
-                                    Current Bid (Round 2)
-                                    <% } else { %>
-                                        Bid Amount (Round 1)
-                                        <% } %>
-                            </p>
-                            <p class="text-xs text-gray-400 mt-1">
-                                Submitted: <%= moment(bid.createdAt).format('MMM D, YYYY h:mm A') %>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Round Information -->
-                    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
-                        <h3 class="font-semibold text-blue-800 mb-2">Bidding Round Information</h3>
-                        <div class="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
-                            <div class="flex items-center">
-                                <i class="fas fa-layer-group mr-2"></i>
-                                <span>Current Round: <strong>Round <%= project.biddingRounds.currentRound %>
-                                            </strong></span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-clock mr-2"></i>
-                                <span>Round Status: <strong class="uppercase">
-                                        <%= project.biddingRounds.round1.status %>
-                                    </strong></span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-blue-600 mt-2">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Multi-round bidding process: Top 3 lowest bidders selected for customer review, with waiting
-                            queue for replacements.
-                        </p>
-                    </div>
-
-                    <!-- Defect Information -->
-                    <% if (bid.status==='defected' ) { %>
-                        <div class="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-                            <h3 class="font-semibold text-red-800 mb-2 flex items-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                Bid Marked as Defected
-                            </h3>
-                            <div class="space-y-2 text-sm text-red-700">
-                                <p><strong>Customer Remarks:</strong>
-                                    <%= bid.defectRemarks %>
-                                </p>
-                                <p><strong>Defect Count:</strong>
-                                    <%= bid.defectCount %> of 3 maximum allowed
-                                </p>
-                                <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline)> new Date()) { %>
-                                    <p><strong>Resubmission Deadline:</strong>
-                                        <%= moment(bid.resubmissionDeadline).format('MMM D, YYYY h:mm A') %>
-                                    </p>
-                                    <p class="text-xs">If you don't resubmit within 24 hours, you will be moved to Lost
-                                        and replaced by the next bidder in waiting queue.</p>
-                                    <% } else if (bid.resubmissionDeadline) { %>
-                                        <p class="font-bold">Resubmission deadline has passed. You have been moved to
-                                            Lost section.</p>
-                                        <% } %>
-                            </div>
-
-                            <!-- Resubmission Action -->
-                            <% if (bid.resubmissionDeadline && new Date(bid.resubmissionDeadline)> new Date()) { %>
-                                <div class="mt-4">
-                                    <a href="/seller/bid/<%= bid._id %>/defected-resubmission"
-                                        class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-300 font-semibold inline-flex items-center">
-                                        <i class="fas fa-paper-plane mr-2"></i>
-                                        Resubmit Bid Form
-                                    </a>
-                                    <p class="text-xs text-red-600 mt-2">
-                                        You need to fill the Round 1 submission form again with corrections
-                                    </p>
-                                </div>
-                                <% } %>
-                        </div>
+                        <% if (bid.status === 'defected' && bid.resubmissionDeadline && new Date(bid.resubmissionDeadline) > new Date()) { %>
+                            <a href="/seller/bid/<%= bid._id %>/defected-resubmission"
+                                class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Resubmit Bid Form
+                            </a>
                         <% } %>
 
-                            <!-- Waiting Queue Information -->
-                            <% if (bid.status==='waiting' ) { %>
-                                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
-                                    <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
-                                        <i class="fas fa-clock mr-2"></i>
-                                        Waiting Queue Position <%= bid.queuePosition %>
-                                    </h3>
-                                    <div class="space-y-2 text-sm text-blue-700">
-                                        <p>You are position <strong>#<%= bid.queuePosition %></strong> in the waiting
-                                            queue.</p>
-                                        <p>If any of the top 3 bids are marked as defected and not resubmitted within 24
-                                            hours, you will be automatically promoted.</p>
-                                        <p class="text-xs">The customer has 24 hours to review and select the top 3 bids
-                                            for Round 2.</p>
-                                    </div>
-                                </div>
-                                <% } %>
+                        <% if (bid.status === 'selected-round2' && project.biddingRounds && project.biddingRounds.round2 && project.biddingRounds.round2.status === 'active' && new Date(project.biddingRounds.round2.endDate) > new Date()) { %>
+                            <a href="/seller/project/<%= project._id %>/round2-bidding"
+                                class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-edit mr-2"></i>
+                                Update Round 2 Bid
+                            </a>
+                        <% } %>
 
-                                    <!-- Round 2 Action Required -->
-                                    <% if (bid.status==='selected-round2' ) { %>
-                                        <div class="mt-4 bg-purple-50 border border-purple-200 rounded-md p-4">
-                                            <h3 class="font-semibold text-purple-800 mb-2 flex items-center">
-                                                <i class="fas fa-flag-checkered mr-2"></i>
-                                                Final Round - Update Your Bid!
-                                            </h3>
-                                            <p class="text-sm text-purple-700 mb-3">
-                                                You're in the final round! You have 24 hours to update your bid amount
-                                                and proposal.
-                                                The <strong class="text-green-600">lowest bidder</strong> in Round 2
-                                                wins the project.
-                                            </p>
-
-                                            <% if (project.biddingRounds.round2.status==='active' && new
-                                                Date(project.biddingRounds.round2.endDate)> new Date()) { %>
-                                                <a href="/seller/project/<%= project._id %>/round2-bidding"
-                                                    class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold inline-flex items-center">
-                                                    <i class="fas fa-edit mr-2"></i>
-                                                    Update Bid for Round 2
-                                                </a>
-                                                <% else if (project.biddingRounds.round2.status==='completed' ) { %>
-                                                    <p class="text-sm text-purple-600 flex items-center">
-                                                        <i class="fas fa-clock mr-2"></i>
-                                                        Round 2 has ended. Waiting for winner selection.
-                                                    </p>
-                                                    <% } %>
-                                        </div>
-                                        <% } %>
-
-                                            <!-- Won Project Information -->
-                                            <% if (bid.status==='won' ) { %>
-                                                <div class="mt-4 bg-green-50 border border-green-200 rounded-md p-4">
-                                                    <h3 class="font-semibold text-green-800 mb-2 flex items-center">
-                                                        <i class="fas fa-crown mr-2"></i>
-                                                        Congratulations! You Won the Project
-                                                    </h3>
-                                                    <p class="text-sm text-green-700">
-                                                        You are the lowest bidder in Round 2 and have won this project!
-                                                    </p>
-                                                    <% if (bid.contract) { %>
-                                                        <div class="mt-3">
-                                                            <a href="/seller/contract-details/<%= bid._id %>"
-                                                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300 text-sm inline-flex items-center">
-                                                                <i class="fas fa-file-contract mr-2"></i>
-                                                                View Contract Details
-                                                            </a>
-                                                        </div>
-                                                        <% } %>
-                                                </div>
-                                                <% } %>
+                        <% if (bid.status === 'submitted' && project.biddingRounds && project.biddingRounds.round1 && project.biddingRounds.round1.status === 'active') { %>
+                            <a href="/seller/project/<%= project._id %>/bid"
+                                class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-edit mr-2"></i>
+                                Edit Round 1 Bid
+                            </a>
+                        <% } %>
+                    </div>
                 </div>
 
-                <div class="grid lg:grid-cols-3 gap-8">
-                    <!-- Left Column - Bid Details -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <!-- Proposal -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                                <i class="fas fa-file-alt text-green-500 mr-2"></i>
-                                Proposal
-                            </h2>
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <p class="text-gray-700 whitespace-pre-wrap">
-                                    <%= bid.proposal %>
-                                </p>
-                            </div>
-                            <p class="text-sm text-gray-500 mt-2 text-right">
-                                <%= bid.proposal.length %> characters
-                            </p>
-                        </div>
+                <!-- Current Status Timeline -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Status</h3>
+                    <div class="space-y-3 text-sm">
+                        <% const statusSteps = [ 
+                            { status: 'submitted', label: 'Round 1 Submitted', icon: 'paper-plane', color: 'blue' }, 
+                            { status: 'selected-round1', label: 'Top 3 Selected', icon: 'trophy', color: 'orange' }, 
+                            { status: 'defected', label: 'Defected - Resubmit', icon: 'exclamation-triangle', color: 'red' }, 
+                            { status: 'waiting', label: 'Waiting Queue', icon: 'clock', color: 'blue' }, 
+                            { status: 'selected-round2', label: 'Round 2 Selected', icon: 'flag-checkered', color: 'purple' }, 
+                            { status: 'won', label: 'Project Won', icon: 'crown', color: 'green' }, 
+                            { status: 'lost', label: 'Not Selected', icon: 'times-circle', color: 'red' } 
+                        ]; %>
 
-                        <!-- Agreement Responses -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                                <i class="fas fa-file-contract text-indigo-500 mr-2"></i>
-                                Agreement Responses
-                            </h2>
-                            <div class="space-y-4">
-                                <% if (agreements && agreements.clauses) { %>
-                                    <% agreements.clauses.forEach(clause=> { %>
-                                        <% const response=bid.agreementResponses.responses.find(r=>
-                                            r.clauseId && r.clauseId.toString() === clause._id.toString()
-                                            );
-                                            %>
-                                            <div
-                                                class="border border-gray-200 rounded-lg p-4 <%= clause.required ? 'bg-blue-50 border-blue-200' : '' %>">
-                                                <div class="flex justify-between items-start">
-                                                    <div class="flex-1">
-                                                        <h3 class="font-semibold text-gray-900 flex items-center">
-                                                            <%= clause.clauseNumber %>. <%= clause.title %>
-                                                                    <% if (clause.required) { %>
-                                                                        <span
-                                                                            class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Required</span>
-                                                                        <% } %>
-                                                        </h3>
-                                                        <p class="text-gray-600 mt-1 text-sm">
-                                                            <%= clause.description %>
-                                                        </p>
-                                                    </div>
-                                                    <span
-                                                        class="px-3 py-1 rounded-full text-sm font-medium <%= response && response.agreed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %> flex items-center">
-                                                        <% if (response && response.agreed) { %>
-                                                            <i class="fas fa-check mr-1"></i>
-                                                            <% } else { %>
-                                                                <i class="fas fa-times mr-1"></i>
-                                                                <% } %>
-                                                                    <%= response && response.agreed ? 'AGREED'
-                                                                        : 'DISAGREED' %>
-                                                    </span>
-                                                </div>
-                                                <% if (response && !response.agreed && response.remarks) { %>
-                                                    <div class="mt-2 bg-yellow-50 border border-yellow-200 rounded p-3">
-                                                        <p class="text-sm text-yellow-700">
-                                                            <strong>Remarks:</strong>
-                                                            <%= response.remarks %>
-                                                        </p>
-                                                    </div>
-                                                    <% } %>
-                                            </div>
-                                            <% }) %>
-                                                <% else { %>
-                                                    <div class="text-center py-8 text-gray-500">
-                                                        <i class="fas fa-file-contract text-4xl mb-2"></i>
-                                                        <p>No agreement responses available.</p>
-                                                    </div>
-                                                    <% } %>
-                            </div>
-                        </div>
-
-                        <!-- Round 2 Bid History -->
-                        <% if (bid.round2Bid) { %>
-                            <div class="bg-white shadow rounded-lg p-6">
-                                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                                    <i class="fas fa-history text-purple-500 mr-2"></i>
-                                    Round 2 Bid History
-                                </h2>
-                                <div class="space-y-4">
-                                    <div class="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
-                                        <div>
-                                            <p class="font-semibold text-purple-800">Current Round 2 Bid</p>
-                                            <p class="text-sm text-purple-600">$<%=
-                                                    bid.round2Bid.amount.toLocaleString() %>
-                                            </p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm text-gray-500">Submitted</p>
-                                            <p class="text-xs text-gray-400">
-                                                <%= moment(bid.round2Bid.submittedAt).format('MMM D, YYYY h:mm A') %>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <% if (bid.round2Bid.revisionCount> 0) { %>
-                                        <p class="text-sm text-gray-600 text-center">
-                                            <i class="fas fa-sync-alt mr-1"></i>
-                                            Updated <%= bid.round2Bid.revisionCount %> time<%=
-                                                    bid.round2Bid.revisionCount !==1 ? 's' : '' %> in Round 2
-                                        </p>
-                                        <% } %>
-                                </div>
-                            </div>
-                            <% } %>
-                    </div>
-
-                    <!-- Right Column - Project & Process Information -->
-                    <div class="space-y-6">
-                        <!-- Project Information -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
-                            <div class="space-y-4 text-sm">
-                                <div class="flex items-center">
-                                    <i class="fas fa-tag mr-3 text-indigo-500"></i>
-                                    <div>
-                                        <p class="text-gray-500">Category</p>
-                                        <p class="font-medium capitalize">
-                                            <%= project.category.replace('-', ' ' ) %>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-map-marker-alt mr-3 text-red-500"></i>
-                                    <div>
-                                        <p class="text-gray-500">Location</p>
-                                        <p class="font-medium">
-                                            <%= project.location.city %>, <%= project.location.state %>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-dollar-sign mr-3 text-green-500"></i>
-                                    <div>
-                                        <p class="text-gray-500">Starting Bid</p>
-                                        <p class="font-medium">$<%= project.bidSettings.startingBid %>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-clock mr-3 text-orange-500"></i>
-                                    <div>
-                                        <p class="text-gray-500">Round 1 Deadline</p>
-                                        <p class="font-medium">
-                                            <%= moment(project.biddingRounds.round1.endDate).format('MMM D, YYYY h:mm
-                                                A') %>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bidding Process Flow -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Bidding Process Flow</h3>
-                            <div class="space-y-4 text-sm text-gray-600">
-                                <div class="flex items-start">
-                                    <div
-                                        class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                                        1</div>
-                                    <div>
-                                        <strong>Round 1:</strong> Submit bid with agreements. Top 3 lowest bidders
-                                        selected automatically.
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div
-                                        class="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                                        2</div>
-                                    <div>
-                                        <strong>Customer Review:</strong> Customer reviews top 3 bids and can mark as
-                                        defected with remarks.
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div
-                                        class="bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                                        3</div>
-                                    <div>
-                                        <strong>Defect Resolution:</strong> Defected bids have 24 hours to resubmit with
-                                        corrections.
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div
-                                        class="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                                        4</div>
-                                    <div>
-                                        <strong>Round 2:</strong> Customer selects 3 bids for final 24-hour round where
-                                        bids can be updated.
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div
-                                        class="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                                        5</div>
-                                    <div>
-                                        <strong>Winner Selection:</strong> Lowest bidder in Round 2 wins the project.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Customer Information -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
-                            <div class="space-y-3 text-sm">
-                                <div class="flex items-center">
-                                    <i class="fas fa-user mr-3 text-blue-500"></i>
-                                    <div>
-                                        <p class="font-medium">
-                                            <%= project.customer.name %>
-                                        </p>
-                                        <p class="text-gray-600">
-                                            <%= project.customer.email %>
-                                        </p>
-                                    </div>
-                                </div>
-                                <% if (project.customer.companyName) { %>
-                                    <div class="flex items-center">
-                                        <i class="fas fa-building mr-3 text-gray-500"></i>
-                                        <span>
-                                            <%= project.customer.companyName %>
-                                        </span>
-                                    </div>
-                                    <% } %>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-phone mr-3 text-green-500"></i>
-                                            <span>
-                                                <%= project.contact.phone %>
-                                            </span>
-                                        </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-                            <div class="space-y-3">
-                                <a href="/seller/my-bids"
-                                    class="w-full bg-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-400 transition duration-300 flex items-center justify-center">
-                                    <i class="fas fa-arrow-left mr-2"></i>
-                                    Back to My Bids
-                                </a>
-
-                                <% if (bid.status==='defected' && bid.resubmissionDeadline && new
-                                    Date(bid.resubmissionDeadline)> new Date()) { %>
-                                    <a href="/seller/bid/<%= bid._id %>/defected-resubmission"
-                                        class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition duration-300 flex items-center justify-center">
-                                        <i class="fas fa-paper-plane mr-2"></i>
-                                        Resubmit Bid Form
-                                    </a>
-                                    <% } %>
-
-                                        <% if (bid.status==='selected-round2' &&
-                                            project.biddingRounds.round2.status==='active' && new
-                                            Date(project.biddingRounds.round2.endDate)> new Date()) { %>
-                                            <a href="/seller/project/<%= project._id %>/round2-bidding"
-                                                class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition duration-300 flex items-center justify-center">
-                                                <i class="fas fa-edit mr-2"></i>
-                                                Update Round 2 Bid
-                                            </a>
-                                            <% } %>
-
-                                                <% if (bid.status==='submitted' &&
-                                                    project.biddingRounds.round1.status==='active' ) { %>
-                                                    <a href="/seller/project/<%= project._id %>/bid"
-                                                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center">
-                                                        <i class="fas fa-edit mr-2"></i>
-                                                        Edit Round 1 Bid
-                                                    </a>
-                                                    <% } %>
-                            </div>
-                        </div>
-
-                        <!-- Current Status Timeline -->
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Status</h3>
-                            <div class="space-y-3 text-sm">
-                                <% const statusSteps=[ { status: 'submitted' , label: 'Round 1 Submitted' ,
-                                    icon: 'paper-plane' , color: 'blue' }, { status: 'selected-round1' ,
-                                    label: 'Top 3 Selected' , icon: 'trophy' , color: 'orange' }, { status: 'defected' ,
-                                    label: 'Defected - Resubmit' , icon: 'exclamation-triangle' , color: 'red' }, {
-                                    status: 'waiting' , label: 'Waiting Queue' , icon: 'clock' , color: 'blue' }, {
-                                    status: 'selected-round2' , label: 'Round 2 Selected' , icon: 'flag-checkered' ,
-                                    color: 'purple' }, { status: 'won' , label: 'Project Won' , icon: 'crown' ,
-                                    color: 'green' }, { status: 'lost' , label: 'Not Selected' , icon: 'times-circle' ,
-                                    color: 'red' } ]; %>
-
-                                    <% statusSteps.forEach(step=> { %>
-                                        <div
-                                            class="flex items-center <%= step.status === bid.status ? 'font-bold' : 'opacity-50' %>">
-                                            <div class="w-6 h-6 rounded-full 
+                        <% statusSteps.forEach(step => { %>
+                            <div class="flex items-center <%= step.status === bid.status ? 'font-bold' : 'opacity-50' %>">
+                                <div class="w-6 h-6 rounded-full 
                                     <%= step.status === bid.status ? 
                                         `bg-${step.color}-500 text-white` : 
                                         'bg-gray-200 text-gray-400' %> 
                                     flex items-center justify-center mr-3 text-xs">
-                                                <i class="fas fa-<%= step.icon %>"></i>
-                                            </div>
-                                            <span
-                                                class="<%= step.status === bid.status ? `text-${step.color}-600` : 'text-gray-500' %>">
-                                                <%= step.label %>
-                                            </span>
-                                        </div>
-                                        <% }) %>
+                                    <i class="fas fa-<%= step.icon %>"></i>
+                                </div>
+                                <span class="<%= step.status === bid.status ? `text-${step.color}-600` : 'text-gray-500' %>">
+                                    <%= step.label %>
+                                </span>
                             </div>
-                        </div>
+                        <% }); %>
                     </div>
                 </div>
+            </div>
         </div>
+    </div>
 
-        <script>
-            // Update countdown timers
-            function updateCountdowns() {
-                // Defect countdown
-                const defectCountdown = document.getElementById('defect-countdown');
-                if (defectCountdown) {
-                    const deadline = new Date('<%= bid.resubmissionDeadline %>');
-                    const now = new Date();
-                    const timeLeft = deadline - now;
+    <script>
+        // Update countdown timers
+        function updateCountdowns() {
+            // Defect countdown
+            const defectCountdown = document.getElementById('defect-countdown');
+            if (defectCountdown) {
+                const deadline = new Date('<%= bid.resubmissionDeadline %>');
+                const now = new Date();
+                const timeLeft = deadline - now;
 
-                    if (timeLeft <= 0) {
-                        defectCountdown.innerHTML = '<i class="fas fa-clock mr-1"></i><span class="font-mono">Time Expired</span>';
-                        defectCountdown.classList.remove('bg-yellow-100', 'text-yellow-800');
-                        defectCountdown.classList.add('bg-red-100', 'text-red-800');
-                    } else {
-                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                        const countdownSpan = defectCountdown.querySelector('span');
-                        if (countdownSpan) {
-                            countdownSpan.textContent = `${hours}h ${minutes}m`;
-                        }
-                    }
-                }
-
-                // Round 2 countdown
-                const round2Countdown = document.getElementById('round2-countdown');
-                if (round2Countdown) {
-                    const deadline = new Date('<%= project.biddingRounds.round2.endDate %>');
-                    const now = new Date();
-                    const timeLeft = deadline - now;
-
-                    if (timeLeft <= 0) {
-                        round2Countdown.innerHTML = '<i class="fas fa-clock mr-1"></i><span class="font-mono">Round Ended</span>';
-                        round2Countdown.classList.remove('bg-green-100', 'text-green-800');
-                        round2Countdown.classList.add('bg-red-100', 'text-red-800');
-                    } else {
-                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                        const countdownSpan = round2Countdown.querySelector('span');
-                        if (countdownSpan) {
-                            countdownSpan.textContent = `${hours}h ${minutes}m`;
-                        }
+                if (timeLeft <= 0) {
+                    defectCountdown.innerHTML = '<i class="fas fa-clock mr-1"></i><span class="font-mono">Time Expired</span>';
+                    defectCountdown.classList.remove('bg-yellow-100', 'text-yellow-800');
+                    defectCountdown.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const countdownSpan = defectCountdown.querySelector('span');
+                    if (countdownSpan) {
+                        countdownSpan.textContent = `${hours}h ${minutes}m`;
                     }
                 }
             }
 
-            // Update last updated timestamp
-            function updateLastUpdated() {
-                const lastUpdated = document.getElementById('last-updated');
-                if (lastUpdated) {
-                    lastUpdated.textContent = 'Updated ' + moment().fromNow();
+            // Round 2 countdown
+            const round2Countdown = document.getElementById('round2-countdown');
+            if (round2Countdown) {
+                const deadline = new Date('<%= project.biddingRounds && project.biddingRounds.round2 ? project.biddingRounds.round2.endDate : "" %>');
+                const now = new Date();
+                const timeLeft = deadline - now;
+
+                if (timeLeft <= 0) {
+                    round2Countdown.innerHTML = '<i class="fas fa-clock mr-1"></i><span class="font-mono">Round Ended</span>';
+                    round2Countdown.classList.remove('bg-green-100', 'text-green-800');
+                    round2Countdown.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const countdownSpan = round2Countdown.querySelector('span');
+                    if (countdownSpan) {
+                        countdownSpan.textContent = `${hours}h ${minutes}m`;
+                    }
                 }
             }
+        }
 
-            // Auto-refresh for real-time status updates
-            function shouldAutoRefresh() {
-                const bidStatus = '<%= bid.status %>';
-                const needsRefresh = bidStatus === 'defected' ||
-                    bidStatus === 'selected-round1' ||
-                    bidStatus === 'selected-round2' ||
-                    bidStatus === 'waiting' ||
-                    bidStatus === 'submitted';
-
-                return needsRefresh;
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            const lastUpdated = document.getElementById('last-updated');
+            if (lastUpdated) {
+                lastUpdated.textContent = 'Updated ' + moment().fromNow();
             }
+        }
 
-            // Initialize
-            document.addEventListener('DOMContentLoaded', function () {
-                // Update countdown timers
-                updateCountdowns();
-                setInterval(updateCountdowns, 60000); // Update every minute
+        // Auto-refresh for real-time status updates and contract process
+        function shouldAutoRefresh() {
+            const bidStatus = '<%= bid.status %>';
+            const contractStatus = '<%= bid.contract ? bid.contract.status : "" %>';
+            const projectStatus = '<%= project.status %>';
+            
+            // Refresh for bidding status updates
+            const needsBidRefresh = bidStatus === 'defected' ||
+                bidStatus === 'selected-round1' ||
+                bidStatus === 'selected-round2' ||
+                bidStatus === 'waiting' ||
+                bidStatus === 'submitted';
 
-                // Update last updated timestamp
-                updateLastUpdated();
-                setInterval(updateLastUpdated, 60000);
+            // Refresh for contract process updates
+            const needsContractRefresh = (bidStatus === 'won' && 
+                (contractStatus === 'pending-customer' || 
+                 contractStatus === 'pending-seller' ||
+                 !contractStatus && projectStatus === 'awarded'));
 
-                // Auto-refresh for real-time updates
-                if (shouldAutoRefresh()) {
-                    setInterval(() => {
-                        console.log('Auto-refreshing for real-time bid status updates...');
-                        location.reload();
-                    }, 30000); // Refresh every 30 seconds
+            return needsBidRefresh || needsContractRefresh;
+        }
+
+        // Enhanced file upload validation
+        function setupFileValidation() {
+            const contractForms = document.querySelectorAll('form[action="/seller/upload-contract"]');
+            
+            contractForms.forEach(form => {
+                const fileInput = form.querySelector('input[type="file"]');
+                const submitButton = form.querySelector('button[type="submit"]');
+                
+                if (fileInput && submitButton) {
+                    fileInput.addEventListener('change', function() {
+                        const file = this.files[0];
+                        if (file) {
+                            // Validate file size (10MB limit)
+                            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                            if (file.size > maxSize) {
+                                alert('File size must be less than 10MB');
+                                this.value = '';
+                                submitButton.disabled = true;
+                                return;
+                            }
+                            
+                            // Validate file type
+                            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+                            if (!allowedTypes.includes(file.type)) {
+                                alert('Please select a valid file type (PDF, DOC, DOCX, JPG, JPEG, PNG)');
+                                this.value = '';
+                                submitButton.disabled = true;
+                                return;
+                            }
+                            
+                            submitButton.disabled = false;
+                        }
+                    });
                 }
             });
-        </script>
+        }
 
-        <%- include('../partials/footer') %>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            // Update countdown timers
+            updateCountdowns();
+            setInterval(updateCountdowns, 60000); // Update every minute
+
+            // Update last updated timestamp
+            updateLastUpdated();
+            setInterval(updateLastUpdated, 60000);
+
+            // Setup file validation
+            setupFileValidation();
+
+            // Auto-refresh for real-time updates
+            if (shouldAutoRefresh()) {
+                setInterval(() => {
+                    console.log('Auto-refreshing for real-time bid and contract status updates...');
+                    location.reload();
+                }, 30000); // Refresh every 30 seconds
+            }
+        });
+    </script>
+
+    <%- include('../partials/footer') %>
 </body>
-
 </html>

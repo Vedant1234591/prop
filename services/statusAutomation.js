@@ -611,74 +611,143 @@ async processRound1Completion(results, now) {
     //     }
     // }
     // ==================== ROUND 2 COMPLETION ====================
-async processRound2Completion(results, now) {
-    try {
-        const round2Projects = await Project.find({
-            'biddingRounds.currentRound': 2,
-            'biddingRounds.round2.status': 'active',
-            'biddingRounds.round2.endDate': { $lte: now },
-            'biddingRounds.round2.winnerSelected': false
-        }).populate('customer');
+// async processRound2Completion(results, now) {
+//     try {
+//         const round2Projects = await Project.find({
+//             'biddingRounds.currentRound': 2,
+//             'biddingRounds.round2.status': 'active',
+//             'biddingRounds.round2.endDate': { $lte: now },
+//             'biddingRounds.round2.winnerSelected': false
+//         }).populate('customer');
 
-        console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
+//         console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
 
-        for (const project of round2Projects) {
-            try {
-                console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
+//         for (const project of round2Projects) {
+//             try {
+//                 console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
                 
-                // Use project method to complete Round 2 and select lowest bidder as winner
-                await project.completeRound2();
+//                 // Use project method to complete Round 2 and select lowest bidder as winner
+//                 await project.completeRound2();
                 
-                // Get updated project data
-                const updatedProject = await Project.findById(project._id);
+//                 // Get updated project data
+//                 const updatedProject = await Project.findById(project._id);
                 
-                console.log(`✅ Round 2 completed: ${project.title}, Status: ${updatedProject.status}`);
-                results.round2Completed++;
+//                 console.log(`✅ Round 2 completed: ${project.title}, Status: ${updatedProject.status}`);
+//                 results.round2Completed++;
 
-                // Check if project was awarded and initialize contract
-                if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
-                    const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
+//                 // Check if project was awarded and initialize contract
+//                 if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
+//                     const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
                     
-                    if (winningBid) {
-                        console.log(`📝 Initializing contract for winning bid: ${winningBid._id}`);
+//                     if (winningBid) {
+//                         console.log(`📝 Initializing contract for winning bid: ${winningBid._id}`);
                         
-                        // Initialize contract for winner
-                        await this.initializeContractForWinner(updatedProject, winningBid, results);
+//                         // Initialize contract for winner
+//                         await this.initializeContractForWinner(updatedProject, winningBid, results);
 
-                        // Notify winner
-                        await this.createNotice(
-                            `You Won! - ${updatedProject.title}`,
-                            `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
-                            'seller',
-                            'success',
-                            winningBid.seller._id
-                        );
+//                         // Notify winner
+//                         await this.createNotice(
+//                             `You Won! - ${updatedProject.title}`,
+//                             `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
+//                             'seller',
+//                             'success',
+//                             winningBid.seller._id
+//                         );
 
-                        // Notify customer
-                        await this.createNotice(
-                            `Winner Selected - ${updatedProject.title}`,
-                            `A winner has been automatically selected for your project. Please download the contract template, sign it, and upload the signed contract to proceed.`,
-                            'customer',
-                            'success',
-                            updatedProject.customer._id
-                        );
+//                         // Notify customer
+//                         await this.createNotice(
+//                             `Winner Selected - ${updatedProject.title}`,
+//                             `A winner has been automatically selected for your project. Please download the contract template, sign it, and upload the signed contract to proceed.`,
+//                             'customer',
+//                             'success',
+//                             updatedProject.customer._id
+//                         );
 
-                        console.log(`✅ Contract process started for project ${updatedProject._id}`);
-                    }
-                } else {
-                    console.log(`❌ Project not awarded after Round 2: ${updatedProject.title}, Status: ${updatedProject.status}`);
-                }
+//                         console.log(`✅ Contract process started for project ${updatedProject._id}`);
+//                     }
+//                 } else {
+//                     console.log(`❌ Project not awarded after Round 2: ${updatedProject.title}, Status: ${updatedProject.status}`);
+//                 }
 
-            } catch (error) {
-                console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
-                results.validationErrors++;
+//             } catch (error) {
+//                 console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
+//                 results.validationErrors++;
+//             }
+//         }
+//     } catch (error) {
+//         console.error('❌ Round 2 completion error:', error);
+//     }
+// }
+// ==================== ROUND 2 COMPLETION ====================
+// ==================== ROUND 2 COMPLETION ====================
+async processRound2Completion(results, now) {
+  try {
+    const round2Projects = await Project.find({
+      'biddingRounds.currentRound': 2,
+      'biddingRounds.round2.status': 'active',
+      'biddingRounds.round2.endDate': { $lte: now },
+      'biddingRounds.round2.winnerSelected': false
+    })
+    .populate('customer')
+    .populate('biddingRounds.round2.selectedBids');
+
+    console.log(`🏆 Processing ${round2Projects.length} Round 2 projects for winner selection`);
+
+    for (const project of round2Projects) {
+      try {
+        console.log(`🔄 Auto-completing Round 2 for: ${project.title}`);
+        console.log(`⏰ Round 2 end date: ${project.biddingRounds.round2.endDate}, Now: ${now}`);
+        
+        // Use project method to complete Round 2 and select lowest bidder as winner
+        // This will automatically initialize the contract
+        await project.completeRound2();
+        
+        // Get updated project data
+        const updatedProject = await Project.findById(project._id);
+        
+        console.log(`✅ Round 2 completed: ${project.title}, Status: ${updatedProject.status}`);
+        results.round2Completed++;
+
+        // Check if project was awarded
+        if (updatedProject.status === 'awarded') {
+          console.log(`🎉 Project awarded: ${updatedProject.title}`);
+          
+          // Check if contract was created
+          const contract = await Contract.findOne({
+            project: updatedProject._id,
+            bid: updatedProject.selectedBid
+          });
+          
+          if (contract) {
+            console.log(`✅ Contract found: ${contract._id} with status: ${contract.status}`);
+          } else {
+            console.log(`❌ No contract found for awarded project ${updatedProject._id}`);
+            // Try to initialize contract again
+            try {
+              const winningBid = await Bid.findById(updatedProject.selectedBid).populate('seller');
+              if (winningBid) {
+                await updatedProject.initializeContractForWinner(winningBid, updatedProject.finalWinner.winningAmount);
+                console.log(`✅ Contract initialized on second attempt for project ${updatedProject._id}`);
+              }
+            } catch (retryError) {
+              console.error(`❌ Second contract initialization attempt failed: ${retryError.message}`);
             }
+          }
+        } else {
+          console.log(`❌ Project not awarded after Round 2: ${updatedProject.title}, Status: ${updatedProject.status}`);
         }
-    } catch (error) {
-        console.error('❌ Round 2 completion error:', error);
-    }
-}
 
+      } catch (error) {
+        console.error(`❌ Error auto-completing Round 2 for ${project.title}:`, error.message);
+        console.error(error.stack);
+        results.validationErrors++;
+      }
+    }
+  } catch (error) {
+    console.error('❌ Round 2 completion error:', error);
+    console.error(error.stack);
+  }
+}
     // ==================== EXPIRED SELECTION PHASE ====================
     async processExpiredSelectionPhase(results, now) {
         try {
@@ -796,232 +865,509 @@ async processRound2Completion(results, now) {
 
 
 
-    // ==================== CONTRACT MANAGEMENT ====================
-    async manageContracts(results, now) {
-        try {
-            const contracts = await Contract.find({
-                status: { $in: ['pending-customer', 'pending-seller', 'pending-admin', 'correcting'] }
-            }).populate('project').populate('seller').populate('customer').populate('bid');
+// ==================== CONTRACT MANAGEMENT ====================
+async manageContracts(results, now) {
+  try {
+    const contracts = await Contract.find({
+      status: { $in: ['pending-customer', 'pending-seller', 'pending-admin', 'correcting'] }
+    })
+    .populate('project')
+    .populate('seller') 
+    .populate('customer')
+    .populate('bid');
 
-            console.log(`📄 Managing ${contracts.length} contracts`);
+    console.log(`📄 Managing ${contracts.length} contracts`);
 
-            for (const contract of contracts) {
-                try {
-                    switch (contract.status) {
-                        case 'pending-customer':
-                            if (contract.customerSignedContract && contract.customerSignedContract.url) {
-                                await contract.completeCustomerStep();
-                                console.log(`✅ Contract moved to pending-seller: ${contract.project.title}`);
-                            }
-                            break;
-
-                        case 'pending-seller':
-                            if (contract.sellerSignedContract && contract.sellerSignedContract.url) {
-                                await contract.completeSellerStep();
-                                console.log(`✅ Contract moved to pending-admin: ${contract.project.title}`);
-                            }
-                            break;
-
-                        case 'correcting':
-                            await this.handleContractCorrection(contract, results, now);
-                            break;
-
-                        case 'pending-admin':
-                            // Wait for manual admin approval
-                            console.log(`⏳ Contract waiting admin approval: ${contract.project.title}`);
-                            break;
-                    }
-                } catch (error) {
-                    console.error(`❌ Error managing contract ${contract._id}:`, error.message);
-                    results.validationErrors++;
-                }
+    for (const contract of contracts) {
+      try {
+        switch (contract.status) {
+          case 'pending-customer':
+            if (contract.customerSignedContract && contract.customerSignedContract.url) {
+              await contract.completeCustomerStep();
+              console.log(`✅ Contract moved to pending-seller: ${contract.project?.title || 'Unknown Project'}`);
             }
+            break;
 
-            // Handle expired corrections
-            await this.handleExpiredCorrections(results, now);
-
-        } catch (error) {
-            console.error('❌ Contract management error:', error);
-        }
-    }
-
-    async handleContractCorrection(contract, results, now) {
-        try {
-            if (contract.isRejectionExpired && contract.isRejectionExpired()) {
-                await this.cancelExpiredContract(contract, results);
+          case 'pending-seller':
+            if (contract.sellerSignedContract && contract.sellerSignedContract.url) {
+              await contract.completeSellerStep();
+              console.log(`✅ Contract moved to pending-admin: ${contract.project?.title || 'Unknown Project'}`);
             }
-        } catch (error) {
-            console.error(`❌ Contract correction error for ${contract._id}:`, error.message);
-            results.validationErrors++;
+            break;
+
+          case 'correcting':
+            await this.handleContractCorrection(contract, results, now);
+            break;
+
+          case 'pending-admin':
+            // Wait for manual admin approval
+            console.log(`⏳ Contract waiting admin approval: ${contract.project?.title || 'Unknown Project'}`);
+            break;
         }
+      } catch (error) {
+        console.error(`❌ Error managing contract ${contract._id}:`, error.message);
+        results.validationErrors++;
+      }
     }
 
-    async handleExpiredCorrections(results, now) {
-        try {
-            const expiredContracts = await Contract.find({
-                status: 'correcting',
-                'currentRejection.deadline': { $lte: now }
-            }).populate('project').populate('customer').populate('seller');
+    // Handle expired corrections
+    await this.handleExpiredCorrections(results, now);
 
-            for (const contract of expiredContracts) {
-                await this.cancelExpiredContract(contract, results);
-            }
-        } catch (error) {
-            console.error('❌ Expired corrections error:', error);
-        }
+  } catch (error) {
+    console.error('❌ Contract management error:', error);
+  }
+}
+
+async handleContractCorrection(contract, results, now) {
+  try {
+    if (contract.isRejectionExpired && contract.isRejectionExpired()) {
+      console.log(`⏰ Contract correction expired: ${contract._id}`);
+      await this.cancelExpiredContract(contract, results);
+    } else {
+      console.log(`⏳ Contract still in correction period: ${contract._id}`);
+    }
+  } catch (error) {
+    console.error(`❌ Contract correction error for ${contract._id}:`, error.message);
+    results.validationErrors++;
+  }
+}
+
+    // async handleContractCorrection(contract, results, now) {
+    //     try {
+    //         if (contract.isRejectionExpired && contract.isRejectionExpired()) {
+    //             await this.cancelExpiredContract(contract, results);
+    //         }
+    //     } catch (error) {
+    //         console.error(`❌ Contract correction error for ${contract._id}:`, error.message);
+    //         results.validationErrors++;
+    //     }
+    // }
+
+   async handleExpiredCorrections(results, now) {
+  try {
+    const expiredContracts = await Contract.find({
+      status: 'correcting',
+      'currentRejection.deadline': { $lte: now }
+    }).populate('project').populate('customer').populate('seller');
+
+    console.log(`⏰ Found ${expiredContracts.length} contracts with expired corrections`);
+
+    for (const contract of expiredContracts) {
+      try {
+        await this.cancelExpiredContract(contract, results);
+      } catch (error) {
+        console.error(`❌ Error handling expired correction for contract ${contract._id}:`, error.message);
+        results.validationErrors++;
+      }
+    }
+  } catch (error) {
+    console.error('❌ Expired corrections error:', error);
+  }
+}
+
+async cancelExpiredContract(contract, results) {
+  try {
+    console.log(`❌ Cancelling expired contract: ${contract._id}`);
+    
+    contract.status = 'cancelled';
+    // Use undefined instead of null to avoid validation errors
+    contract.currentRejection = undefined;
+    await contract.save();
+
+    // Mark bid as cancelled
+    if (contract.bid && contract.bid._id) {
+      await Bid.findByIdAndUpdate(contract.bid._id, {
+        status: 'cancelled',
+        selectionStatus: 'lost'
+      });
     }
 
-    async cancelExpiredContract(contract, results) {
-        try {
-            contract.status = 'rejected';
-            contract.currentRejection = null;
-            await contract.save();
-
-            // Mark bid as cancelled
-            await Bid.findByIdAndUpdate(contract.bid._id, {
-                status: 'cancelled',
-                selectionStatus: 'lost'
-            });
-
-            // Reset project status
-            await Project.findByIdAndUpdate(contract.project._id, {
-                selectedBid: null,
-                status: 'failed'
-            });
-
-            // Notify parties
-            await this.createNotice(
-                `Contract Cancelled - ${contract.project.title}`,
-                'Contract cancelled due to missed correction deadline.',
-                'customer',
-                'error',
-                contract.customer._id
-            );
-
-            await this.createNotice(
-                `Contract Cancelled - ${contract.project.title}`,
-                'Contract cancelled due to missed correction deadline.',
-                'seller',
-                'error',
-                contract.seller._id
-            );
-
-            console.log(`❌ Contract cancelled: ${contract._id}`);
-            results.contractsCancelled++;
-
-        } catch (error) {
-            console.error(`❌ Error cancelling contract ${contract._id}:`, error.message);
-            results.validationErrors++;
-        }
+    // Reset project status
+    if (contract.project && contract.project._id) {
+      await Project.findByIdAndUpdate(contract.project._id, {
+        selectedBid: null,
+        status: 'failed'
+      });
     }
 
+    // Notify parties
+    if (contract.customer) {
+      await this.createNotice(
+        `Contract Cancelled - ${contract.project?.title || 'Project'}`,
+        'Contract cancelled due to missed correction deadline.',
+        'customer',
+        'error',
+        contract.customer._id || contract.customer
+      );
+    }
+
+    if (contract.seller) {
+      await this.createNotice(
+        `Contract Cancelled - ${contract.project?.title || 'Project'}`,
+        'Contract cancelled due to missed correction deadline.',
+        'seller',
+        'error',
+        contract.seller._id || contract.seller
+      );
+    }
+
+    console.log(`✅ Contract cancelled: ${contract._id}`);
+    results.contractsCancelled++;
+
+  } catch (error) {
+    console.error(`❌ Error cancelling contract ${contract._id}:`, error.message);
+    results.validationErrors++;
+  }
+}
     // ==================== CONTRACT INITIALIZATION ====================
-    async initializeContractForWinner(project, winningBid, results) {
-        try {
-            console.log('📝 Initializing contract for winning bid...');
-            
-            // Check if contract already exists
-            const existingContract = await Contract.findOne({ bid: winningBid._id });
-            if (existingContract) {
-                console.log('⏭️ Contract already exists');
-                return existingContract;
-            }
+// ==================== CONTRACT INITIALIZATION ====================
+// async initializeContractForWinner(project, winningBid, results) {
+//   try {
+//     console.log('📝 Initializing contract for winning bid...');
+    
+//     // Check if contract already exists
+//     const existingContract = await Contract.findOne({ 
+//       project: project._id,
+//       bid: winningBid._id 
+//     });
+    
+//     if (existingContract) {
+//       console.log('⏭️ Contract already exists:', existingContract._id);
+//       return existingContract;
+//     }
 
-            // Get customer and seller details
-            const customer = await User.findById(project.customer);
-            const seller = await User.findById(winningBid.seller);
+//     // Get customer and seller details
+//     const customer = await User.findById(project.customer);
+//     const seller = await User.findById(winningBid.seller);
 
-            if (!customer || !seller) {
-                throw new Error('Customer or seller not found');
-            }
+//     if (!customer) {
+//       throw new Error('Customer not found for project: ' + project._id);
+//     }
+    
+//     if (!seller) {
+//       throw new Error('Seller not found for bid: ' + winningBid._id);
+//     }
 
-            console.log('🔄 Generating contract templates...');
-            
-            // Generate contract templates
-            const customerTemplate = await PDFGenerator.generateContract('customer', winningBid, project, customer, seller);
-            const sellerTemplate = await PDFGenerator.generateContract('seller', winningBid, project, customer, seller);
+//     console.log('🔄 Generating contract templates...');
+    
+//     try {
+//       // Generate contract templates
+//       const customerTemplate = await PDFGenerator.generateContract('customer', winningBid, project, customer, seller);
+//       const sellerTemplate = await PDFGenerator.generateContract('seller', winningBid, project, customer, seller);
 
-            // Create contract record
-            const contract = new Contract({
-                bid: winningBid._id,
-                project: project._id,
-                customer: project.customer,
-                seller: winningBid.seller._id,
-                contractValue: winningBid.round2Bid?.amount || winningBid.amount,
-                status: 'pending-customer',
-                currentStep: 1,
-                autoGenerated: true,
-                
-                // Store templates
-                customerTemplate: {
-                    public_id: customerTemplate.public_id,
-                    url: customerTemplate.secure_url,
-                    filename: `customer_contract_${winningBid._id}.pdf`,
-                    bytes: customerTemplate.bytes,
-                    generatedAt: new Date()
-                },
-                sellerTemplate: {
-                    public_id: sellerTemplate.public_id,
-                    url: sellerTemplate.secure_url,
-                    filename: `seller_contract_${winningBid._id}.pdf`,
-                    bytes: sellerTemplate.bytes,
-                    generatedAt: new Date()
-                },
-                
-                // Contract terms
-                terms: new Map([
-                    ['projectTitle', project.title],
-                    ['projectDescription', project.description],
-                    ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
-                    ['startDate', project.timeline.startDate.toISOString()],
-                    ['endDate', project.timeline.endDate.toISOString()],
-                    ['category', project.category],
-                    ['customerName', customer.name],
-                    ['sellerName', seller.companyName || seller.name],
-                    ['customerEmail', customer.email],
-                    ['sellerEmail', seller.email]
-                ]),
-                
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
+//       // Create contract record
+//       const contract = new Contract({
+//         bid: winningBid._id,
+//         project: project._id,
+//         customer: project.customer,
+//         seller: winningBid.seller._id,
+//         contractValue: winningBid.round2Bid?.amount || winningBid.amount,
+//         status: 'pending-customer',
+//         currentStep: 1,
+//         autoGenerated: true,
+        
+//         // Store templates
+//         customerTemplate: {
+//           public_id: customerTemplate.public_id,
+//           url: customerTemplate.secure_url,
+//           filename: `customer_contract_${winningBid._id}.pdf`,
+//           bytes: customerTemplate.bytes,
+//           generatedAt: new Date()
+//         },
+//         sellerTemplate: {
+//           public_id: sellerTemplate.public_id,
+//           url: sellerTemplate.secure_url,
+//           filename: `seller_contract_${winningBid._id}.pdf`,
+//           bytes: sellerTemplate.bytes,
+//           generatedAt: new Date()
+//         },
+        
+//         // Contract terms
+//         terms: new Map([
+//           ['projectTitle', project.title],
+//           ['projectDescription', project.description],
+//           ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
+//           ['startDate', project.timeline.startDate.toISOString()],
+//           ['endDate', project.timeline.endDate.toISOString()],
+//           ['category', project.category],
+//           ['customerName', customer.name],
+//           ['sellerName', seller.companyName || seller.name],
+//           ['customerEmail', customer.email],
+//           ['sellerEmail', seller.email]
+//         ]),
+        
+//         createdAt: new Date(),
+//         updatedAt: new Date()
+//       });
 
-            await contract.save();
-            console.log(`✅ Contract initialized: ${contract._id}`);
-            results.contractsCreated++;
+//       await contract.save();
+//       console.log(`✅ Contract initialized: ${contract._id} for project ${project._id}`);
+      
+//       if (results) {
+//         results.contractsCreated++;
+//       }
 
-            // Create notifications
-            await this.createNotice(
-                `Contract Ready - ${project.title}`,
-                `Your bid won! Wait for customer to upload signed contract first.`,
-                'seller',
-                'success',
-                winningBid.seller._id
-            );
+//       // Create notifications
+//       await this.createNotice(
+//         `Contract Ready - ${project.title}`,
+//         `Your bid won! Wait for customer to upload signed contract first.`,
+//         'seller',
+//         'success',
+//         winningBid.seller._id
+//       );
 
-            await this.createNotice(
-                `Contract Ready - ${project.title}`,
-                `Winner selected! Download contract template, sign and upload to proceed.`,
-                'customer',
-                'info',
-                project.customer._id
-            );
+//       await this.createNotice(
+//         `Contract Ready - ${project.title}`,
+//         `Winner selected! Download contract template, sign and upload to proceed.`,
+//         'customer',
+//         'info',
+//         project.customer._id
+//       );
 
-            await this.createNotice(
-                `New Contract - ${project.title}`,
-                `New contract created and waiting for customer upload.`,
-                'admin',
-                'info'
-            );
+//       await this.createNotice(
+//         `New Contract - ${project.title}`,
+//         `New contract created and waiting for customer upload.`,
+//         'admin',
+//         'info'
+//       );
 
-            return contract;
+//       return contract;
 
-        } catch (error) {
-            console.error('❌ Contract initialization error:', error);
-            throw error;
-        }
+//     } catch (pdfError) {
+//       console.error('❌ PDF generation error, creating contract without templates:', pdfError);
+      
+//       // Create contract even if PDF generation fails
+//       const contract = new Contract({
+//         bid: winningBid._id,
+//         project: project._id,
+//         customer: project.customer,
+//         seller: winningBid.seller._id,
+//         contractValue: winningBid.round2Bid?.amount || winningBid.amount,
+//         status: 'pending-customer',
+//         currentStep: 1,
+//         autoGenerated: true,
+        
+//         // Contract terms
+//         terms: new Map([
+//           ['projectTitle', project.title],
+//           ['projectDescription', project.description],
+//           ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
+//           ['startDate', project.timeline.startDate.toISOString()],
+//           ['endDate', project.timeline.endDate.toISOString()],
+//           ['category', project.category],
+//           ['customerName', customer.name],
+//           ['sellerName', seller.companyName || seller.name],
+//           ['customerEmail', customer.email],
+//           ['sellerEmail', seller.email]
+//         ]),
+        
+//         createdAt: new Date(),
+//         updatedAt: new Date()
+//       });
+
+//       await contract.save();
+//       console.log(`✅ Contract initialized (without templates): ${contract._id}`);
+      
+//       if (results) {
+//         results.contractsCreated++;
+//       }
+
+//       return contract;
+//     }
+
+//   } catch (error) {
+//     console.error('❌ Contract initialization error:', error);
+    
+//     // Even if contract creation fails, don't break the whole process
+//     console.log('⚠️ Continuing without contract initialization');
+//     return null;
+//   }
+// }
+async initializeContractForWinner(project, winningBid, results) {
+  try {
+    console.log('📝 Initializing contract for winning bid...', {
+      projectId: project._id,
+      bidId: winningBid._id,
+      projectTitle: project.title
+    });
+    
+    // Check if contract already exists
+    const existingContract = await Contract.findOne({ 
+      project: project._id,
+      bid: winningBid._id 
+    });
+    
+    if (existingContract) {
+      console.log('⏭️ Contract already exists:', existingContract._id);
+      return existingContract;
     }
 
+    // Get customer and seller details
+    const customer = await User.findById(project.customer);
+    const seller = await User.findById(winningBid.seller);
+
+    if (!customer) {
+      throw new Error('Customer not found for project: ' + project._id);
+    }
+    
+    if (!seller) {
+      throw new Error('Seller not found for bid: ' + winningBid._id);
+    }
+
+    console.log('🔄 Generating contract templates...', {
+      customer: customer.name,
+      seller: seller.companyName || seller.name
+    });
+    
+    try {
+      // Generate contract templates with detailed logging
+      console.log('📄 Starting customer template generation...');
+      const customerTemplate = await PDFGenerator.generateContract('customer', winningBid, project, customer, seller);
+      console.log('✅ Customer template generated successfully:', {
+        public_id: customerTemplate.public_id,
+        url: customerTemplate.secure_url,
+        bytes: customerTemplate.bytes
+      });
+      
+      console.log('📄 Starting seller template generation...');
+      const sellerTemplate = await PDFGenerator.generateContract('seller', winningBid, project, customer, seller);
+      console.log('✅ Seller template generated successfully:', {
+        public_id: sellerTemplate.public_id,
+        url: sellerTemplate.secure_url,
+        bytes: sellerTemplate.bytes
+      });
+
+      // Create contract record
+      const contract = new Contract({
+        bid: winningBid._id,
+        project: project._id,
+        customer: project.customer,
+        seller: winningBid.seller._id,
+        contractValue: winningBid.round2Bid?.amount || winningBid.amount,
+        status: 'pending-customer',
+        currentStep: 1,
+        autoGenerated: true,
+        
+        // Store templates
+        customerTemplate: {
+          public_id: customerTemplate.public_id,
+          url: customerTemplate.secure_url,
+          filename: `customer_contract_${winningBid._id}.pdf`,
+          bytes: customerTemplate.bytes,
+          generatedAt: new Date()
+        },
+        sellerTemplate: {
+          public_id: sellerTemplate.public_id,
+          url: sellerTemplate.secure_url,
+          filename: `seller_contract_${winningBid._id}.pdf`,
+          bytes: sellerTemplate.bytes,
+          generatedAt: new Date()
+        },
+        
+        // Contract terms
+        terms: new Map([
+          ['projectTitle', project.title],
+          ['projectDescription', project.description],
+          ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
+          ['startDate', project.timeline.startDate.toISOString()],
+          ['endDate', project.timeline.endDate.toISOString()],
+          ['category', project.category],
+          ['customerName', customer.name],
+          ['sellerName', seller.companyName || seller.name],
+          ['customerEmail', customer.email],
+          ['sellerEmail', seller.email]
+        ]),
+        
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await contract.save();
+      console.log(`✅ Contract initialized: ${contract._id} for project ${project._id}`);
+      
+      if (results) {
+        results.contractsCreated++;
+      }
+
+      // Create notifications
+      await this.createNotice(
+        `Contract Ready - ${project.title}`,
+        `Your bid won! Wait for customer to upload signed contract first.`,
+        'seller',
+        'success',
+        winningBid.seller._id
+      );
+
+      await this.createNotice(
+        `Contract Ready - ${project.title}`,
+        `Winner selected! Download contract template, sign and upload to proceed.`,
+        'customer',
+        'info',
+        project.customer._id
+      );
+
+      await this.createNotice(
+        `New Contract - ${project.title}`,
+        `New contract created and waiting for customer upload.`,
+        'admin',
+        'info'
+      );
+
+      console.log(`📢 All notifications sent for contract ${contract._id}`);
+      return contract;
+
+    } catch (pdfError) {
+      console.error('❌ PDF generation error:', pdfError);
+      console.log('🔄 Creating contract without templates...');
+      
+      // Create contract even if PDF generation fails
+      const contract = new Contract({
+        bid: winningBid._id,
+        project: project._id,
+        customer: project.customer,
+        seller: winningBid.seller._id,
+        contractValue: winningBid.round2Bid?.amount || winningBid.amount,
+        status: 'pending-customer',
+        currentStep: 1,
+        autoGenerated: true,
+        
+        // Contract terms
+        terms: new Map([
+          ['projectTitle', project.title],
+          ['projectDescription', project.description],
+          ['contractValue', (winningBid.round2Bid?.amount || winningBid.amount).toString()],
+          ['startDate', project.timeline.startDate.toISOString()],
+          ['endDate', project.timeline.endDate.toISOString()],
+          ['category', project.category],
+          ['customerName', customer.name],
+          ['sellerName', seller.companyName || seller.name],
+          ['customerEmail', customer.email],
+          ['sellerEmail', seller.email]
+        ]),
+        
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await contract.save();
+      console.log(`✅ Contract initialized (without templates): ${contract._id}`);
+      
+      if (results) {
+        results.contractsCreated++;
+      }
+
+      return contract;
+    }
+
+  } catch (error) {
+    console.error('❌ Contract initialization error:', error);
+    console.error(error.stack);
+    
+    // Even if contract creation fails, don't break the whole process
+    console.log('⚠️ Continuing without contract initialization');
+    return null;
+  }
+}
     // ==================== PROJECT COMPLETION ====================
     async completeProjects(results, now) {
         try {

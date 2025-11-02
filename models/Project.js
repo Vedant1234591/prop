@@ -492,6 +492,16 @@ projectSchema.methods.promoteFromWaitingQueue = async function() {
   }
   
   return this.save();
+};// Add this method to handle automatic project processing
+projectSchema.statics.autoProcessProjects = async function() {
+  try {
+    console.log('🔄 Auto-processing projects...');
+    const statusAutomation = require('../services/statusAutomation');
+    return await statusAutomation.updateAllProjectStatuses();
+  } catch (error) {
+    console.error('❌ Auto-process projects error:', error);
+    throw error;
+  }
 };
 
 // Method to handle resubmission of defected bid
@@ -1029,13 +1039,603 @@ projectSchema.methods.selectTop3ForRound2 = async function (selectedBidIds) {
 //     throw error;
 //   }
 // };
+// projectSchema.methods.completeRound2 = async function() {
+//   const Bid = mongoose.model('Bid');
+  
+//   try {
+//     console.log(`🏆 Starting Round 2 completion for project: ${this._id}`);
+    
+//     // FIXED: Use the project's selectedBids from round2
+//     const round2Bids = await Bid.find({
+//       _id: { $in: this.biddingRounds.round2.selectedBids },
+//       $or: [
+//         { selectionStatus: 'selected-round2' },
+//         { status: 'selected' },
+//         { round: 2 }
+//       ]
+//     }).populate('seller');
+
+//     console.log(`📊 Found ${round2Bids.length} active Round 2 bids from selectedBids:`, 
+//       this.biddingRounds.round2.selectedBids);
+
+//     if (round2Bids.length === 0) {
+//       console.log(`❌ No active bids in Round 2 - marking project as failed`);
+//       this.status = 'failed';
+//       this.biddingRounds.round2.status = 'completed';
+//       this.biddingRounds.round2Completed = true;
+//       await this.save();
+//       throw new Error('No active bids found in Round 2');
+//     }
+    
+//     // Find the lowest bidder (WINNER SELECTION LOGIC)
+//     const bidsWithAmounts = round2Bids.map(bid => ({
+//       bid,
+//       amount: bid.round2Bid?.amount || bid.amount,
+//       finalAmount: bid.round2Bid?.amount // Prefer round2Bid amount if exists
+//     }));
+    
+//     // Sort by lowest amount
+//     bidsWithAmounts.sort((a, b) => a.amount - b.amount);
+//     const winningBid = bidsWithAmounts[0].bid;
+//     const winningAmount = bidsWithAmounts[0].finalAmount || bidsWithAmounts[0].amount;
+    
+//     console.log(`🎉 Winner selected: ${winningBid._id} with amount $${winningAmount}`);
+    
+//     // CRITICAL FIX: Ensure project status is set to 'awarded'
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     this.biddingRounds.round2.winnerSelected = true;
+//     this.biddingRounds.currentRound = 3;
+//     this.selectedBid = winningBid._id;
+//     this.status = 'awarded'; // ← THIS MUST BE 'awarded'
+//     this.biddingCompleted = true;
+//     this.winnerSelectedAt = new Date();
+    
+//     // Set final winner
+//     this.finalWinner = {
+//       bid: winningBid._id,
+//       seller: winningBid.seller._id,
+//       selectedAt: new Date(),
+//       winningAmount: winningAmount,
+//       round: 2
+//     };
+    
+//     // Update winning bid
+//     winningBid.selectionStatus = 'won';
+//     winningBid.status = 'won';
+//     winningBid.isActiveInRound = false;
+//     await winningBid.save();
+    
+//     // Mark other Round 2 bids as lost
+//     const otherBids = round2Bids.filter(bid => bid._id.toString() !== winningBid._id.toString());
+//     console.log(`❌ Marking ${otherBids.length} other bids as lost`);
+    
+//     for (const bid of otherBids) {
+//       bid.selectionStatus = 'lost';
+//       bid.status = 'lost';
+//       bid.isActiveInRound = false;
+//       await bid.save();
+//     }
+    
+//     await this.save();
+//     console.log(`✅ Round 2 successfully completed for project ${this._id}, Status: ${this.status}`);
+    
+//     return this;
+    
+//   } catch (error) {
+//     console.error(`❌ Error in completeRound2 for project ${this._id}:`, error);
+    
+//     // Ensure project status is set properly even on error
+//     this.status = 'failed';
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     await this.save();
+    
+//     throw error;
+//   }
+// };
+// Method to complete Round 2 and select winner (lowest bidder) - ENHANCED VERSION
+// projectSchema.methods.completeRound2 = async function() {
+//   const Bid = mongoose.model('Bid');
+//   const Contract = mongoose.model('Contract');
+//   const statusAutomation = require('../services/statusAutomation');
+  
+//   try {
+//     console.log(`🏆 Starting Round 2 completion for project: ${this._id}`);
+    
+//     // Get all Round 2 bids with their final amounts
+//     const round2Bids = await Bid.find({
+//       _id: { $in: this.biddingRounds.round2.selectedBids },
+//       $or: [
+//         { selectionStatus: 'selected-round2' },
+//         { status: 'selected' },
+//         { round: 2 }
+//       ]
+//     }).populate('seller');
+
+//     console.log(`📊 Found ${round2Bids.length} active Round 2 bids`);
+
+//     if (round2Bids.length === 0) {
+//       console.log(`❌ No active bids in Round 2 - marking project as failed`);
+//       this.status = 'failed';
+//       this.biddingRounds.round2.status = 'completed';
+//       this.biddingRounds.round2Completed = true;
+//       await this.save();
+//       throw new Error('No active bids found in Round 2');
+//     }
+    
+//     // Find the lowest bidder (WINNER SELECTION LOGIC)
+//     const bidsWithAmounts = round2Bids.map(bid => ({
+//       bid,
+//       amount: bid.round2Bid?.amount || bid.amount,
+//       finalAmount: bid.round2Bid?.amount // Prefer round2Bid amount if exists
+//     }));
+    
+//     // Sort by lowest amount
+//     bidsWithAmounts.sort((a, b) => a.amount - b.amount);
+//     const winningBid = bidsWithAmounts[0].bid;
+//     const winningAmount = bidsWithAmounts[0].finalAmount || bidsWithAmounts[0].amount;
+    
+//     console.log(`🎉 Winner selected: ${winningBid._id} with amount $${winningAmount}`);
+    
+//     // Update project status - CRITICAL: Set to 'awarded'
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     this.biddingRounds.round2.winnerSelected = true;
+//     this.biddingRounds.currentRound = 3;
+//     this.selectedBid = winningBid._id;
+//     this.status = 'awarded'; // This must be 'awarded'
+//     this.biddingCompleted = true;
+//     this.winnerSelectedAt = new Date();
+    
+//     // Set final winner
+//     this.finalWinner = {
+//       bid: winningBid._id,
+//       seller: winningBid.seller._id,
+//       selectedAt: new Date(),
+//       winningAmount: winningAmount,
+//       round: 2
+//     };
+    
+//     // Update winning bid
+//     winningBid.selectionStatus = 'won';
+//     winningBid.status = 'won';
+//     winningBid.isActiveInRound = false;
+//     await winningBid.save();
+    
+//     // Mark other Round 2 bids as lost
+//     const otherBids = round2Bids.filter(bid => bid._id.toString() !== winningBid._id.toString());
+//     console.log(`❌ Marking ${otherBids.length} other bids as lost`);
+    
+//     for (const bid of otherBids) {
+//       bid.selectionStatus = 'lost';
+//       bid.status = 'lost';
+//       bid.isActiveInRound = false;
+//       await bid.save();
+//     }
+    
+//     await this.save();
+//     console.log(`✅ Round 2 successfully completed for project ${this._id}, Status: ${this.status}`);
+    
+//     // 🚀 IMMEDIATELY INITIALIZE CONTRACT PROCESS
+//     console.log(`📝 Initializing contract process for winning bid: ${winningBid._id}`);
+//     try {
+//       await statusAutomation.initializeContractForWinner(this, winningBid, {});
+//       console.log(`✅ Contract process initialized successfully for project ${this._id}`);
+//     } catch (contractError) {
+//       console.error(`❌ Contract initialization failed: ${contractError.message}`);
+//       // Don't throw error - project is still awarded even if contract init fails
+//     }
+    
+//     return this;
+    
+//   } catch (error) {
+//     console.error(`❌ Error in completeRound2 for project ${this._id}:`, error);
+    
+//     // Ensure project status is set properly even on error
+//     this.status = 'failed';
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     await this.save();
+    
+//     throw error;
+//   }
+// };
+// Method to complete Round 2 and select winner (lowest bidder)
+// projectSchema.methods.completeRound2 = async function() {
+//   const Bid = mongoose.model('Bid');
+//   const Contract = mongoose.model('Contract');
+//   const statusAutomation = require('../services/statusAutomation');
+  
+//   try {
+//     console.log(`🏆 Starting Round 2 completion for project: ${this._id}`);
+    
+//     // FIXED: Use the project's selectedBids from round2
+//     const round2Bids = await Bid.find({
+//       _id: { $in: this.biddingRounds.round2.selectedBids },
+//       $or: [
+//         { selectionStatus: 'selected-round2' },
+//         { status: 'selected' },
+//         { round: 2 }
+//       ]
+//     }).populate('seller');
+
+//     console.log(`📊 Found ${round2Bids.length} active Round 2 bids from selectedBids:`, 
+//       this.biddingRounds.round2.selectedBids);
+
+//     if (round2Bids.length === 0) {
+//       console.log(`❌ No active bids in Round 2 - marking project as failed`);
+//       this.status = 'failed';
+//       this.biddingRounds.round2.status = 'completed';
+//       this.biddingRounds.round2Completed = true;
+//       await this.save();
+//       throw new Error('No active bids found in Round 2');
+//     }
+    
+//     // Find the lowest bidder (WINNER SELECTION LOGIC)
+//     const bidsWithAmounts = round2Bids.map(bid => ({
+//       bid,
+//       amount: bid.round2Bid?.amount || bid.amount,
+//       finalAmount: bid.round2Bid?.amount // Prefer round2Bid amount if exists
+//     }));
+    
+//     // Sort by lowest amount
+//     bidsWithAmounts.sort((a, b) => a.amount - b.amount);
+//     const winningBid = bidsWithAmounts[0].bid;
+//     const winningAmount = bidsWithAmounts[0].finalAmount || bidsWithAmounts[0].amount;
+    
+//     console.log(`🎉 Winner selected: ${winningBid._id} with amount $${winningAmount}`);
+    
+//     // CRITICAL FIX: Ensure project status is set to 'awarded'
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     this.biddingRounds.round2.winnerSelected = true;
+//     this.biddingRounds.currentRound = 3;
+//     this.selectedBid = winningBid._id;
+//     this.status = 'awarded'; // ← THIS MUST BE 'awarded'
+//     this.biddingCompleted = true;
+//     this.winnerSelectedAt = new Date();
+    
+//     // Set final winner
+//     this.finalWinner = {
+//       bid: winningBid._id,
+//       seller: winningBid.seller._id,
+//       selectedAt: new Date(),
+//       winningAmount: winningAmount,
+//       round: 2
+//     };
+    
+//     // Update winning bid
+//     winningBid.selectionStatus = 'won';
+//     winningBid.status = 'won';
+//     winningBid.isActiveInRound = false;
+//     await winningBid.save();
+    
+//     // Mark other Round 2 bids as lost
+//     const otherBids = round2Bids.filter(bid => bid._id.toString() !== winningBid._id.toString());
+//     console.log(`❌ Marking ${otherBids.length} other bids as lost`);
+    
+//     for (const bid of otherBids) {
+//       bid.selectionStatus = 'lost';
+//       bid.status = 'lost';
+//       bid.isActiveInRound = false;
+//       await bid.save();
+//     }
+    
+//     await this.save();
+//     console.log(`✅ Round 2 successfully completed for project ${this._id}, Status: ${this.status}`);
+    
+//     // ✅ CRITICAL: Initialize contract immediately after winner selection
+//     console.log(`📝 Initializing contract for winning bid: ${winningBid._id}`);
+//     await statusAutomation.initializeContractForWinner(this, winningBid, {});
+//     console.log(`✅ Contract initialized for project ${this._id}`);
+    
+//     return this;
+    
+//   } catch (error) {
+//     console.error(`❌ Error in completeRound2 for project ${this._id}:`, error);
+    
+//     // Ensure project status is set properly even on error
+//     this.status = 'failed';
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     await this.save();
+    
+//     throw error;
+//   }
+// };
+// Method to complete Round 2 and select winner (lowest bidder) - ENHANCED VERSION
+// projectSchema.methods.completeRound2 = async function() {
+//   const Bid = mongoose.model('Bid');
+//   const Contract = mongoose.model('Contract');
+//   const User = mongoose.model('User');
+  
+//   try {
+//     console.log(`🏆 Starting Round 2 completion for project: ${this._id}`);
+    
+//     // Get all Round 2 bids with their final amounts
+//     const round2Bids = await Bid.find({
+//       _id: { $in: this.biddingRounds.round2.selectedBids },
+//       $or: [
+//         { selectionStatus: 'selected-round2' },
+//         { status: 'selected' },
+//         { round: 2 }
+//       ]
+//     }).populate('seller').populate('customer');
+
+//     console.log(`📊 Found ${round2Bids.length} active Round 2 bids`);
+
+//     if (round2Bids.length === 0) {
+//       console.log(`❌ No active bids in Round 2 - marking project as failed`);
+//       this.status = 'failed';
+//       this.biddingRounds.round2.status = 'completed';
+//       this.biddingRounds.round2Completed = true;
+//       await this.save();
+//       throw new Error('No active bids found in Round 2');
+//     }
+    
+//     // Find the lowest bidder (WINNER SELECTION LOGIC)
+//     const bidsWithAmounts = round2Bids.map(bid => ({
+//       bid,
+//       amount: bid.round2Bid?.amount || bid.amount,
+//       finalAmount: bid.round2Bid?.amount // Prefer round2Bid amount if exists
+//     }));
+    
+//     // Sort by lowest amount
+//     bidsWithAmounts.sort((a, b) => a.amount - b.amount);
+//     const winningBid = bidsWithAmounts[0].bid;
+//     const winningAmount = bidsWithAmounts[0].finalAmount || bidsWithAmounts[0].amount;
+    
+//     console.log(`🎉 Winner selected: ${winningBid._id} with amount $${winningAmount}`);
+//     console.log(`👤 Winning seller: ${winningBid.seller._id}`);
+//     console.log(`👤 Project customer: ${this.customer}`);
+    
+//     // Update project status - CRITICAL: Set to 'awarded'
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     this.biddingRounds.round2.winnerSelected = true;
+//     this.biddingRounds.currentRound = 3;
+//     this.selectedBid = winningBid._id;
+//     this.status = 'awarded'; // This must be 'awarded'
+//     this.biddingCompleted = true;
+//     this.winnerSelectedAt = new Date();
+    
+//     // Set final winner
+//     this.finalWinner = {
+//       bid: winningBid._id,
+//       seller: winningBid.seller._id,
+//       selectedAt: new Date(),
+//       winningAmount: winningAmount,
+//       round: 2
+//     };
+    
+//     // Update winning bid
+//     winningBid.selectionStatus = 'won';
+//     winningBid.status = 'won';
+//     winningBid.isActiveInRound = false;
+//     await winningBid.save();
+    
+//     // Mark other Round 2 bids as lost
+//     const otherBids = round2Bids.filter(bid => bid._id.toString() !== winningBid._id.toString());
+//     console.log(`❌ Marking ${otherBids.length} other bids as lost`);
+    
+//     for (const bid of otherBids) {
+//       bid.selectionStatus = 'lost';
+//       bid.status = 'lost';
+//       bid.isActiveInRound = false;
+//       await bid.save();
+//     }
+    
+//     await this.save();
+//     console.log(`✅ Round 2 successfully completed for project ${this._id}, Status: ${this.status}`);
+    
+//     // 🚀 IMMEDIATELY INITIALIZE CONTRACT PROCESS
+//     console.log(`📝 Starting contract initialization for winning bid: ${winningBid._id}`);
+//     try {
+//       await this.initializeContractForWinner(winningBid, winningAmount);
+//       console.log(`✅ Contract process initialized successfully for project ${this._id}`);
+//     } catch (contractError) {
+//       console.error(`❌ Contract initialization failed: ${contractError.message}`);
+//       console.error(contractError.stack);
+//       // Don't throw error - project is still awarded even if contract init fails
+//     }
+    
+//     return this;
+    
+//   } catch (error) {
+//     console.error(`❌ Error in completeRound2 for project ${this._id}:`, error);
+//     console.error(error.stack);
+    
+//     // Ensure project status is set properly even on error
+//     this.status = 'failed';
+//     this.biddingRounds.round2.status = 'completed';
+//     this.biddingRounds.round2Completed = true;
+//     await this.save();
+    
+//     throw error;
+//   }
+// };
+
+// projectSchema.methods.initializeContractForWinner = async function(winningBid, winningAmount) {
+//   const Contract = mongoose.model('Contract');
+//   const User = mongoose.model('User');
+//   const PDFGenerator = require('../services/pdfGenerator'); // ADD THIS
+  
+//   try {
+//     console.log('📝 Initializing contract for winning bid...');
+    
+//     // Check if contract already exists
+//     const existingContract = await Contract.findOne({ 
+//       bid: winningBid._id,
+//       project: this._id 
+//     });
+    
+//     if (existingContract) {
+//       console.log('⏭️ Contract already exists for this bid and project');
+//       return existingContract;
+//     }
+
+//     // Get customer and seller details
+//     const customer = await User.findById(this.customer);
+//     const seller = await User.findById(winningBid.seller._id);
+
+//     if (!customer) {
+//       throw new Error(`Customer not found for ID: ${this.customer}`);
+//     }
+//     if (!seller) {
+//       throw new Error(`Seller not found for ID: ${winningBid.seller._id}`);
+//     }
+
+//     console.log(`👤 Customer: ${customer.name}, Seller: ${seller.name || seller.companyName}`);
+    
+//     let customerTemplate = null;
+//     let sellerTemplate = null;
+
+//     // ✅ GENERATE ACTUAL PDF TEMPLATES
+//     try {
+//       console.log('🔄 Generating contract templates...');
+      
+//       // Generate actual PDF templates
+//       customerTemplate = await PDFGenerator.generateContract('customer', winningBid, this, customer, seller);
+//       sellerTemplate = await PDFGenerator.generateContract('seller', winningBid, this, customer, seller);
+      
+//       console.log('✅ Contract templates generated successfully');
+//     } catch (pdfError) {
+//       console.error('❌ PDF generation error:', pdfError);
+//       // Continue without templates but log the error
+//     }
+
+//     // Create contract record
+//     const contractData = {
+//       bid: winningBid._id,
+//       project: this._id,
+//       customer: this.customer,
+//       seller: winningBid.seller._id,
+//       contractValue: winningAmount,
+//       status: 'pending-customer',
+//       currentStep: 1,
+//       autoGenerated: true,
+      
+//       // Contract terms
+//       terms: new Map([
+//         ['projectTitle', this.title],
+//         ['projectDescription', this.description],
+//         ['contractValue', winningAmount.toString()],
+//         ['startDate', this.timeline.startDate.toISOString()],
+//         ['endDate', this.timeline.endDate.toISOString()],
+//         ['category', this.category],
+//         ['customerName', customer.name],
+//         ['sellerName', seller.companyName || seller.name],
+//         ['customerEmail', customer.email],
+//         ['sellerEmail', seller.email]
+//       ]),
+      
+//       createdAt: new Date(),
+//       updatedAt: new Date()
+//     };
+
+//     // ✅ ADD ACTUAL TEMPLATES IF GENERATED
+//     if (customerTemplate) {
+//       contractData.customerTemplate = {
+//         public_id: customerTemplate.public_id,
+//         url: customerTemplate.secure_url,
+//         filename: `customer_contract_${winningBid._id}.pdf`,
+//         bytes: customerTemplate.bytes,
+//         generatedAt: new Date()
+//       };
+//     } else {
+//       // Fallback placeholder
+//       contractData.customerTemplate = {
+//         public_id: `pending_customer_${winningBid._id}`,
+//         url: '/documents/contract-template-customer.pdf',
+//         filename: `customer_contract_${winningBid._id}.pdf`,
+//         bytes: 0,
+//         generatedAt: new Date()
+//       };
+//     }
+
+//     if (sellerTemplate) {
+//       contractData.sellerTemplate = {
+//         public_id: sellerTemplate.public_id,
+//         url: sellerTemplate.secure_url,
+//         filename: `seller_contract_${winningBid._id}.pdf`,
+//         bytes: sellerTemplate.bytes,
+//         generatedAt: new Date()
+//       };
+//     } else {
+//       // Fallback placeholder
+//       contractData.sellerTemplate = {
+//         public_id: `pending_seller_${winningBid._id}`,
+//         url: '/documents/contract-template-seller.pdf',
+//         filename: `seller_contract_${winningBid._id}.pdf`,
+//         bytes: 0,
+//         generatedAt: new Date()
+//       };
+//     }
+
+//     const contract = new Contract(contractData);
+//     await contract.save();
+    
+//     console.log(`✅ Contract initialized with ID: ${contract._id}, Status: ${contract.status}`, {
+//       hasCustomerTemplate: !!customerTemplate,
+//       hasSellerTemplate: !!sellerTemplate
+//     });
+    
+//     // Create notifications
+//     const Notice = mongoose.model('Notice');
+    
+//     // Notify customer
+//     await Notice.create({
+//       title: `Contract Ready - ${this.title}`,
+//       content: `Your project has been awarded! Please download the contract template, sign it, and upload the signed contract to proceed.`,
+//       targetAudience: "customer",
+//       specificUser: this.customer,
+//       noticeType: "success",
+//       isActive: true,
+//       startDate: new Date(),
+//       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//     });
+
+//     // Notify seller
+//     await Notice.create({
+//       title: `Project Awarded - ${this.title}`,
+//       content: `Congratulations! Your bid won the project. Please wait for the customer to upload their signed contract first. Once they upload, you'll be able to download and upload your signed contract.`,
+//       targetAudience: "seller",
+//       specificUser: winningBid.seller._id,
+//       noticeType: "success",
+//       isActive: true,
+//       startDate: new Date(),
+//       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//     });
+
+//     // Notify admin
+//     await Notice.create({
+//       title: `New Contract - ${this.title}`,
+//       content: `New contract created and waiting for customer upload. Customer must upload first, then seller.`,
+//       targetAudience: "admin",
+//       noticeType: "info",
+//       isActive: true,
+//       startDate: new Date(),
+//       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//     });
+
+//     console.log(`📢 Notifications sent for contract ${contract._id}`);
+//     return contract;
+
+//   } catch (error) {
+//     console.error('❌ Contract initialization error:', error);
+//     console.error(error.stack);
+//     throw error;
+//   }
+// };
 projectSchema.methods.completeRound2 = async function() {
   const Bid = mongoose.model('Bid');
+  const statusAutomation = require('../services/statusAutomation');
   
   try {
     console.log(`🏆 Starting Round 2 completion for project: ${this._id}`);
     
-    // FIXED: Use the project's selectedBids from round2
+    // Get all Round 2 bids with their final amounts
     const round2Bids = await Bid.find({
       _id: { $in: this.biddingRounds.round2.selectedBids },
       $or: [
@@ -1043,10 +1643,9 @@ projectSchema.methods.completeRound2 = async function() {
         { status: 'selected' },
         { round: 2 }
       ]
-    }).populate('seller');
+    }).populate('seller').populate('customer');
 
-    console.log(`📊 Found ${round2Bids.length} active Round 2 bids from selectedBids:`, 
-      this.biddingRounds.round2.selectedBids);
+    console.log(`📊 Found ${round2Bids.length} active Round 2 bids`);
 
     if (round2Bids.length === 0) {
       console.log(`❌ No active bids in Round 2 - marking project as failed`);
@@ -1070,14 +1669,16 @@ projectSchema.methods.completeRound2 = async function() {
     const winningAmount = bidsWithAmounts[0].finalAmount || bidsWithAmounts[0].amount;
     
     console.log(`🎉 Winner selected: ${winningBid._id} with amount $${winningAmount}`);
+    console.log(`👤 Winning seller: ${winningBid.seller._id}`);
+    console.log(`👤 Project customer: ${this.customer}`);
     
-    // CRITICAL FIX: Ensure project status is set to 'awarded'
+    // Update project status - CRITICAL: Set to 'awarded'
     this.biddingRounds.round2.status = 'completed';
     this.biddingRounds.round2Completed = true;
     this.biddingRounds.round2.winnerSelected = true;
     this.biddingRounds.currentRound = 3;
     this.selectedBid = winningBid._id;
-    this.status = 'awarded'; // ← THIS MUST BE 'awarded'
+    this.status = 'awarded'; // This must be 'awarded'
     this.biddingCompleted = true;
     this.winnerSelectedAt = new Date();
     
@@ -1110,10 +1711,22 @@ projectSchema.methods.completeRound2 = async function() {
     await this.save();
     console.log(`✅ Round 2 successfully completed for project ${this._id}, Status: ${this.status}`);
     
+    // 🚀 IMMEDIATELY INITIALIZE CONTRACT PROCESS USING STATUS AUTOMATION
+    console.log(`📝 Starting contract initialization for winning bid: ${winningBid._id}`);
+    try {
+      await statusAutomation.initializeContractForWinner(this, winningBid, {});
+      console.log(`✅ Contract process initialized successfully for project ${this._id}`);
+    } catch (contractError) {
+      console.error(`❌ Contract initialization failed: ${contractError.message}`);
+      console.error(contractError.stack);
+      // Don't throw error - project is still awarded even if contract init fails
+    }
+    
     return this;
     
   } catch (error) {
     console.error(`❌ Error in completeRound2 for project ${this._id}:`, error);
+    console.error(error.stack);
     
     // Ensure project status is set properly even on error
     this.status = 'failed';
@@ -1124,7 +1737,6 @@ projectSchema.methods.completeRound2 = async function() {
     throw error;
   }
 };
-
 // Pre-save middleware
 projectSchema.pre('save', function(next) {
   this.updatedAt = Date.now();

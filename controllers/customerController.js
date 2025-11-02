@@ -132,6 +132,123 @@ exports.getDashboard = async (req, res) => {
 };
 
 // Enhanced getProjectDetails - Add status update and contract info
+// exports.getProjectDetails = async (req, res) => {
+//   try {
+//     // Force status update before showing project details
+//     await statusAutomation.updateAllProjectStatuses();
+
+//     const project = await Project.findById(req.params.id)
+//       .populate("customer")
+//       .populate({
+//         path: "bids",
+//         populate: {
+//           path: "seller",
+//           select: "name companyName email phone rating profileImage",
+
+//         },
+//       })
+//       .populate({
+//         path: "selectedBid", // ✅ This should be the ObjectId, not the full bid object
+//         select: "_id", // ✅ Only select the _id to avoid serialization issues
+//       });
+
+//     if (!project) {
+//       req.flash("error", "Project not found");
+//       return res.redirect("/customer/my-projects");
+//     }
+
+//     if (project.customer._id.toString() !== req.session.userId.toString()) {
+//       req.flash("error", "Unauthorized access");
+//       return res.redirect("/customer/my-projects");
+//     }
+
+//     // Get contract information
+//     const contract = await Contract.findOne({ project: req.params.id })
+//       .populate("seller", "name companyName email phone")
+//       .populate("bid", "amount proposal");
+
+//     const userData = req.session.user || { name: "Customer", email: "" };
+
+//     res.render("customer/project-details", {
+//       user: userData,
+//       currentPage: "projects",
+//       project,
+//       bids: project.bids || [],
+//       contract: contract || null,
+//       moment: moment,
+      
+      
+
+//     });
+//   } catch (error) {
+//     console.error("Get project details error:", error);
+//     req.flash("error", "Error loading project details");
+//     res.redirect("/customer/my-projects");
+//   }
+// };
+
+// exports.getProjectDetails = async (req, res) => {
+//   try {
+//     // Force status update before showing project details
+//     await statusAutomation.updateAllProjectStatuses();
+
+//     const project = await Project.findById(req.params.id)
+//       .populate("customer")
+//       .populate({
+//         path: "bids",
+//         populate: {
+//           path: "seller",
+//           select: "name companyName email phone rating profileImage",
+//         },
+//       })
+//       .populate({
+//         path: "selectedBid",
+//         select: "_id amount seller", // Include seller info
+//         populate: {
+//           path: "seller",
+//           select: "name companyName email phone"
+//         }
+//       });
+
+//     if (!project) {
+//       req.flash("error", "Project not found");
+//       return res.redirect("/customer/my-projects");
+//     }
+
+//     if (project.customer._id.toString() !== req.session.userId.toString()) {
+//       req.flash("error", "Unauthorized access");
+//       return res.redirect("/customer/my-projects");
+//     }
+
+//     // Get contract information - FIXED QUERY
+//     const contract = await Contract.findOne({ 
+//       project: req.params.id,
+//       bid: project.selectedBid // Make sure we get the contract for the selected bid
+//     })
+//       .populate("seller", "name companyName email phone")
+//       .populate("bid", "amount proposal");
+
+//     console.log(`📋 Project ${project._id} - Contract found:`, !!contract);
+//     if (contract) {
+//       console.log(`📋 Contract status: ${contract.status}, Customer signed: ${!!contract.customerSignedContract?.url}, Seller signed: ${!!contract.sellerSignedContract?.url}`);
+//     }
+
+//     const userData = req.session.user || { name: "Customer", email: "" };
+
+//     res.render("customer/project-details", {
+//       user: userData,
+//       currentPage: "projects",
+//       project,
+//       bids: project.bids || [],
+//       contract: contract || null,
+//       moment: moment,
+//     });
+//   } catch (error) {
+//     console.error("Get project details error:", error);
+//     req.flash("error", "Error loading project details");
+//     res.redirect("/customer/my-projects");
+//   }
+// };
 exports.getProjectDetails = async (req, res) => {
   try {
     // Force status update before showing project details
@@ -144,12 +261,14 @@ exports.getProjectDetails = async (req, res) => {
         populate: {
           path: "seller",
           select: "name companyName email phone rating profileImage",
-
         },
       })
       .populate({
-        path: "selectedBid", // ✅ This should be the ObjectId, not the full bid object
-        select: "_id", // ✅ Only select the _id to avoid serialization issues
+        path: "selectedBid",
+        populate: {
+          path: "seller",
+          select: "name companyName email phone"
+        }
       });
 
     if (!project) {
@@ -162,10 +281,20 @@ exports.getProjectDetails = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    // Get contract information
-    const contract = await Contract.findOne({ project: req.params.id })
+    // Get contract information - FIXED QUERY
+    const contract = await Contract.findOne({ 
+      project: req.params.id 
+    })
       .populate("seller", "name companyName email phone")
       .populate("bid", "amount proposal");
+
+    console.log(`📄 Contract search for project ${project._id}:`, {
+      projectId: req.params.id,
+      contractFound: !!contract,
+      contractStatus: contract ? contract.status : 'N/A',
+      projectStatus: project.status,
+      selectedBid: project.selectedBid ? project.selectedBid._id : 'N/A'
+    });
 
     const userData = req.session.user || { name: "Customer", email: "" };
 
@@ -176,9 +305,6 @@ exports.getProjectDetails = async (req, res) => {
       bids: project.bids || [],
       contract: contract || null,
       moment: moment,
-      
-      
-
     });
   } catch (error) {
     console.error("Get project details error:", error);
@@ -2117,14 +2243,79 @@ exports.getNotifications = async (req, res) => {
 //   }
 // };
 // Auto-complete Round 2 and select winner
+// exports.autoCompleteRound2 = async (req, res) => {
+//   try {
+//     const { projectId } = req.params;
+//     const customerId = req.session.userId;
+
+//     const Project = require('../models/Project');
+//     const Bid = require('../models/Bid'); // ADD THIS IMPORT
+//     const statusAutomation = require('../services/statusAutomation');
+    
+//     // Get the project first
+//     const project = await Project.findById(projectId);
+//     if (!project) {
+//       throw new Error('Project not found');
+//     }
+
+//     // Use the project method directly instead of statusAutomation
+//     await project.completeRound2();
+    
+//     // Get the updated project to ensure we have the latest data
+//     const updatedProject = await Project.findById(projectId);
+    
+//     // Check if project was successfully awarded and get winning bid
+//     if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
+//       const winningBid = await Bid.findById(updatedProject.finalWinner.bid);
+//       if (winningBid) {
+//         // Initialize contract for winner
+//         await statusAutomation.initializeContractForWinner(updatedProject, winningBid, {});
+        
+//         console.log(`✅ Contract initialized for project ${projectId}`);
+//       }
+//     }
+
+//     req.flash("success", "Final round completed! Winner selected and contract process started.");
+//     res.redirect(`/customer/project/${projectId}`);
+//   } catch (error) {
+//     console.error("Auto complete Round 2 error:", error);
+//     req.flash("error", error.message || "Error completing final round");
+//     res.redirect("/customer/my-projects");
+//   }
+// };
+
+// exports.autoCompleteRound2 = async (req, res) => {
+//   try {
+//     const { projectId } = req.params;
+//     const customerId = req.session.userId;
+
+//     const Project = require('../models/Project');
+    
+//     // Get the project first
+//     const project = await Project.findById(projectId);
+//     if (!project) {
+//       throw new Error('Project not found');
+//     }
+
+//     // Use the project method directly - this will handle contract creation
+//     await project.completeRound2();
+    
+//     console.log(`✅ Round 2 completed and contract initialized for project ${projectId}`);
+
+//     req.flash("success", "Final round completed! Winner selected and contract process started.");
+//     res.redirect(`/customer/project/${projectId}`);
+//   } catch (error) {
+//     console.error("Auto complete Round 2 error:", error);
+//     req.flash("error", error.message || "Error completing final round");
+//     res.redirect("/customer/my-projects");
+//   }
+// };
 exports.autoCompleteRound2 = async (req, res) => {
   try {
     const { projectId } = req.params;
     const customerId = req.session.userId;
 
     const Project = require('../models/Project');
-    const Bid = require('../models/Bid'); // ADD THIS IMPORT
-    const statusAutomation = require('../services/statusAutomation');
     
     // Get the project first
     const project = await Project.findById(projectId);
@@ -2132,22 +2323,10 @@ exports.autoCompleteRound2 = async (req, res) => {
       throw new Error('Project not found');
     }
 
-    // Use the project method directly instead of statusAutomation
+    // Use the project method directly - this will handle contract creation via statusAutomation
     await project.completeRound2();
     
-    // Get the updated project to ensure we have the latest data
-    const updatedProject = await Project.findById(projectId);
-    
-    // Check if project was successfully awarded and get winning bid
-    if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
-      const winningBid = await Bid.findById(updatedProject.finalWinner.bid);
-      if (winningBid) {
-        // Initialize contract for winner
-        await statusAutomation.initializeContractForWinner(updatedProject, winningBid, {});
-        
-        console.log(`✅ Contract initialized for project ${projectId}`);
-      }
-    }
+    console.log(`✅ Round 2 completed and contract initialized for project ${projectId}`);
 
     req.flash("success", "Final round completed! Winner selected and contract process started.");
     res.redirect(`/customer/project/${projectId}`);
@@ -2157,9 +2336,6 @@ exports.autoCompleteRound2 = async (req, res) => {
     res.redirect("/customer/my-projects");
   }
 };
-
-
-
 exports.selectWinner = async (req, res) => {
   try {
     const { projectId } = req.params;

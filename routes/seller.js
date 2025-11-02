@@ -16,7 +16,15 @@ router.get('/update-statuses', sellerController.updateStatuses);
 
 // ==================== PROJECT BROWSING ====================
 router.get('/find-bids', sellerController.getFindBids);
-router.get('/bid-details/:id', sellerController.getBidDetails);
+// Correct route - uses bid ID
+// Make sure this route exists and matches your link
+router.get('/bid/:id', sellerController.getBidDetails);
+
+// NOT this (if you have it):
+// router.get('/bid-details/:id', sellerController.getBidDetails);
+
+// NOT project ID
+// router.get('/seller/bid-details/:projectId', ...); // Wrong
 
 // ==================== BID MANAGEMENT ====================
 router.get('/my-bids', sellerController.getMyBids);

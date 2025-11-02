@@ -1460,11 +1460,58 @@ exports.updateRound2Bid = async (req, res) => {
 //     console.error("Auto complete Round 2 error:", error);
 //   }
 // };
+// exports.autoCompleteRound2 = async (projectId) => {
+//   try {
+//     const Project = mongoose.model('Project');
+//     const Bid = mongoose.model('Bid');
+//     const statusAutomation = require('../services/statusAutomation'); // ADD THIS
+    
+//     const project = await Project.findById(projectId);
+//     if (!project || project.biddingRounds.currentRound !== 2) {
+//       console.log(`Project ${projectId} not found or not in Round 2`);
+//       return;
+//     }
+
+//     console.log(`🕒 Auto-completing Round 2 for project: ${projectId}`);
+
+//     // Use the project's completeRound2 method directly
+//     await project.completeRound2();
+    
+//     // Get updated project to check status
+//     const updatedProject = await Project.findById(projectId);
+    
+//     // If project was successfully awarded, initialize contract
+//     if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
+//       const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
+//       if (winningBid) {
+//         await statusAutomation.initializeContractForWinner(updatedProject, winningBid, {});
+
+//         // Notify winner
+//         const Notice = require("../models/Notice");
+//         await Notice.create({
+//           title: `You Won! - ${updatedProject.title}`,
+//           content: `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
+//           targetAudience: "seller",
+//           specificUser: winningBid.seller,
+//           noticeType: "success",
+//           isActive: true,
+//           startDate: new Date(),
+//           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//         });
+
+//         console.log(`✅ Contract initialized and notifications sent for project ${projectId}`);
+//       }
+//     }
+
+//     console.log(`🎉 Round 2 auto-completion finished for project ${projectId}`);
+    
+//   } catch (error) {
+//     console.error("Auto complete Round 2 error:", error);
+//   }
+// };
 exports.autoCompleteRound2 = async (projectId) => {
   try {
     const Project = mongoose.model('Project');
-    const Bid = mongoose.model('Bid');
-    const statusAutomation = require('../services/statusAutomation'); // ADD THIS
     
     const project = await Project.findById(projectId);
     if (!project || project.biddingRounds.currentRound !== 2) {
@@ -1474,42 +1521,15 @@ exports.autoCompleteRound2 = async (projectId) => {
 
     console.log(`🕒 Auto-completing Round 2 for project: ${projectId}`);
 
-    // Use the project's completeRound2 method directly
+    // Use the project's completeRound2 method directly - it will handle everything via statusAutomation
     await project.completeRound2();
     
-    // Get updated project to check status
-    const updatedProject = await Project.findById(projectId);
-    
-    // If project was successfully awarded, initialize contract
-    if (updatedProject.status === 'awarded' && updatedProject.finalWinner && updatedProject.finalWinner.bid) {
-      const winningBid = await Bid.findById(updatedProject.finalWinner.bid).populate('seller');
-      if (winningBid) {
-        await statusAutomation.initializeContractForWinner(updatedProject, winningBid, {});
-
-        // Notify winner
-        const Notice = require("../models/Notice");
-        await Notice.create({
-          title: `You Won! - ${updatedProject.title}`,
-          content: `Congratulations! Your bid has been selected as the winner for "${updatedProject.title}". Contract process has started. Please wait for customer to upload their signed contract first.`,
-          targetAudience: "seller",
-          specificUser: winningBid.seller,
-          noticeType: "success",
-          isActive: true,
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        });
-
-        console.log(`✅ Contract initialized and notifications sent for project ${projectId}`);
-      }
-    }
-
     console.log(`🎉 Round 2 auto-completion finished for project ${projectId}`);
     
   } catch (error) {
     console.error("Auto complete Round 2 error:", error);
   }
 };
-
 
 
 
@@ -1652,6 +1672,134 @@ exports.updateStatuses = async (req, res) => {
 
 
 
+// exports.getMyBids = async (req, res) => {
+//   try {
+//     const sellerId = req.session.userId;
+
+//     if (!sellerId) {
+//       req.flash("error", "Please log in to view your bids");
+//       return res.redirect("/auth/login");
+//     }
+
+//     // Force status update before showing bids
+//     await statusAutomation.updateAllProjectStatuses();
+
+//     // Handle expired resubmissions
+//     const expiredDefectedBids = await Bid.findExpiredDefectedBids();
+//     for (const bid of expiredDefectedBids) {
+//       await bid.autoMarkAsLostIfExpired();
+//     }
+
+//     const myBids = await Bid.find({ seller: sellerId })
+//       .populate({
+//         path: "project",
+//         select: "title category description location bidSettings timeline status progress biddingRounds adminStatus round1Selections"
+//       })
+//       .populate("customer", "name email phone")
+//       .sort({ createdAt: -1 });
+
+//     console.log(`📊 Found ${myBids.length} total bids for seller ${sellerId}`);
+
+//     // Enhanced grouping with proper multi-round status handling
+//     const bidsByStatus = {
+//       submitted: myBids.filter(bid => 
+//         bid.selectionStatus === 'submitted' && 
+//         bid.status === 'submitted' &&
+//         bid.isActiveInRound !== false &&
+//         bid.round === 1
+//       ),
+      
+//       defected: myBids.filter(bid => 
+//         bid.selectionStatus === 'defected' &&
+//         bid.agreementResponses?.status === 'defected' &&
+//         // Only show defected bids that can still be resubmitted
+//         (bid.agreementResponses.defectCount < bid.agreementResponses.maxDefectCount) &&
+//         // Check if resubmission deadline hasn't passed
+//         (!bid.resubmissionDeadline || new Date(bid.resubmissionDeadline) > new Date())
+//       ),
+      
+//       waitingQueue: myBids.filter(bid => 
+//         bid.selectionStatus === 'waiting-queue' && 
+//         bid.isInWaitingQueue === true &&
+//         bid.isActiveInRound !== false
+//       ),
+      
+//       selectedRound1: myBids.filter(bid => 
+//         bid.selectionStatus === 'selected-round1' && 
+//         bid.isActiveInRound !== false &&
+//         bid.round === 1
+//       ),
+      
+//       selectedRound2: myBids.filter(bid => 
+//         bid.selectionStatus === 'selected-round2' && 
+//         bid.isActiveInRound !== false &&
+//         bid.round === 2
+//       ),
+      
+//       won: myBids.filter(bid => 
+//         bid.selectionStatus === 'won' || 
+//         bid.status === 'won'
+//       ),
+      
+//       lost: myBids.filter(bid => 
+//         (bid.selectionStatus === 'lost' || bid.status === 'lost') &&
+//         bid.agreementResponses?.status !== 'defected'
+//       )
+//     };
+
+//     // Get contracts for won bids
+//     const wonBidIds = bidsByStatus.won.map(bid => bid._id);
+//     const contracts = await Contract.find({ bid: { $in: wonBidIds } })
+//       .populate('customer', 'name email')
+//       .populate('seller', 'name companyName')
+//       .populate('project', 'title');
+
+//     // Add contract info to won bids
+//     bidsByStatus.won.forEach(bid => {
+//       const contract = contracts.find(
+//         contract => contract.bid && contract.bid.toString() === bid._id.toString()
+//       );
+//       if (contract) {
+//         bid.contract = contract;
+//       }
+//     });
+
+//     const userData = req.session.user || { name: "Seller", email: "" };
+
+//     // Get bid count for notifications (active bids only)
+//     const bidCount = await Bid.countDocuments({
+//       seller: sellerId,
+//       selectionStatus: { 
+//         $in: ['submitted', 'selected-round1', 'selected-round2', 'waiting-queue'] 
+//       },
+//       status: { $ne: 'lost' }
+//     });
+
+//     console.log('📈 Bid counts by status:', {
+//       submitted: bidsByStatus.submitted.length,
+//       defected: bidsByStatus.defected.length,
+//       waitingQueue: bidsByStatus.waitingQueue.length,
+//       selectedRound1: bidsByStatus.selectedRound1.length,
+//       selectedRound2: bidsByStatus.selectedRound2.length,
+//       won: bidsByStatus.won.length,
+//       lost: bidsByStatus.lost.length
+//     });
+
+//     res.render("seller/my-bids", {
+//       user: userData,
+//       currentPage: "my-bids",
+//       bids: bidsByStatus,
+//       bidCount: bidCount,
+//       moment: require("moment"),
+//       csrfToken: req.csrfToken ? req.csrfToken() : ''
+//     });
+
+//   } catch (error) {
+//     console.error("❌ My bids error:", error);
+//     req.flash("error", "Error loading bids: " + error.message);
+//     res.redirect("/seller/dashboard");
+//   }
+// };
 exports.getMyBids = async (req, res) => {
   try {
     const sellerId = req.session.userId;
@@ -1691,11 +1839,7 @@ exports.getMyBids = async (req, res) => {
       
       defected: myBids.filter(bid => 
         bid.selectionStatus === 'defected' &&
-        bid.agreementResponses?.status === 'defected' &&
-        // Only show defected bids that can still be resubmitted
-        (bid.agreementResponses.defectCount < bid.agreementResponses.maxDefectCount) &&
-        // Check if resubmission deadline hasn't passed
-        (!bid.resubmissionDeadline || new Date(bid.resubmissionDeadline) > new Date())
+        bid.agreementResponses?.status === 'defected'
       ),
       
       waitingQueue: myBids.filter(bid => 
@@ -1727,20 +1871,29 @@ exports.getMyBids = async (req, res) => {
       )
     };
 
-    // Get contracts for won bids
+    // Get contracts for won bids - FIXED QUERY
     const wonBidIds = bidsByStatus.won.map(bid => bid._id);
-    const contracts = await Contract.find({ bid: { $in: wonBidIds } })
+    const contracts = await Contract.find({ 
+      bid: { $in: wonBidIds },
+      seller: sellerId // Ensure seller can only see their contracts
+    })
       .populate('customer', 'name email')
       .populate('seller', 'name companyName')
-      .populate('project', 'title');
+      .populate('project', 'title')
+      .populate('bid', 'amount proposal');
+
+    console.log(`📄 Found ${contracts.length} contracts for ${wonBidIds.length} won bids`);
 
     // Add contract info to won bids
     bidsByStatus.won.forEach(bid => {
       const contract = contracts.find(
-        contract => contract.bid && contract.bid.toString() === bid._id.toString()
+        contract => contract.bid && contract.bid._id.toString() === bid._id.toString()
       );
       if (contract) {
         bid.contract = contract;
+        console.log(`📋 Bid ${bid._id} - Contract status: ${contract.status}`);
+      } else {
+        console.log(`❌ No contract found for won bid: ${bid._id}`);
       }
     });
 
@@ -1780,7 +1933,6 @@ exports.getMyBids = async (req, res) => {
     res.redirect("/seller/dashboard");
   }
 };
-
 // Get Round 1 Bidding Form - FIXED
 exports.getRound1BiddingForm = async (req, res) => {
   try {
@@ -2316,45 +2468,109 @@ exports.submitRound2Bid = async (req, res) => {
     res.redirect("/seller/my-bids");
   }
 };
-
-// Get Bid Details with Enhanced Status
 exports.getBidDetails = async (req, res) => {
   try {
-    console.log("req params ",req.params)
     const { id } = req.params;
     const sellerId = req.session.userId;
-    let bidId = id
 
     console.log("=== BID DETAILS DEBUG ===");
-    console.log("Bid ID:", bidId);
-    console.log("Seller ID:", sellerId);
+    console.log("Request params:", req.params);
+    console.log("Bid ID from URL:", id);
+    console.log("Seller ID from session:", sellerId);
+    console.log("Session user:", req.session.user);
 
     if (!sellerId) {
+      console.log("No seller ID in session");
       req.flash("error", "Please log in to view bid details");
       return res.redirect("/auth/login");
     }
 
-    const bid = await Bid.findById(bidId)
-      .populate('project')
-      .populate('customer', 'name email phone companyName')
-      .populate('agreementResponses.responses.clauseId');
-
-    if (!bid || bid.seller.toString() !== sellerId) {
-      req.flash("error", "Bid not found or unauthorized");
+    if (!id) {
+      console.log("No bid ID provided");
+      req.flash("error", "Bid ID is required");
       return res.redirect("/seller/my-bids");
     }
 
+    // Check if it's a valid MongoDB ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log("Invalid bid ID format:", id);
+      req.flash("error", "Invalid bid ID format");
+      return res.redirect("/seller/my-bids");
+    }
+
+    // Try to find the bid with multiple approaches for debugging
+    console.log("Attempting to find bid with ID:", id);
+    
+    // Approach 1: Find by ID only (for debugging)
+    const anyBid = await Bid.findById(id);
+    console.log("Bid found (no seller filter):", anyBid ? "YES" : "NO");
+    
+    if (anyBid) {
+      console.log("Bid details:", {
+        id: anyBid._id,
+        seller: anyBid.seller,
+        project: anyBid.project,
+        status: anyBid.status
+      });
+    }
+
+    // Approach 2: Find with seller filter (what we actually want)
+    const bid = await Bid.findOne({
+      _id: id,
+      seller: sellerId
+    })
+    .populate('project')
+    .populate('seller', '_id name email')
+    .populate('customer', 'name email phone companyName')
+    .populate('agreementResponses.responses.clauseId');
+
+    console.log("Bid found with seller filter:", bid ? "YES" : "NO");
+
+    if (!bid) {
+      console.log("Bid not found or unauthorized access");
+      console.log("Looking for bid ID:", id);
+      console.log("With seller ID:", sellerId);
+      
+      // Additional debug: Check if sellerId exists in users
+      const User = require('../models/User');
+      const seller = await User.findById(sellerId);
+      console.log("Seller user exists:", seller ? "YES" : "NO");
+      
+      req.flash("error", "Bid not found or you don't have permission to view it");
+      return res.redirect("/seller/my-bids");
+    }
+
+    console.log("Bid successfully found:", {
+      id: bid._id,
+      projectTitle: bid.project?.title,
+      seller: bid.seller?._id,
+      status: bid.status
+    });
+
     // Get agreements for the project category
     const agreements = await Agreement.findOne({ category: bid.project.category });
+    console.log("Agreements found:", agreements ? "YES" : "NO");
+
+    // Get contract for this bid
+    const contract = await Contract.findOne({ 
+      bid: id 
+    }).populate('customer seller');
+
+    console.log(`Contract for bid ${id}:`, contract ? contract.status : 'No contract');
+
+    // Attach contract to bid for EJS template
+    bid.contract = contract;
 
     const userData = req.session.user || { name: "Seller", email: "" };
 
     // Get bid count for notifications
     const bidCount = await Bid.countDocuments({
       seller: sellerId,
-      selectionStatus: "submitted",
+      status: "submitted",
     });
 
+    console.log("=== SUCCESS: Rendering bid details page ===");
+    
     res.render("seller/bid-details", {
       user: userData,
       currentPage: "my-bids",
@@ -2364,8 +2580,10 @@ exports.getBidDetails = async (req, res) => {
       bidCount: bidCount,
       moment: require("moment"),
     });
+
   } catch (error) {
-    console.error("Bid details error:", error);
+    console.error("❌ BID DETAILS ERROR:", error);
+    console.error("Error stack:", error.stack);
     req.flash("error", "Error loading bid details: " + error.message);
     res.redirect("/seller/my-bids");
   }
