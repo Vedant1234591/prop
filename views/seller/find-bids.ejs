@@ -227,11 +227,272 @@
                 </a>
               </div>
             </div>
-          <% } %>
-        <% }) %>
-      <% } else { %>
-        <div class="col-span-full text-center py-10">
-          <p class="text-gray-500">No projects found matching your filters.</p>
+
+            <!-- Projects Grid -->
+            <div class="grid gap-6">
+                <% if (approvedActiveProjects.length > 0) { %>
+                    <% approvedActiveProjects.forEach(project => { %>
+                        <div class="bg-white shadow rounded-lg p-6 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border-l-4 border-green-400">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3
+                                            class="text-xl font-semibold text-gray-900 hover:text-indigo-600 transition duration-300">
+                                            <%= project.title %>
+                                        </h3>
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center">
+                                                <i class="fas fa-play-circle mr-1"></i>
+                                                Round 1 Active
+                                            </span>
+                                            <span
+                                                class="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                <%= project.bids ? project.bids.length : 0 %> bids
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <p class="text-gray-600 mb-4 line-clamp-2">
+                                        <%= project.description %>
+                                    </p>
+
+                                    <div class="grid md:grid-cols-4 gap-4 text-sm text-gray-500 mb-4">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-tag mr-2 text-indigo-500"></i>
+                                            <span class="capitalize">
+                                                <%= project.category ? project.category.replace('-', ' ') : 'Not specified' %>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                                            <span>
+                                                <%= project.location ? `${project.location.city}, ${project.location.state}` : 'Location not specified' %>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock mr-2 text-orange-500"></i>
+                                            <span>Round 1 ends: <%= project.biddingRounds.round1.endDate ? moment(project.biddingRounds.round1.endDate).fromNow() : 'Not specified' %>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+                                            <span class="font-semibold">Starting at $<%=
+                                                    project.bidSettings ? project.bidSettings.startingBid : 'N/A' %></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center text-sm text-gray-500 mb-4">
+                                        <i class="fas fa-user mr-2 text-blue-500"></i>
+                                        <span>Posted by: <%= project.customer ? project.customer.name : 'Unknown' %></span>
+                                        <% if (project.customer && project.customer.companyName) { %>
+                                            <span class="mx-2">•</span>
+                                            <span>
+                                                <%= project.customer.companyName %>
+                                            </span>
+                                            <% } %>
+                                    </div>
+                                
+                                    <!-- Round status display -->
+                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                                        <div class="flex items-center text-sm text-blue-700">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            <% if (project.biddingRounds.currentRound === 1) { %>
+                                                <span>Round 1 Active - Top 10 will be selected automatically when bidding ends</span>
+                                            <% } else if (project.biddingRounds.currentRound === 1.5) { %>
+                                                <span>Round 1 Completed - Customer selecting top 3</span>
+                                            <% } else if (project.biddingRounds.currentRound === 2) { %>
+                                                <span>Round 2 Active - 24 hours remaining for top 3 bidders</span>
+                                            <% } else if (project.biddingRounds.currentRound === 3) { %>
+                                                <span>Completed - Winner selected</span>
+                                            <% } else { %>
+                                                <span>Project <%= project.status %></span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+
+                                    <!-- Real-time Status & Auto Selection Info -->
+                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-3">
+                                        <div class="flex items-center text-sm text-blue-700 mb-2">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            Project is <strong class="text-green-600 mx-1">active and accepting bids in Round 1</strong>
+                                            <span class="text-blue-600 ml-2">
+                                                • Round 1 ends <%= project.biddingRounds.round1.endDate ? moment(project.biddingRounds.round1.endDate).fromNow() : 'Date not set' %>
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-blue-600 space-y-1">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-bolt mr-2"></i>
+                                                <span>Top 10 bidders by amount will be selected for Round 2</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-sync-alt mr-2"></i>
+                                                <span>Real-time status updates and notifications</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-shield-alt mr-2"></i>
+                                                <span>Secure bidding process with contract automation</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Urgency Indicator -->
+                                        <% if (project.biddingRounds.round1.endDate) { %>
+                                            <% const hoursUntilEnd = (new Date(project.biddingRounds.round1.endDate) - new Date()) / (1000 * 60 * 60); %>
+                                            <% if (hoursUntilEnd < 24 && project.biddingRounds.round1.status === 'active') { %>
+                                                <div
+                                                    class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center">
+                                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                    <span>Round 1 ends soon! Only <%= Math.ceil(hoursUntilEnd) %>
+                                                            hours left.</span>
+                                                </div>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <div class="ml-6 flex flex-col space-y-3 min-w-[120px]">
+                                    <a href="/seller/bid-details/<%= project._id %>"
+                                        class="bg-indigo-600 text-white px-4 py-3 rounded-md hover:bg-indigo-700 transition duration-300 text-sm text-center flex items-center justify-center group">
+                                        <i
+                                            class="fas fa-gavel mr-2 group-hover:scale-110 transition duration-300"></i>
+                                        View Details
+                                    </a>
+
+                                    <div class="text-center space-y-1">
+                                        <span
+                                            class="text-xs <%= project.biddingRounds.round1.status === 'active' ? 'text-green-600' : 'text-red-600' %> font-medium block">
+                                            <i class="fas fa-circle mr-1 text-xs"></i>
+                                            <%= project.biddingRounds.round1.status === 'active' ? 'Active' : 'Closed' %>
+                                        </span>
+                                        <span class="text-xs text-blue-600 block">
+                                            <i class="fas fa-users mr-1"></i>
+                                            <%= project.bids ? project.bids.length : 0 %> bids
+                                        </span>
+                                        <span class="text-xs text-gray-500 block">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            <%= project.viewCount || 0 %> views
+                                        </span>
+                                    </div>
+
+                               <!-- Update the bid button section: -->
+<% if (project.biddingRounds.round1.status === 'active' && project.biddingRounds.round1.endDate && new Date(project.biddingRounds.round1.endDate) > new Date()) { %>
+    <a href="/seller/project/<%= project._id %>/bid" 
+       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-xs text-center">
+        Submit Round 1 Bid
+    </a>
+<% } else { %>
+    <span class="bg-gray-400 text-white px-4 py-2 rounded-md text-xs text-center cursor-not-allowed">
+        Bidding Closed
+    </span>
+<% } %>
+                                </div>
+                            </div>
+
+                            <!-- Quick Stats Footer -->
+                            <div
+                                class="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-4">
+                                <div class="flex items-center space-x-4">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        Posted: <%= moment(project.createdAt).fromNow() %>
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-hourglass-half mr-1"></i>
+                                        Duration: <%= project.timeline ? project.timeline.duration : 'N/A' %> days
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-flag mr-1"></i>
+                                        Status: <span
+                                            class="capitalize ml-1 <%= project.status === 'active' ? 'text-green-600' : 'text-gray-600' %>">
+                                            <%= project.status %>
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-indigo-600 flex items-center">
+                                        <i class="fas fa-layer-group mr-1"></i>
+                                        Round <%= project.biddingRounds.currentRound %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div
+                        class="bg-white shadow rounded-lg p-12 text-center hover:shadow-lg transition duration-300">
+                        <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No active projects found</h3>
+                        <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                            <% if (filters.state || filters.city || filters.category) { %>
+                                Try adjusting your filters to find more projects. New projects are added after admin approval.
+                                <% } else { %>
+                                    There are no active projects in Round 1 bidding at the moment.
+                                    Check back soon as new projects are added after admin approval.
+                                    <% } %>
+                        </p>
+                        <div class="space-x-4">
+                            <% if (filters.state || filters.city || filters.category) { %>
+                                <a href="/seller/find-bids"
+                                    class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                                    Clear Filters
+                                </a>
+                                <% } %>
+                                    <a href="/seller/dashboard"
+                                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-300">
+                                        Back to Dashboard
+                                    </a>
+                        </div>
+
+                        <!-- Tips for Better Results -->
+                        <div
+                            class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                            <h4 class="font-semibold text-blue-800 text-sm mb-2 flex items-center">
+                                <i class="fas fa-lightbulb mr-2"></i>
+                                Pro Tips for Finding Projects
+                            </h4>
+                            <ul class="text-xs text-blue-700 space-y-1 text-left">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
+                                    Complete your seller profile with detailed expertise
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
+                                    Check back regularly - new projects added after admin approval
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check mr-2 mt-1 text-green-500"></i>
+                                    Use broader location filters for more results
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Pagination or Load More -->
+            <% if (approvedActiveProjects.length > 0) { %>
+                <div class="mt-8 text-center">
+                    <div class="bg-white shadow rounded-lg p-4 inline-flex items-center space-x-4">
+                        <span class="text-sm text-gray-600">
+                            Showing <%= approvedActiveProjects.length %> of <%= approvedActiveProjects.length %> projects
+                        </span>
+                        <div class="flex space-x-2">
+                            <button
+                                class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button
+                                class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition duration-300">
+                                1
+                            </button>
+                            <button
+                                class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-300 transition duration-300">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
         </div>
       <% } %>
     </section>

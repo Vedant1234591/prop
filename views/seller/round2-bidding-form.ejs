@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round 2 Bid - Propload</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <%- include('../partials/header', { 
+        user: user, 
+        currentPage: 'my-bids',
+        bidCount: bidCount || 0
+    }) %>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <%- include('../partials/flash-messages') %>
+
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Final Round - Update Your Bid</h1>
+                    <p class="text-gray-600 mt-2">Congratulations! You're in the top 3 finalists. Update your bid for the final 24-hour round.</p>
+                </div>
+                <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                    ROUND 2 - FINAL BIDDING
+                </span>
+            </div>
+            
+            <!-- Round 2 Information -->
+            <div class="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-purple-800 mb-2">Final Round Instructions</h3>
+                        <p class="text-purple-700 text-sm">
+                            <strong>Important:</strong> You have 24 hours to update your bid amount and proposal. 
+                            The <span class="font-bold text-green-600">lowest bidder</span> in this round automatically wins the project when the round ends.
+                            All waiting queue sellers are automatically moved to lost.
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-purple-600">
+                            <i class="fas fa-clock mr-1"></i>
+                            Ends: <%= moment(project.biddingRounds.round2.endDate).format('MMM D, h:mm A') %>
+                        </p>
+                        <p class="text-xs text-purple-500 mt-1" id="round2-countdown">
+                            <%= moment(project.biddingRounds.round2.endDate).fromNow() %> remaining
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Round Process -->
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="font-semibold text-blue-800 mb-2">Final Round Process</h4>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
+                    <div class="flex items-start">
+                        <i class="fas fa-edit mr-2 mt-1"></i>
+                        <span><strong>Multiple Edits:</strong> You can update your bid multiple times during 24 hours</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-trophy mr-2 mt-1"></i>
+                        <span><strong>Lowest Bid Wins:</strong> The lowest bidder when time ends automatically wins</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-times-circle mr-2 mt-1"></i>
+                        <span><strong>Others Lost:</strong> The other two bidders automatically go to lost section</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-users-slash mr-2 mt-1"></i>
+                        <span><strong>Queue Cleared:</strong> All waiting queue sellers moved to lost when round starts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Information -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Project: <%= project.title %></h2>
+            <div class="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
+                <div class="flex items-center">
+                    <i class="fas fa-tag mr-2 text-indigo-500"></i>
+                    <span class="capitalize"><%= project.category.replace('-', ' ') %></span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                    <span><%= project.location.city %>, <%= project.location.state %></span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+                    <span>Starting: $<%= project.bidSettings.startingBid %></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Round 2 Bid Form -->
+        <form action="/seller/project/<%= project._id %>/submit-round2-bid" method="POST" class="space-y-6">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <!-- Current Bid Summary -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-blue-900 mb-4">Your Round 1 Bid</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm text-blue-700">Round 1 Amount</p>
+                        <p class="text-2xl font-bold text-blue-800">$<%= bid.amount.toLocaleString() %></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-blue-700">Status</p>
+                        <p class="text-lg font-semibold text-blue-800">Top 3 Selected</p>
+                    </div>
+                </div>
+                <p class="text-xs text-blue-600 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    This was your original bid that got you selected for the final round
+                </p>
+            </div>
+
+            <!-- Round 2 Bid Update -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Update Your Final Bid</h2>
+                
+                <!-- Bid Amount - Emphasizing Lowest Bid Strategy -->
+                <div class="mb-6">
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        Final Bid Amount ($) *
+                        <span class="text-green-600 ml-2">← Lower amount increases your chance to win!</span>
+                    </label>
+                    <div class="relative">
+                        <input type="number" 
+                               id="amount" 
+                               name="amount" 
+                               required 
+                               min="<%= project.bidSettings.startingBid %>" 
+                               step="0.01"
+                               value="<%= bid.round2Bid ? bid.round2Bid.amount : bid.amount %>"
+                               class="w-full border border-gray-300 rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-semibold"
+                               placeholder="Enter your final bid amount">
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-500 mt-1">
+                        <span>Minimum: $<%= project.bidSettings.startingBid %></span>
+                        <span class="font-medium">Round 1: $<%= bid.amount.toLocaleString() %></span>
+                    </div>
+                    <p class="text-xs text-green-600 mt-1">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        Remember: The lowest bidder when the 24-hour round ends automatically wins the project
+                    </p>
+                </div>
+
+                <!-- Proposal Update -->
+                <div>
+                    <label for="proposal" class="block text-sm font-medium text-gray-700 mb-2">
+                        Updated Proposal (Optional)
+                    </label>
+                    <textarea id="proposal" 
+                              name="proposal" 
+                              rows="6"
+                              class="w-full border border-gray-300 rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="You can update your proposal to strengthen your final bid. If left empty, your Round 1 proposal will be used..."><%= bid.round2Bid ? bid.round2Bid.proposal : bid.proposal %></textarea>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Optional: Update your proposal to strengthen your final bid. If left empty, your Round 1 proposal will be used.
+                    </p>
+                </div>
+
+                <!-- Revision Info -->
+                <% if (bid.round2Bid) { %>
+                <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-history text-yellow-500 mr-3"></i>
+                        <div>
+                            <p class="text-sm text-yellow-700">
+                                <strong>Previous Round 2 Submission:</strong> You've already submitted a Round 2 bid. 
+                                This update will replace your previous submission.
+                            </p>
+                            <p class="text-xs text-yellow-600 mt-1">
+                                Previous submission: <%= moment(bid.round2Bid.submittedAt).format('MMM D, h:mm A') %>
+                                • Revisions: <%= bid.round2Bid.revisionCount %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Bidding Strategy Tips -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-green-800 mb-3">Final Round Bidding Strategy</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-green-700">
+                    <div class="flex items-start">
+                        <i class="fas fa-bullseye mr-2 mt-1"></i>
+                        <span><strong>Goal: Be the lowest bidder</strong> when the 24-hour timer ends</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-sync-alt mr-2 mt-1"></i>
+                        <span><strong>Multiple updates allowed</strong> - monitor competitors and adjust</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-chart-line mr-2 mt-1"></i>
+                        <span>Balance <strong>competitiveness</strong> with <strong>profitability</strong></span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-stopwatch mr-2 mt-1"></i>
+                        <span>Submit your <strong>final bid</strong> before the countdown ends</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Win Conditions -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-red-800 mb-3">Automatic Winner Selection</h3>
+                <div class="space-y-2 text-sm text-red-700">
+                    <div class="flex items-center">
+                        <i class="fas fa-trophy mr-2"></i>
+                        <span><strong>Winner:</strong> Lowest bidder when Round 2 ends → Moves to "Won" section</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <span><strong>Other Two Bidders:</strong> Automatically moved to "Lost" section</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-users-slash mr-2"></i>
+                        <span><strong>Waiting Queue:</strong> All waiting sellers automatically moved to "Lost"</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-file-contract mr-2"></i>
+                        <span><strong>Contract Process:</strong> Automatically starts for the winner</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Submit Final Bid</h3>
+                        <p class="text-gray-600 text-sm">
+                            <% if (bid.round2Bid) { %>
+                                This will update your existing Round 2 bid. You can submit multiple times before the deadline.
+                            <% } else { %>
+                                This is your first Round 2 bid submission. You can update it multiple times.
+                            <% } %>
+                        </p>
+                    </div>
+                    <div class="space-x-4">
+                        <a href="/seller/my-bids" 
+                           class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition duration-300">
+                            Back to Bids
+                        </a>
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 font-semibold">
+                            <i class="fas fa-trophy mr-2"></i>
+                            <%= bid.round2Bid ? 'Update Final Bid' : 'Submit Final Bid' %>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Important Notice -->
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                        <p class="text-sm text-blue-700">
+                            <strong>Final Round Rules:</strong> The lowest bidder when the 24-hour countdown ends automatically wins. 
+                            You can update your bid multiple times until the deadline. All other bidders (including waiting queue) 
+                            are automatically moved to lost when this round starts.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Auto-save Indicator -->
+                <div id="auto-save-indicator" class="mt-3 text-xs text-gray-500 text-center hidden">
+                    <i class="fas fa-save mr-1"></i> Draft auto-saved locally
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const amountInput = document.getElementById('amount');
+        const proposalInput = document.getElementById('proposal');
+        const submitBtn = document.getElementById('submitBtn');
+        const countdownElement = document.getElementById('round2-countdown');
+        const autoSaveIndicator = document.getElementById('auto-save-indicator');
+
+        // Real-time countdown update
+        function updateCountdown() {
+            const endTime = new Date('<%= project.biddingRounds.round2.endDate %>');
+            const now = new Date();
+            const timeLeft = endTime - now;
+            
+            if (timeLeft <= 0) {
+                // Round 2 ended
+                form.style.opacity = '0.6';
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-clock mr-2"></i>Round Ended';
+                countdownElement.textContent = 'Round completed - Winner being selected';
+                countdownElement.classList.add('text-red-600');
+                return;
+            }
+            
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            
+            // Warning when less than 1 hour remaining
+            if (hours === 0 && minutes < 60) {
+                countdownElement.classList.add('text-red-600', 'font-bold');
+            }
+        }
+
+        // Update countdown every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Auto-save draft functionality
+        let autoSaveTimeout;
+        function autoSaveDraft() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                const draftData = {
+                    amount: amountInput.value,
+                    proposal: proposalInput.value,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Save to localStorage
+                localStorage.setItem(`round2_draft_<%= project._id %>`, JSON.stringify(draftData));
+                
+                // Show auto-save indicator
+                autoSaveIndicator.classList.remove('hidden');
+                setTimeout(() => {
+                    autoSaveIndicator.classList.add('hidden');
+                }, 2000);
+                
+                console.log('Draft auto-saved');
+            }, 2000);
+        }
+
+        // Load draft if exists
+        function loadDraft() {
+            const savedDraft = localStorage.getItem(`round2_draft_<%= project._id %>`);
+            if (savedDraft) {
+                const draft = JSON.parse(savedDraft);
+                if (!amountInput.value || amountInput.value === '<%= bid.amount %>') {
+                    amountInput.value = draft.amount;
+                }
+                if (!proposalInput.value || proposalInput.value === '<%= bid.proposal %>') {
+                    proposalInput.value = draft.proposal;
+                }
+                console.log('Draft loaded from local storage');
+            }
+        }
+
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const errors = [];
+            const amount = parseFloat(amountInput.value);
+            const minAmount = parseFloat(amountInput.min);
+            
+            // Validate bid amount
+            if (!amount || isNaN(amount)) {
+                errors.push('Please enter a valid bid amount');
+            } else if (amount < minAmount) {
+                errors.push(`Bid amount must be at least $${minAmount}`);
+            }
+            
+            // Check if round has ended
+            const endTime = new Date('<%= project.biddingRounds.round2.endDate %>');
+            if (new Date() > endTime) {
+                errors.push('Round 2 has ended. Bidding is closed.');
+            }
+            
+            if (errors.length > 0) {
+                alert('Error: ' + errors.join(', '));
+                return;
+            }
+            
+            // Clear draft on successful submission
+            localStorage.removeItem(`round2_draft_<%= project._id %>`);
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+            submitBtn.disabled = true;
+            
+            // Submit form
+            form.submit();
+        });
+
+        // Set up auto-save listeners
+        amountInput.addEventListener('input', autoSaveDraft);
+        proposalInput.addEventListener('input', autoSaveDraft);
+
+        // Load draft on page load
+        loadDraft();
+
+        // Auto-refresh for real-time status updates (every 30 seconds)
+        setInterval(() => {
+            const endTime = new Date('<%= project.biddingRounds.round2.endDate %>');
+            const timeLeft = endTime - new Date();
+            
+            // Only refresh if round is active and we have time left
+            if (timeLeft > 0 && timeLeft < 30 * 60 * 1000) { // Refresh if less than 30 minutes left
+                console.log('Auto-refreshing for final round updates...');
+                location.reload();
+            }
+        }, 30000);
+    });
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>
