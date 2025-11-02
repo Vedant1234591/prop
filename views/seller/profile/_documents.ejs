@@ -1,32 +1,95 @@
-<section id="documents" class="bg-white rounded-2xl shadow p-6">
-  <h2 class="text-xl font-semibold text-[rgb(49,94,113)] mb-4">
-    🧾 Uploaded Documents
-  </h2>
+<section
+  id="documents"
+  class="bg-white rounded-2xl shadow border border-transparent hover:border-[var(--propload-secondary)] hover:shadow-lg transition-all duration-300 p-8 font-[Poppins]"
+>
+  <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
+    <div>
+      <h2 class="text-2xl font-bold text-secondary flex items-center gap-2">
+        <i class="fas fa-file-alt text-primary"></i>
+        Uploaded Documents
+      </h2>
+      <p class="text-gray-500 text-sm mt-2 font-medium">
+        Official identification and verification documents uploaded for your business.
+      </p>
+    </div>
+    <a
+      href="/seller/upload-documents"
+      class="bg-secondary text-white px-5 py-2.5 rounded-md font-medium text-sm shadow-sm hover:opacity-90 transition duration-300"
+    >
+      Upload
+    </a>
+  </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-gray-50 p-4 rounded-lg border text-center">
-      <h3 class="font-medium text-[rgb(49,94,113)] mb-2">Aadhaar</h3>
-      <% if (seller?.Aadhaar?.secure_url) { %>
-      <img
-        src="<%= seller.Aadhaar.secure_url %>"
-        alt="Aadhaar"
-        class="mx-auto w-40 rounded shadow"
-      />
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Aadhaar -->
+    <div
+      class="bg-gray-50 p-6 rounded-xl border border-gray-200 hover:border-[var(--propload-secondary)] hover:bg-[var(--propload-primary)]/20 shadow-sm hover:shadow-md transition duration-300 text-center"
+    >
+      <h3 class="font-semibold text-secondary mb-3 text-lg">Aadhaar</h3>
+
+      <% if (seller?.Aadhaar?.secure_url) { 
+           const aadhaarUrl = seller.Aadhaar.secure_url;
+           const isPdf = aadhaarUrl.toLowerCase().endsWith('.pdf');
+      %>
+        <div class="relative inline-block text-center">
+          <% if (isPdf) { %>
+            <div class="flex flex-col items-center justify-center bg-gray-100 p-6 rounded-lg shadow-sm">
+              <i class="fas fa-file-pdf text-red-500 text-5xl mb-3"></i>
+              <p class="text-gray-600 font-medium text-sm mb-2">Aadhaar PDF Document</p>
+            </div>
+          <% } else { %>
+            <img
+              src="<%= aadhaarUrl %>"
+              alt="Aadhaar"
+              class="mx-auto w-48 h-auto rounded-lg shadow-md border border-gray-300 hover:scale-[1.02] transition duration-300"
+            />
+          <% } %>
+          <a
+            href="/seller/profile/documents/<%=  seller._id  %>"
+            target="_blank"
+            class="absolute bottom-2 right-2 bg-secondary text-white text-xs px-3 py-1 rounded-full shadow-sm hover:opacity-90 transition"
+          >
+            View
+          </a>
+        </div>
       <% } else { %>
-      <p class="text-gray-500 text-sm">Not uploaded</p>
+        <p class="text-gray-500 text-sm font-medium">Not uploaded</p>
       <% } %>
     </div>
 
-    <div class="bg-gray-50 p-4 rounded-lg border text-center">
-      <h3 class="font-medium text-[rgb(49,94,113)] mb-2">Pancard</h3>
-      <% if (seller?.Pancard?.secure_url) { %>
-      <img
-        src="<%= seller.Pancard.secure_url %>"
-        alt="PAN"
-        class="mx-auto w-40 rounded shadow"
-      />
+    <!-- Pancard -->
+    <div
+      class="bg-gray-50 p-6 rounded-xl border border-gray-200 hover:border-[var(--propload-secondary)] hover:bg-[var(--propload-primary)]/20 shadow-sm hover:shadow-md transition duration-300 text-center"
+    >
+      <h3 class="font-semibold text-secondary mb-3 text-lg">PAN Card</h3>
+
+      <% if (seller?.Pancard?.secure_url) { 
+           const panUrl = seller.Pancard.secure_url;
+           const isPdf = panUrl.toLowerCase().endsWith('.pdf');
+      %>
+        <div class="relative inline-block text-center">
+          <% if (isPdf) { %>
+            <div class="flex flex-col items-center justify-center bg-gray-100 p-6 rounded-lg shadow-sm">
+              <i class="fas fa-file-pdf text-red-500 text-5xl mb-3"></i>
+              <p class="text-gray-600 font-medium text-sm mb-2">PAN PDF Document</p>
+            </div>
+          <% } else { %>
+            <img
+              src="<%= panUrl %>"
+              alt="PAN Card"
+              class="mx-auto w-48 h-auto rounded-lg shadow-md border border-gray-300 hover:scale-[1.02] transition duration-300"
+            />
+          <% } %>
+          <a
+            href="/seller/profile/documents/<%= seller._id %>"
+            target="_blank"
+            class="absolute bottom-2 right-2 bg-secondary text-white text-xs px-3 py-1 rounded-full shadow-sm hover:opacity-90 transition"
+          >
+            View
+          </a>
+        </div>
       <% } else { %>
-      <p class="text-gray-500 text-sm">Not uploaded</p>
+        <p class="text-gray-500 text-sm font-medium">Not uploaded</p>
       <% } %>
     </div>
   </div>

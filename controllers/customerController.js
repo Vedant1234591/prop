@@ -1339,6 +1339,24 @@ exports.downloadCertificate = async (req, res) => {
 };
 
 // Update Profile Information
+exports.getupdateProfile= async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      req.flash("error", "User not found");
+      return res.redirect("/customer/profile");
+    }
+
+    res.render('customer/editProfile', { user });
+  } catch (error) {
+    console.error("Get profile edit error:", error);
+    req.flash("error", "Error loading profile edit page");
+    res.redirect("/customer/profile");
+  }
+};
+
+
+// Update Profile Information
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, address, city, state, zipCode, bio } = req.body;
@@ -1374,6 +1392,11 @@ exports.updateProfile = async (req, res) => {
     res.redirect("/customer/profile");
   }
 };
+
+exports.changePasswordPage = (req, res) => {
+  res.render('customer/changePassword', { messages: req.flash(), user: req.session.user });
+}
+
 
 // Change Password
 exports.changePassword = async (req, res) => {
@@ -1709,9 +1732,10 @@ exports.postProjectStep3 = async (req, res) => {
     await project.save();
 
     console.log("✅ Project created successfully:", project._id);
-
+const userData = req.session.user
     const Notice = require("../models/Notice");
     await Notice.create({
+      targetId :userData._id ,
       title: `New Project Submitted - ${project.title}`,
       content: `A new project "${project.title}" has been submitted for verification.`,
       targetAudience: "admin",
@@ -1962,6 +1986,114 @@ exports.downloadFinalCertificate = async (req, res) => {
     }
 };
 
+
+
+
+
+
+
+// Download Customer Contract
+// exports.downloadCustomerContract = async (req, res) => {
+
+//   console.log("Debugging downloading customer contract")
+//     try {
+//         const { bidId } = req.params;
+//         const customerId = req.session.userId;
+
+//   console.log("Debugging downloading customer contract 1")
+
+
+//         const bid = await Bid.findOne({ _id: bidId }).populate('project');
+//         if (!bid || bid.project.customer.toString() !== customerId) {
+//             req.flash('error', 'Unauthorized access');
+//             return res.redirect('/customer/my-projects');
+//         }
+
+//         const contract = await Contract.findOne({ bid: bidId });
+//         if (!contract || !contract.customerSignedContract?.url) {
+//             req.flash('error', 'Customer contract not available');
+//             return res.redirect('/customer/my-projects');
+//         }
+
+//         console.log("The url",contract.customerSignedContract.url)
+
+//         res.redirect(contract.customerSignedContract.url);
+//     } catch (error) {
+//         console.error('❌ Download customer contract error:', error);
+//         req.flash('error', 'Error downloading customer contract');
+//   console.log("Debugging downloading customer contract 2")
+
+//         res.redirect('/customer/my-projects');
+//     }
+// };
+
+// const cloudinary = require('cloudinary').v2; // Make sure cloudinary is configured
+
+// exports.downloadCustomerContract = async (req, res) => {
+//   console.log("📥 downloadCustomerContract called");
+
+//   try {
+//     const { bidId } = req.params;
+//     const customerId = req.session.userId;
+
+//     console.log("🔹 bidId:", bidId);
+//     console.log("🔹 customerId from session:", customerId);
+
+//     const bid = await Bid.findOne({ _id: bidId }).populate('project');
+//     if (!bid || bid.project.customer.toString() !== customerId) {
+//       req.flash('error', 'Unauthorized access');
+//       return res.redirect('/customer/my-projects');
+//     }
+
+//     const contract = await Contract.findOne({ bid: bidId });
+//     if (!contract || !contract.customerSignedContract?.url) {
+//       console.log("❌ Customer contract missing");
+//       req.flash("error", "Customer contract not available yet");
+//       return res.redirect("/customer/my-projects");
+//     }
+
+//     // Extract public_id
+//      const publicId = contract.customerSignedContract.public_id
+//     // const publicId = contract.customerSignedContract.public_id
+//     //   ? contract.customerSignedContract.public_id
+//     //   : contract.customerSignedContract.url.split("/upload/")[1]?.split(".pdf")[0];
+
+//     console.log("📂 Extracted publicId:", publicId);
+
+//     // Generate signed Cloudinary URL for authenticated download
+//   const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
+//   resource_type: "raw",
+//   type: "authenticated",
+//   attachment: true,
+// });
+
+
+//     console.log("🔗 Signed URL generated:", signedUrl);
+
+//     // Set headers (optional)
+//     res.setHeader(
+//       "Content-Disposition",
+//       `attachment; filename="customer_contract_${bidId}.pdf"`
+//     );
+//     res.setHeader("Content-Type", "application/pdf");
+
+//     console.log("✅ Redirecting to signed URL...");
+//     return res.redirect(signedUrl);
+
+//   } catch (error) {
+//     console.error("❌ Download customer contract error:", error);
+//     req.flash("error", "Error downloading customer contract: " + error.message);
+//     return res.redirect("/customer/my-projects");
+//   }
+// };
+
+
+
+
+
+// Download Seller Contract
+
+
 exports.downloadCustomerContract = async (req, res) => {
   console.log("📥 downloadCustomerContract called");
 
@@ -1972,10 +2104,10 @@ exports.downloadCustomerContract = async (req, res) => {
     console.log("🔹 bidId:", bidId);
     console.log("🔹 customerId from session:", customerId);
 
-    const bid = await Bid.findOne({ _id: bidId }).populate('project');
+    const bid = await Bid.findOne({ _id: bidId }).populate("project");
     if (!bid || bid.project.customer.toString() !== customerId) {
-      req.flash('error', 'Unauthorized access');
-      return res.redirect('/customer/my-projects');
+      req.flash("error", "Unauthorized access");
+      return res.redirect("/customer/my-projects");
     }
 
     const contract = await Contract.findOne({ bid: bidId });
@@ -1985,32 +2117,27 @@ exports.downloadCustomerContract = async (req, res) => {
       return res.redirect("/customer/my-projects");
     }
 
-    // Extract public_id
-    const publicId = contract.customerSignedContract.public_id
-      ? contract.customerSignedContract.public_id
-      : contract.customerSignedContract.url.split("/upload/")[1]?.split(".pdf")[0];
-
+    // Use exact public_id from Cloudinary
+    const publicId = contract.customerSignedContract.public_id;
     console.log("📂 Extracted publicId:", publicId);
 
-    // Generate signed Cloudinary URL for authenticated download
-    const signedUrl = cloudinary.utils.private_download_url(publicId, "pdf", {
-      resource_type: "raw",
-      type: "authenticated",
-      attachment: true, // forces download
+    // Generate signed Cloudinary URL (no format argument)
+    const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
+      resource_type: "raw",       // must be "raw" for PDF
+      type: "upload",      // file is private
+      attachment: true,           // force download
     });
 
     console.log("🔗 Signed URL generated:", signedUrl);
 
-    // Set headers (optional)
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="customer_contract_${bidId}.pdf"`
     );
     res.setHeader("Content-Type", "application/pdf");
 
-    console.log("✅ Redirecting to signed URL...");
+    console.log("✅ Redirecting to signed Cloudinary download URL...");
     return res.redirect(signedUrl);
-
   } catch (error) {
     console.error("❌ Download customer contract error:", error);
     req.flash("error", "Error downloading customer contract: " + error.message);
@@ -2018,72 +2145,77 @@ exports.downloadCustomerContract = async (req, res) => {
   }
 };
 
-// Download Seller Contract
+
+
+
+
+
+
+
 exports.downloadSellerContract = async (req, res) => {
-    try {
-        const { bidId } = req.params;
-        const customerId = req.session.userId;
+  console.log("📥 downloadSellerContract called");
 
-        const bid = await Bid.findOne({ _id: bidId }).populate('project');
-        if (!bid || bid.project.customer.toString() !== customerId) {
-            req.flash('error', 'Unauthorized access');
-            return res.redirect('/customer/my-projects');
-        }
+  try {
+    const { bidId } = req.params;
+    const customerId = req.session.userId;
 
-        const contract = await Contract.findOne({ bid: bidId });
-        if (!contract || !contract.sellerSignedContract?.url) {
-            req.flash('error', 'Seller contract not available');
-            return res.redirect('/customer/my-projects');
-            
-        }
+    console.log("🔹 bidId:", bidId);
+    console.log("🔹 customerId from session:", customerId);
 
+    // 1️⃣ Validate access
+    const bid = await Bid.findOne({ _id: bidId }).populate("project");
+    if (!bid || bid.project.customer.toString() !== customerId) {
+      req.flash("error", "Unauthorized access");
+      return res.redirect("/customer/my-projects");
+    }
 
-      //     let publicId = contract.sellerSignedContract.public_id
-      // ? contract.sellerSignedContract.public_id
-      // : contract.sellerSignedContract.url.split("/upload/")[1]?.split(".pdf")[0];
+    // 2️⃣ Fetch contract record
+    const contract = await Contract.findOne({ bid: bidId });
+    if (!contract || !contract.sellerSignedContract?.url) {
+      req.flash("error", "Seller contract not available yet");
+      return res.redirect("/customer/my-projects");
+    }
 
-         let publicId = contract.sellerSignedContract.public_id
-    
-publicId = `${publicId}.pdf`;
-  // const publicId  =   publicId.append(".pdf")
-  console.log("📂 Extracted publicId:", publicId);
- 
+    // 3️⃣ Extract Cloudinary public_id safely
+    let publicId = contract.sellerSignedContract.public_id;
+    if (!publicId) {
+      const urlPart = contract.sellerSignedContract.url.split("/upload/")[1];
+      publicId = urlPart?.split(".pdf")[0];
+    }
 
+    console.log("📂 Extracted publicId:", publicId);
 
-     const signedUrl = cloudinary.utils.private_download_url(publicId, "pdf", {
+    // 4️⃣ Generate signed Cloudinary URL for download
+    // Use type=upload because your uploadContracts uses that (not authenticated)
+    const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
       resource_type: "raw",
-      type: "authenticated",
-      attachment: true, // forces download
+      type: "upload", // ✅ matches your uploader config
+      attachment: true, // ✅ forces browser download
     });
 
     console.log("🔗 Signed URL generated:", signedUrl);
 
-     // Set headers (optional)
+    // 5️⃣ Set headers for clean file download
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="seller_contract_${bidId}.pdf"`
     );
     res.setHeader("Content-Type", "application/pdf");
 
-    console.log("✅ Redirecting to signed URL...");
+    console.log("✅ Redirecting to signed Cloudinary download URL...");
+    return res.redirect(signedUrl);
 
-    //  return res.redirect(signedUrl);
-
-
-
-
-        res.redirect(contract.sellerSignedContract.url);
-    } catch (error) {
-        console.error('❌ Download seller contract error:', error);
-        req.flash('error', 'Error downloading seller contract');
-        res.redirect('/customer/my-projects');
-    }
-
-    
+  } catch (error) {
+    console.error("❌ Download seller contract error:", error);
+    req.flash("error", "Error downloading seller contract: " + error.message);
+    return res.redirect("/customer/my-projects");
+  }
 };
 
 
 
+
+// Configure Cloudinary
 
 // Fix Round 2 completion to select HIGHEST bid
 
