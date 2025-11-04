@@ -1873,6 +1873,66 @@ exports.getMyProjects = async (req, res) => {
     }
 };
 
+exports.getActiveProjects = async (req, res) => {
+  try {
+    const customerId = req.session.userId;
+    console.log('🟢 Loading active projects for customer:', customerId);
+
+    const projects = await Project.find({
+      customer: customerId,
+      status: { $ne: 'deleted' }
+    })
+      .populate('selectedBid')
+      .populate('bids')
+      .sort({ createdAt: -1 });
+
+    console.log(`📋 Found ${projects.length} total projects`);
+
+    const projectsWithContracts = await Promise.all(
+      projects.map(async (project) => {
+        let contract = null;
+
+        if (project.selectedBid) {
+          contract = await Contract.findOne({ bid: project.selectedBid._id })
+            .populate('customer', 'name email')
+            .populate('seller', 'name companyName email')
+            .populate('bid', 'amount proposal');
+        }
+
+        return {
+          ...project.toObject(),
+          contract,
+          hasContract: !!contract
+        };
+      })
+    );
+
+    // ✅ Only keep projects that have a contract that is *completed or active*
+    const activeProjects = projectsWithContracts.filter(p => 
+      p.contract && 
+      ['active', 'in-progress', 'completed'].includes(p.contract.status)
+    );
+
+    console.log(`✅ Found ${activeProjects.length} active projects`);
+
+    const userData = req.session.user || { name: "Customer", email: "" };
+
+    res.render('customer/ActiveProjects', {
+      user: userData,
+      currentPage: 'active-projects',
+      projects: activeProjects,
+      moment: require('moment')
+    });
+
+  } catch (error) {
+    console.error('❌ Get active projects error:', error);
+    req.flash('error', 'Error loading active projects: ' + error.message);
+    res.redirect('/customer/dashboard');
+  }
+};
+
+
+
 exports.downloadCustomerCertificate = async (req, res) => {
   try {
     const { bidId } = req.params;
@@ -2541,10 +2601,10 @@ exports.updateStatuses = async (req, res) => {
     await statusAutomation.handleExpiredResubmissions();
     
     // Handle completed rounds
-    await statusAutomation.handleCompletedRounds();
+    // await statusAutomation.updateAllProjectStatuses();
 
     req.flash('success', 'Status updates completed successfully!');
-    res.redirect('/customer/my-projects');
+    res.redirect('/customer/dashboard');
   } catch (error) {
     console.error('Status update error:', error);
     req.flash('error', 'Error updating statuses: ' + error.message);

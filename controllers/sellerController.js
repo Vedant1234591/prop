@@ -1477,9 +1477,66 @@ exports.updateRound2Bid = async (req, res) => {
 };
 
 
+
+
 exports.serveSellerDocument = async (req, res) => {
-  console.log("dfghjkldfghjk",req.params)
-}
+  console.log("📥 serveSellerDocument called with params:", req.params);
+
+  try {
+    const { sellerId, docType } = req.params;
+    const sessionUserId = req.session.userId;
+
+    // Ensure session user exists
+    if (!sessionUserId) {
+      req.flash("error", "Session expired. Please log in again.");
+      return res.redirect("/seller/login");
+    }
+
+    // Verify seller matches logged-in user
+    const seller = await Seller.findOne({ _id: sellerId, userId: sessionUserId });
+    if (!seller) {
+      req.flash("error", "Unauthorized access to seller document.");
+      return res.redirect("/seller/profile");
+    }
+
+    // Validate document type
+    const validDocs = ["aadhaar", "pan"];
+    if (!validDocs.includes(docType.toLowerCase())) {
+      req.flash("error", "Invalid document type requested.");
+      return res.redirect("/seller/profile");
+    }
+
+    // Pick correct document field
+    const fileData =
+      docType.toLowerCase() === "aadhaar" ? seller.Aadhaar : seller.Pancard;
+
+    if (!fileData?.public_id || !fileData?.secure_url) {
+      req.flash("error", `${docType} document not found.`);
+      return res.redirect("/seller/profile");
+    }
+
+    console.log(`📄 Serving ${docType} document for seller:`, seller._id);
+
+    // Generate a secure Cloudinary signed URL for download/view
+    const signedUrl = cloudinary.utils.private_download_url(
+      fileData.public_id,
+      fileData.format || null,
+      {
+        resource_type: fileData.resource_type || "image",
+        type: "upload",
+        attachment: false, // 'false' = open in browser, not forced download
+      }
+    );
+
+    // Redirect browser to Cloudinary’s secure link
+    return res.redirect(signedUrl);
+  } catch (error) {
+    console.error("❌ serveSellerDocument error:", error);
+    req.flash("error", "Error viewing seller document: " + error.message);
+    return res.redirect("/seller/profile");
+  }
+};
+
 
 
 // NEW: Function to automatically complete Round 2 and select winner
@@ -2133,6 +2190,7 @@ exports.getRound1BiddingForm = async (req, res) => {
       console.log('Creating default agreements for category:', project.category);
       agreements = new Agreement({
         category: project.category,
+         project: project._id, 
         clauses: Agreement.getDefaultClauses(project.category)
       });
       await agreements.save();
@@ -2149,6 +2207,7 @@ exports.getRound1BiddingForm = async (req, res) => {
 
     res.render("seller/round1-bidding-form", {
       user: userData,
+      project: project._id,
       currentPage: "find-bids",
       project: project,
       agreements: agreements,

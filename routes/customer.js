@@ -11,6 +11,7 @@ router.use(requireRole('customer'));
 // ==================== DASHBOARD & NAVIGATION ====================
 router.get('/dashboard', customerController.getDashboard);
 router.get('/my-projects', customerController.getMyProjects);
+router.get('/Active-projects', customerController.getActiveProjects);
 router.get('/bids', customerController.getBids);
 router.get('/won-projects', customerController.getWonProjects);
 router.get('/profile', customerController.getProfile);
