@@ -48,6 +48,6 @@ router.get('/project/:projectId/round2-bidding', sellerController.getSellerRound
 router.post('/project/:projectId/update-round2-bid', sellerController.updateRound2Bid);
 
 //seller profile documents access
-router.get('/profile/documents/:filename', sellerController.serveSellerDocument);
+router.get('/profile/documents/:sellerId/:docType', sellerController.serveSellerDocument);
 
 module.exports = router;
