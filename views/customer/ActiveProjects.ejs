@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Active Projects - Propload</title>
+
+  <!-- Tailwind & FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+  <style>
+    :root {
+      --propload-primary: #e9e2b3;
+      --propload-secondary: #2f6c7b;
+      --surface: #ffffff;
+      --muted: #6b7280;
+      --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+    }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border-radius: 1rem;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s ease;
+      border: 1px solid #e5e7eb;
+    }
+
+    .project-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+    }
+
+    .btn-primary {
+      background: var(--propload-secondary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: #244f5b;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--propload-secondary);
+      color: var(--propload-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .info-icon {
+      color: rgb(215, 64, 41);
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <%- include('./sideNav') %>
+
+  <div class="ml-0 md:ml-64 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+
+      <!-- Header -->
+      <div class="flex justify-between items-center ml-5 mb-8">
+        <div class="flex items-center space-x-2">
+          <a href="/customer/dashboard" class="text-[var(--propload-secondary)] hover:text-gray-800">
+            <i class="fas fa-arrow-left text-xl"></i>
+          </a>
+          <h1 class="text-3xl font-bold text-gray-500">Active Projects</h1>
+        </div>
+        <div class="flex gap-3">
+          <a href="/customer/update-statuses"
+            class="btn-outline hover:bg-[var(--propload-secondary)] hover:text-white transition duration-300 flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i> Update Statuses
+          </a>
+        </div>
+      </div>
+
+      <%- include('../partials/flash-messages') %>
+
+      
+      <% if (projects.length > 0) { %>
+        <div class="space-y-6">
+          <% projects.forEach(project => { %>
+            <div class="project-card ml-5 p-8">
+
+              <!-- Title and Status -->
+              <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+                <div>
+                  <h2 class="uppercase text-2xl font-semibold text-gray-900">
+                    <%= project.title || 'Untitled Project' %>
+                  </h2>
+                  <p class="text-sm text-gray-500">
+                    <i class="fas fa-map-marker-alt mr-1 text-[var(--propload-secondary)]"></i>
+                    <%= project.location && project.location.city
+                        ? `${project.location.city}, ${project.location.state || ''}`
+                        : 'Location not set' %>
+                  </p>
+                </div>
+                
+
+                <a href="/customer/contract-status/<%= project._id %>" 
+   class="border border-blue-200 font-semibold rounded p-2 text-center inline-block 
+          transition-all duration-300 hover:text-white hover:bg-blue-500 ">
+  <h2 class="text-sm uppercase text-gray-600 hover:text-white">
+    PROP/<%= new Date(project.createdAt).getFullYear() %>/<%= project._id.toString() %>
+  </h2>
+</a>
+
+
+                <div class="flex items-center gap-2">
+                  <span class="status-badge bg-green-100 text-green-700">
+                    ACTIVE
+                  </span>
+
+                  <% if ( project.contract.status === 'completed') { %>
+                    <span class="status-badge bg-blue-100 text-blue-700">
+                      CONTRACT COMPLETED
+                    </span>
+                  <% } %>
+                </div>
+              </div>
+
+              <!-- Image -->
+              <% if (project.featuredImage && project.featuredImage.url) { %>
+                <img src="<%= project.featuredImage.url %>" alt="Project image"
+                  class="w-full h-56 object-cover rounded-lg mb-4"
+                  onerror="this.style.display='none'">
+              <% } %>
+
+              <!-- Description -->
+              <p class="text-gray-700 mb-4 leading-relaxed">
+                <%= project.description || 'No description provided.' %>
+              </p>
+
+              <!-- Meta Info -->
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm text-gray-600 mb-4">
+                <div><i class="fas fa-tag mr-2 text-[var(--propload-secondary)]"></i>
+                  <%= project.category ? project.category.replace('-', ' ') : 'General' %>
+                </div>
+                <div><i class="fas fa-calendar mr-2 text-green-600"></i>
+                  Starts: <%= project.timeline?.startDate ? moment(project.timeline.startDate).format('MMM D, YYYY') : 'Not set' %>
+                </div>
+                <div><i class="fas fa-dollar-sign mr-2 text-yellow-600"></i>
+                  Estimated Cost: $<%= project.bidSettings?.startingBid || 0 %>
+                </div>
+                <div><i class="fas fa-gavel mr-2 text-purple-600"></i>
+                  <%= project.bids?.length || 0 %> Bids
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="flex flex-wrap gap-3">
+                <a href="/customer/project/<%= project._id %>"
+                  class="btn-primary flex items-center gap-2">
+                  <i class="fas fa-eye"></i> View Details
+                </a>
+
+                <% if (project.contract && project.contract.status === 'completed') { %>
+                  <a href="/customer/contract-status/<%= project._id %>"
+                    class="btn-outline flex items-center gap-2 bg-blue-600 text-white border-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-file-contract"></i> View Contract
+                  </a>
+                <% } %>
+              </div>
+
+              <!-- Contract Info -->
+              <% if (project.contract) { %>
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <i class="fas fa-file-contract text-blue-700 mr-2"></i>
+                  Contract Status:
+                  <span class="font-medium text-blue-800">
+                    <%= project.contract.status.replace('-', ' ') %>
+                  </span>
+                </div>
+              <% } %>
+
+            </div>
+          <% }) %>
+        </div>
+
+      <% } else { %>
+        <div class="text-center py-16 bg-white rounded-lg shadow ml-3">
+          <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Projects</h3>
+          <p class="text-gray-500 mb-6">Currently, there are no projects with completed contracts.</p>
+          <a href="/customer/my-projects" class="btn-primary">
+            <i class="fas fa-arrow-left mr-2"></i> Back to My Projects
+          </a>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+
+  <script>
+    // Optional auto-refresh if needed
+    setInterval(() => {
+      const activeProjects = document.querySelectorAll('.project-card');
+      if (activeProjects.length > 0) {
+        console.log('Refreshing active projects list...');
+        location.reload();
+      }
+    }, 60000);
+  </script>
+</body>
+</html>
