@@ -6,6 +6,8 @@ const { upload } = require("../middleware/upload");
 
 router.get("/", authController.getLandingPage);
 router.get("/login", authController.getLogin);
+router.get("/about", authController.getAbout);
+router.get("/contact-us", authController.getContact);
 
 //otp for login
 router.get("/login-otp", authController.getLogin_otp);

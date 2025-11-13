@@ -25,6 +25,13 @@ exports.getLogin = (req, res) => {
   res.render("auth/login");
 };
 
+exports.getAbout = (req,res)=>{
+  res.render("auth/about")
+}
+exports.getContact = (req,res)=>{
+  res.render("auth/contact-us")
+}
+
 
 //uttkarsh 23 oct 
 

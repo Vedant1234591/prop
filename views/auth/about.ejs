@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Login using OTP - Propload</title>
+     <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      .bg-propload {
+        background-color: #e9e2b3;
+      }
+      .bg-propload:hover {
+        background-color: #dcd39e;
+      }
+    </style>
+  </head>
+<body>
+
+  <!-- Include header -->
+  <%- include('../partials/landingHeader') %>
+
+  <!-- About Start -->
+  <div class="container-fluid about py-5">
+    <div class="container py-5">
+      <div class="row g-5 align-items-center">
+        <div class="col-xl-6 wow fadeInLeft" data-wow-delay="0.1s">
+          <div class="about-item-image d-flex">
+            <img src="/images/about/about.jpg" class="img-1 img-fluid w-50" alt="">
+            <img src="/images/about/about-3.jpg" class="img-2 img-fluid w-50" alt="">
+            <div class="about-item-image-content">
+              <img src="/images/about/about-1.png" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="">
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-6 wow fadeInRight" data-wow-delay="0.1s">
+          <div class="about-item-content">
+            <h1 class="text-uppercase text-secondary fs-5 mb-0">
+              Propload is India’s Leading Platform for Real Estate Project Bidding
+            </h1>
+            <h2 class="display-4 text-capitalize mb-3">
+              Making Your Vision Come True with Simplicity
+            </h2>
+            <p class="mb-4 fs-5">
+              Connecting you with the right professionals to bring your project to life, at the best price.
+            </p>
+
+            <div class="pb-4 mb-4 border-bottom">
+              <div class="row g-4">
+                <div class="col-lg-4">
+                  <div class="about-item-content-img">
+                    <img src="/images/about/about-2.jpg" class="img-fluid w-100" alt="">
+                  </div>
+                </div>
+                <div class="col-lg-8">
+                  <div class="d-flex mb-4">
+                    <div class="text-secondary">
+                      <i class="fas fa-user-shield fa-3x"></i>
+                    </div>
+                    <h4 class="ms-3">Easy Project Registration</h4>
+                  </div>
+                  <div class="d-flex">
+                    <div class="text-secondary">
+                      <i class="fas fa-users-cog fa-3x"></i>
+                    </div>
+                    <h4 class="ms-3">Smart Professional Filtering</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row gy-0 gx-4 justify-content-between pb-4">
+              <div class="col-lg-6">
+                <p class="text-dark"><i class="fas fa-check text-secondary me-1"></i> Cost-Effective Solutions</p>
+                <p class="text-dark"><i class="fas fa-check text-secondary me-1"></i> Time-Saving</p>
+              </div>
+              <div class="col-lg-6">
+                <p class="text-dark"><i class="fas fa-check text-secondary me-1"></i> Nationwide Reach</p>
+                <p class="text-dark mb-0"><i class="fas fa-check text-secondary me-1"></i> Trusted Professionals</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- About End -->
+
+  <!-- Fact Counter -->
+  <div class="container-fluid counter py-5">
+    <div class="container py-5">
+      <div class="row g-4">
+        <div class="col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.2s">
+          <div class="counter-box">
+            <div class="counter-item-inner p-5 text-center">
+              <i class="fas fa-thumbs-up fa-4x text-secondary"></i>
+              <h4 class="text-dark my-4">Projects Registered</h4>
+              <div class="counter-counting">
+                <span class="text-secondary fs-2 fw-bold" data-toggle="counter-up">10000</span>
+                <span class="h1 fw-bold text-secondary">+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.4s">
+          <div class="counter-box">
+            <div class="counter-item-inner p-5 text-center">
+              <i class="fas fa-users fa-4x text-secondary"></i>
+              <h4 class="text-dark my-4">Verified Professionals</h4>
+              <div class="counter-counting">
+                <span class="text-secondary fs-2 fw-bold" data-toggle="counter-up">6000</span>
+                <span class="h1 fw-bold text-secondary">+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.6s">
+          <div class="counter-box">
+            <div class="counter-item-inner p-5 text-center">
+              <i class="fas fa-user fa-4x text-secondary"></i>
+              <h4 class="text-dark my-4">Faster Project Matching</h4>
+              <div class="counter-counting">
+                <span class="text-secondary fs-2 fw-bold" data-toggle="counter-up">53</span>
+                <span class="h1 fw-bold text-secondary">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.8s">
+          <div class="counter-box">
+            <div class="counter-item-inner p-5 text-center">
+              <i class="fas fa-heart fa-4x text-secondary"></i>
+              <h4 class="text-dark my-4">Satisfied Customer</h4>
+              <div class="counter-counting">
+                <span class="text-secondary fs-2 fw-bold" data-toggle="counter-up">97</span>
+                <span class="h1 fw-bold text-secondary">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Start -->
+  <div class="container-fluid feature bg-light py-5">
+    <div class="container py-5">
+      <div class="text-center mx-auto pb-5 wow fadeInUp" data-wow-delay="0.2s" style="max-width: 800px;">
+        <p class="text-uppercase text-secondary fs-5 mb-0">Why Us</p>
+        <h2 class="display-4 text-capitalize mb-3">Why Choose Us</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.2s">
+          <div class="feature-item text-center border p-5">
+            <div class="feature-img bg-secondary d-inline-flex p-4">
+              <i class="fas fa-city text-primary fa-5x"></i>
+            </div>
+            <h4 class="d-block my-4">Seamless Project Management</h4>
+            <p>Easily manage your project from start to finish with an intuitive platform that streamlines the process.</p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.4s">
+          <div class="feature-item text-center border p-5">
+            <div class="feature-img bg-secondary d-inline-flex p-4">
+              <i class="fas fa-funnel-dollar text-primary fa-5x"></i>
+            </div>
+            <h4 class="d-block my-4">Competitive Pricing for Your Project</h4>
+            <p>Get the best value for your project by connecting with multiple professionals who offer competitive bids.</p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.6s">
+          <div class="feature-item text-center border p-5">
+            <div class="feature-img bg-secondary d-inline-flex p-4">
+              <i class="fas fa-tools text-primary fa-5x"></i>
+            </div>
+            <h4 class="d-block my-4">Nationwide Network of Experts</h4>
+            <p>Access a vast network of verified professionals across India, ensuring you find the right match for your needs.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Features End -->
+
+  <!-- Team Start -->
+  <div class="container-fluid team py-5">
+    <div class="container py-5">
+      <div class="text-center mx-auto pb-5 wow fadeInUp" data-wow-delay="0.2s" style="max-width: 800px;">
+        <p class="text-uppercase text-secondary fs-5 mb-0">Our Team</p>
+        <h2 class="display-4 text-capitalize mb-3">Expert Team Members</h2>
+      </div>
+<% const employee = "" %>
+      <div class="row g-4">
+        <% if (employee && employee.length > 0) { %>
+          <% employee.forEach(i => { %>
+            <div class="col-lg-3 wow fadeInUp" data-wow-delay="0.2s">
+              <div class="team-item border border-primary p-1">
+                <div class="team-img position-relative">
+                  <img src="/media/<%= i.image %>" class="img-fluid w-100" alt="<%= i.name %>">
+                  <div class="team-icon d-flex justify-content-around position-absolute w-100 bottom-0 pb-3">
+                    <% if (i.facebook) { %>
+                      <a class="btn btn-secondary btn-md-square text-white mx-1" href="<%= i.facebook %>"><i class="fab fa-facebook-f"></i></a>
+                    <% } %>
+                    <% if (i.twitter) { %>
+                      <a class="btn btn-secondary btn-md-square text-white mx-1" href="<%= i.twitter %>"><i class="fab fa-twitter"></i></a>
+                    <% } %>
+                    <% if (i.linkedin) { %>
+                      <a class="btn btn-secondary btn-md-square text-white mx-1" href="<%= i.linkedin %>"><i class="fab fa-linkedin-in"></i></a>
+                    <% } %>
+                    <% if (i.instagram) { %>
+                      <a class="btn btn-secondary btn-md-square text-white mx-1" href="<%= i.instagram %>"><i class="fab fa-instagram"></i></a>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="text-center border border-top-0 bg-white py-3">
+                  <h4 class="mb-0"><%= i.name %></h4>
+                  <p class="mb-0"><%= i.designation %></p>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="col-12 text-center">
+            <p>No team members available.</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <!-- Team End -->
+
+  <!-- Include footer -->
+  <%- include('../partials/landingFooter') %>
+
+</body>
+</html>
