@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Support - Propload</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --propload-primary: #e9e2b3;
+      --propload-secondary: #2f6c7b;
+      --surface: #ffffff;
+      --muted: #6b7280;
+      --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 1rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid #e5e7eb;
+      padding: 1.5rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    .btn-primary {
+      background: var(--propload-secondary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: #244f5b;
+    }
+
+    .faq-item {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Include your sidebar navigation here -->
+<header class=" bg-white py-4">
+  <%- include('../partials/landingHeader') %>
+</header>
+
+
+<section>
+
+    <div class=" max-w-6xl mx-auto px-4  py-8">
+    <%- include('../partials/flash-messages') %>
+
+    <div class="text-gray-500 mb-6 sm:mb-8">
+      <p class="text-3xl sm:text-4xl">
+        Support / <span class="font-semibold text-gray-600">Contact Us</span>
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12">
+      
+      <!-- Contact Form -->
+      <div class="card w-full">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Contact Us</h2>
+          <span class="text-sm text-gray-400">We're here to help!</span>
+        </div>
+
+        <form action="" method="" class="space-y-4">
+          <input type="text" name="name" placeholder="John Doe" required
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--propload-secondary)]">
+          <input type="email" name="email" placeholder="john.doe@example.com" required
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--propload-secondary)]">
+          <input type="text" name="phone" placeholder="123-456-7890"
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--propload-secondary)]">
+          <input type="text" name="subject" placeholder="Subject" required
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--propload-secondary)]">
+          <textarea name="message" placeholder="Your message here" rows="4" required
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--propload-secondary)]"></textarea>
+
+          <button type="submit" class="btn-primary w-full mt-2">Submit</button>
+        </form>
+      </div>
+
+      <!-- FAQs -->
+      <div class="card w-full">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Customer Support FAQs</h2>
+          <span class="text-sm text-gray-400">Frequently Asked Questions</span>
+        </div>
+
+        <div class="space-y-2">
+          <!-- FAQ Items -->
+          <div class="faq-item bg-white rounded-lg shadow-sm transition transform duration-200" onclick="toggleFaq(0)">
+            <div class="flex justify-between items-center p-4 cursor-pointer">
+              <span class="text-gray-800 font-medium">1. How can I reach customer support?</span>
+              <i class="fas fa-chevron-down text-gray-400" id="faq-icon-0"></i>
+            </div>
+            <div class="text-gray-600 px-4 pb-4 hidden" id="faq-answer-0">
+              You can reach our customer support team via email at 
+              <a href="mailto:customersupport@propload.in" class="text-[var(--propload-secondary)]">customersupport@propload.in</a>. Our team is here to help you with any questions.
+            </div>
+          </div>
+
+          <div class="faq-item bg-white rounded-lg shadow-sm transition transform duration-200" onclick="toggleFaq(1)">
+            <div class="flex justify-between items-center p-4 cursor-pointer">
+              <span class="text-gray-800 font-medium">2. What is the response time for customer inquiries?</span>
+              <i class="fas fa-chevron-down text-gray-400" id="faq-icon-1"></i>
+            </div>
+            <div class="text-gray-600 px-4 pb-4 hidden" id="faq-answer-1">
+              Our team typically responds to inquiries within 24 hours on business days. We strive to address urgent issues as quickly as possible.
+            </div>
+          </div>
+
+          <div class="faq-item bg-white rounded-lg shadow-sm transition transform duration-200" onclick="toggleFaq(2)">
+            <div class="flex justify-between items-center p-4 cursor-pointer">
+              <span class="text-gray-800 font-medium">3. Can I update my project details after submission?</span>
+              <i class="fas fa-chevron-down text-gray-400" id="faq-icon-2"></i>
+            </div>
+            <div class="text-gray-600 px-4 pb-4 hidden" id="faq-answer-2">
+              Yes, you can update your project details by contacting our customer support team, who will guide you through the process.
+            </div>
+          </div>
+
+          <div class="faq-item bg-white rounded-lg shadow-sm transition transform duration-200" onclick="toggleFaq(3)">
+            <div class="flex justify-between items-center p-4 cursor-pointer">
+              <span class="text-gray-800 font-medium">4. How do I reset my account password?</span>
+              <i class="fas fa-chevron-down text-gray-400" id="faq-icon-3"></i>
+            </div>
+            <div class="text-gray-600 px-4 pb-4 hidden" id="faq-answer-3">
+              You can reset your password by clicking on "Forgot Password" on the login page and following the instructions sent to your registered email.
+            </div>
+          </div>
+
+          <div class="faq-item bg-white rounded-lg shadow-sm transition transform duration-200" onclick="toggleFaq(4)">
+            <div class="flex justify-between items-center p-4 cursor-pointer">
+              <span class="text-gray-800 font-medium">5. Who can I contact for urgent support outside of business hours?</span>
+              <i class="fas fa-chevron-down text-gray-400" id="faq-icon-4"></i>
+            </div>
+            <div class="text-gray-600 px-4 pb-4 hidden" id="faq-answer-4">
+              For urgent matters outside business hours, please email 
+              <a href="mailto:customersupport@propload.in" class="text-[var(--propload-secondary)]">customersupport@propload.in</a>, and our team will prioritize your request.
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Support Email at bottom -->
+        <div class="mt-6 text-gray-500 text-sm sm:text-base">
+          <h3 class="font-semibold mb-1">Customer Support</h3>
+          <p>Email: <a href="mailto:customersupport@propload.in" class="text-blue-500">customersupport@propload.in</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+</section>
+
+
+  <script>
+    function toggleFaq(index) {
+      const totalFaqs = 5;
+      for(let i = 0; i < totalFaqs; i++) {
+        const answer = document.getElementById(`faq-answer-${i}`);
+        const icon = document.getElementById(`faq-icon-${i}`);
+        const item = icon.closest('.faq-item');
+        if(i === index) {
+          const isHidden = answer.classList.contains('hidden');
+          if(isHidden) {
+            answer.classList.remove('hidden');
+            item.classList.add('scale-105', 'shadow-lg');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+          } else {
+            answer.classList.add('hidden');
+            item.classList.remove('scale-105', 'shadow-lg');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+          }
+        } else {
+          answer.classList.add('hidden');
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
+          const otherItem = icon.closest('.faq-item');
+          otherItem.classList.remove('scale-105', 'shadow-lg');
+        }
+      }
+    }
+  </script>
+  
+
+</body>
+</html>
