@@ -1234,37 +1234,78 @@ exports.deleteNotice = async (req, res) => {
 };
 
 // Helper Functions
-exports.generateCertificateUrl = async (contract) => {
-    return `/certificates/${contract.bid._id}.pdf`;
-};
+// exports.generateCertificateUrl = async (contract) => {
+//     return `/certificates/${contract.bid._id}.pdf`;
+// };
+
+// exports.generateCertificate = async (req, res) => {
+//     try {
+//         const { bidId } = req.params;
+
+//         const bid = await Bid.findById(bidId)
+//             .populate('project')
+//             .populate('seller')
+//             .populate('customer');
+
+//         if (!bid) {
+//             req.flash('error', 'Bid not found');
+//             return res.redirect('/admin/pending-contracts');
+//         }
+//         const certificateUrl = await this.generateCertificateUrl({ bid });
+//         bid.certificateGenerated = true;
+//         bid.certificateUrl = certificateUrl;
+//         await bid.save();
+
+//         req.flash('success', 'Certificate generated successfully!');
+//         res.redirect('/admin/pending-contracts');
+//     } catch (error) {
+//         console.error('Generate certificate error:', error);
+//         req.flash('error', 'Error generating certificate: ' + error.message);
+//         res.redirect('/admin/pending-contracts');
+//     }
+// };
+
+
+
+
+
+
+
 
 exports.generateCertificate = async (req, res) => {
     try {
         const { bidId } = req.params;
+        console.log("Generating certificate for bidId:", bidId);
 
-        const bid = await Bid.findById(bidId)
-            .populate('project')
-            .populate('seller')
-            .populate('customer');
+        // Find contract linked to this bid
+        const contract = await Contract.findOne({ project: bidId })
+            .populate("project")
+            .populate("customer")
+            .populate("seller")
+            .populate("bid");
 
-        if (!bid) {
-            req.flash('error', 'Bid not found');
-            return res.redirect('/admin/pending-contracts');
+        if (!contract) {
+            req.flash("error", "No contract exists for this bid.");
+            return res.redirect("/admin/pending-contracts");
         }
 
-        const certificateUrl = await this.generateCertificateUrl({ bid });
-        bid.certificateGenerated = true;
-        bid.certificateUrl = certificateUrl;
-        await bid.save();
+        console.log("Found contract:", contract._id);
 
-        req.flash('success', 'Certificate generated successfully!');
-        res.redirect('/admin/pending-contracts');
+        // Generate certificate
+        const url = await CertificateService.generateCertificate(contract._id);
+
+        console.log("Certificate generated:", url);
+
+        req.flash("success", "Certificate generated successfully!");
+        res.redirect("/admin/pending-contracts");
+
     } catch (error) {
-        console.error('Generate certificate error:', error);
-        req.flash('error', 'Error generating certificate: ' + error.message);
-        res.redirect('/admin/pending-contracts');
+        console.error("Generate certificate error:", error);
+        req.flash("error", "Error generating certificate: " + error.message);
+        res.redirect("/admin/pending-contracts");
     }
 };
+
 // controllers/adminController.js - ADD THESE METHODS
 
 // NEW: Approve project
