@@ -2008,6 +2008,14 @@ exports.getMyBids = async (req, res) => {
 
     // Get contracts for won bids - FIXED QUERY
     const wonBidIds = bidsByStatus.won.map(bid => bid._id);
+    const firstBid = bidsByStatus.won[0];
+const projectId = firstBid.project;
+const contract11 = await Contract.findOne({ project: projectId })
+    .populate("project")
+    .populate("customer")
+    .populate("seller")
+    .populate("bid");
+
     const contracts = await Contract.find({ 
       bid: { $in: wonBidIds },
       seller: sellerId // Ensure seller can only see their contracts
@@ -2059,9 +2067,11 @@ exports.getMyBids = async (req, res) => {
       bids: bidsByStatus,
       bidCount: bidCount,
       moment: require("moment"),
-      csrfToken: req.csrfToken ? req.csrfToken() : ''
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
+      contract :contract11
+      
     });
-
+console.log("✅ Rendered my-bids page successfully", contract11);
   } catch (error) {
     console.error("❌ My bids error:", error);
     req.flash("error", "Error loading bids: " + error.message);
