@@ -1,11 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const adminController = require("../controllers/adminController");
+const blogController = require("../controllers/blogController");const contactController = require('../controllers/contactController');
 const { ensureAuthenticated, ensureAdmin } = require("../middleware/auth");
 
 // Apply admin middleware to all routes
 router.use(ensureAuthenticated, ensureAdmin);
 
+
+// Public route - contact form submission
+
+
+// Admin routes
+router.get('/contact-submissions', contactController.getContactSubmissions);
+router.get('/contact-submissions/:id', contactController.getContactSubmission);
+router.post('/contact-submissions/:id/update', contactController.updateContactStatus);
+router.post('/contact-submissions/:id/delete', contactController.deleteContactSubmission);
+router.get('/contact-stats', contactController.getContactStats);
 // Dashboard
 router.get("/dashboard", adminController.getDashboard);
 // verify seller
@@ -50,6 +61,8 @@ router.post('/auto-process-all', adminController.autoProcessAll);
 // Notice Management
 router.get('/notices', adminController.getNotices);
 router.post('/notices', adminController.createNotice);
+router.get('/create-blog',blogController.showCreateForm);
+router.post('/create-blog',blogController.createBlog);
 router.post('/notices/:noticeId/update', adminController.updateNotice);
 router.post('/notices/:noticeId/delete', adminController.deleteNotice);
 

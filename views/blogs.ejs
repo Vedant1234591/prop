@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Blogs - Propload</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .btn-primary-custom {
+            background-color: #40788e;
+            color: white;
+        }
+        .btn-primary-custom:hover {
+            background-color: #2f5e6b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <%- include('./partials/landingHeader') %>
+
+    <div class="container py-5 mt-5">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold" style="color: #2f6c7b;">Our Blogs</h1>
+            <p class="text-muted">Latest news and articles from Propload</p>
+        </div>
+
+        <div class="row g-4">
+            <% if (blogs && blogs.length > 0) { %>
+                <% blogs.forEach(blog => { %>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+                        <img
+                            src="<%= blog.img %>"
+                            class="card-img-top"
+                            alt="<%= blog.title %>"
+                            style="height: 260px; object-fit: cover"
+                        />
+                        <div class="card-body">
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <%= blog.formattedDate %>
+                            </p>
+                            <h5 class="fw-semibold mb-3" style="color: #2f6c7b">
+                                <%= blog.title %>
+                            </h5>
+                            <p class="text-muted mb-3">
+                                <%= blog.summary %>
+                            </p>
+                            <a
+                                href="/auth/blog/<%= blog.slug %>"
+                                class="btn btn-primary-custom"
+                            >
+                                Read More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted fs-5">No blogs available at the moment.</p>
+                    <a href="/" class="btn btn-primary-custom">Back to Home</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <%- include('./partials/landingFooter') %>
+</body>
+</html>

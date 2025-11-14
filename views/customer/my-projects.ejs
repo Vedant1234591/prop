@@ -180,24 +180,45 @@
               </div>
 
               <!-- Round Info -->
-              <% if (project.biddingRounds && project.biddingRounds.currentRound) { %>
-                <div class="mb-4">
-                  <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                    <i class="fas fa-flag mr-1"></i>
-                    <% if (project.biddingRounds.currentRound === 1) { %>
-                      Round 1 - Active (<%= moment(project.biddingRounds.round1.endDate).fromNow() %>)
-                    <% } else if (project.biddingRounds.currentRound === 1.5) { %>
-                      Round 1 Completed - Select Top 3
-                    <% } else if (project.biddingRounds.currentRound === 2) { %>
-                      Round 2 - Active (<%= moment(project.biddingRounds.round2.endDate).fromNow() %>)
-                    <% } else if (project.biddingRounds.currentRound === 2.5) { %>
-                      Round 2 Completed - Select Winner
-                    <% } else { %>
-                      Contract Phase
-                    <% } %>
-                  </span>
-                </div>
-              <% } %>
+              <% if (project.adminStatus === "pending") { %>
+
+  <!-- 🔵 Show verification status -->
+  <div class="mb-4">
+    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+      <i class="fas fa-sync-alt animate-spin mr-1"></i>
+      Verification Under Process
+    </span>
+  </div>
+
+<% } else { %>
+
+  <% if (project.biddingRounds && project.biddingRounds.currentRound) { %>
+    <div class="mb-4">
+      <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+        <i class="fas fa-flag mr-1"></i>
+
+        <% if (project.biddingRounds.currentRound === 1) { %>
+          Round 1 ending in (<%= moment(project.biddingRounds.round1.endDate).fromNow() %>)
+
+        <% } else if (project.biddingRounds.currentRound === 1.5 && project.status !== 'failed') { %>
+          Round 1 Completed - Select Top 3
+
+        <% } else if (project.biddingRounds.currentRound === 2) { %>
+          Round 2 - Active (<%= moment(project.biddingRounds.round2.endDate).fromNow() %>)
+
+        <% } else if (project.biddingRounds.currentRound === 2.5) { %>
+          Round 2 Completed - Select Winner
+
+        <% } else if(project.status !== 'failed'){ %>
+          Contract Phase
+        <% } %>
+
+      </span>
+    </div>
+  <% } %>
+
+<% } %>
+
 
               <!-- Buttons -->
               <div class="flex flex-wrap gap-3">
@@ -206,7 +227,7 @@
                   <i class="fas fa-eye"></i> View Details
                 </a>
 
-                <% if (project.biddingRounds?.currentRound === 1.5) { %>
+                <% if (project.biddingRounds?.currentRound === 1.5 && project.status !== 'failed' ) { %>
                   <a href="/customer/project/<%= project._id %>/round1-selection"
                     class="btn-outline flex items-center gap-2 bg-purple-600 text-white border-purple-600 hover:bg-purple-700">
                     <i class="fas fa-star"></i> Select Top 3

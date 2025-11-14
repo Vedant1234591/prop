@@ -226,7 +226,7 @@
                 } else if (contract.status === 'pending-admin' || contract.status === 'correcting') {
                     currentStep = 3;
                 } else if (contract.status === 'completed') {
-                    currentStep = 4;
+                    currentStep = 5;
                 }
             }
             %>
@@ -240,9 +240,9 @@
                 </div>
                 <p class="text-sm font-medium text-gray-700 text-center"><%= step.title %></p>
                 <p class="text-xs text-gray-500 text-center hidden md:block"><%= step.description %></p>
-                <% if (index < steps.length - 1) { %>
+                <% if (index < steps.length ) { %>
                 <div class="hidden md:block w-full h-1 mt-4 
-                    <%= currentStep > step.number ? 'bg-green-500' : 'bg-gray-300' %>">
+                    <%= currentStep >= step.number ? 'bg-green-500' : 'bg-gray-300' %>">
                 </div>
                 <% } %>
             </div>

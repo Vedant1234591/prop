@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-
+const blogController = require("../controllers/blogController");
 const { upload } = require("../middleware/upload");
 
-router.get("/", authController.getLandingPage);
+router.get('/blog/:slug', blogController.getBlogBySlug);
+
 router.get("/login", authController.getLogin);
 router.get("/about", authController.getAbout);
 router.get("/contact-us", authController.getContact);

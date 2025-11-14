@@ -2566,7 +2566,7 @@ exports.resubmitDefectedBid = async (req, res) => {
     res.redirect("/seller/my-bids");
   } catch (error) {
     console.error("Resubmit defected bid error:", error);
-    req.flash("error", "Error resubmitting bid: " + error.message);
+    // req.flash("error", "Error resubmitting bid: " + error.message);
     res.redirect("/seller/my-bids");
   }
 };

@@ -1649,7 +1649,7 @@ exports.postProjectStep3 = async (req, res) => {
     }
 
     // Validate required fields
-    const requiredFields = ["startingBid", "bidEndDate", "startDate", "endDate"];
+    const requiredFields = ["startingBid", "bidEndDate", "endDate"];
     const missingFields = requiredFields.filter((field) => !req.body[field]);
 
     if (missingFields.length > 0) {
@@ -1658,7 +1658,16 @@ exports.postProjectStep3 = async (req, res) => {
     }
 
     const bidEndDate = new Date(req.body.bidEndDate);
-    const startDate = new Date(req.body.startDate);
+    // const startDate = new Date(req.body.startDate);
+    // Keep Date object for all calculations
+const startDate = new Date(Date.now() + 3 * 60 * 1000);
+
+// Only for logs (optional)
+console.log("This is START date", startDate.toISOString().slice(0, 16));
+
+
+    // console.log("This is stART date",startDate)
+
     const endDate = new Date(req.body.endDate);
     const now = new Date();
 
