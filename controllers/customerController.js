@@ -2161,8 +2161,7 @@ exports.downloadCustomerContract = async (req, res) => {
     const { bidId } = req.params;
     const customerId = req.session.userId;
 
-    console.log("🔹 bidId:", bidId);
-    console.log("🔹 customerId from session:", customerId);
+
 
     const bid = await Bid.findOne({ _id: bidId }).populate("project");
     if (!bid || bid.project.customer.toString() !== customerId) {
@@ -2179,7 +2178,7 @@ exports.downloadCustomerContract = async (req, res) => {
 
     // Use exact public_id from Cloudinary
     const publicId = contract.customerSignedContract.public_id;
-    console.log("📂 Extracted publicId:", publicId);
+    // console.log("📂 Extracted publicId:", publicId);
 
     // Generate signed Cloudinary URL (no format argument)
     const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
@@ -2188,7 +2187,7 @@ exports.downloadCustomerContract = async (req, res) => {
       attachment: true,           // force download
     });
 
-    console.log("🔗 Signed URL generated:", signedUrl);
+    // console.log("🔗 Signed URL generated:", signedUrl);
 
     res.setHeader(
       "Content-Disposition",
@@ -2196,7 +2195,7 @@ exports.downloadCustomerContract = async (req, res) => {
     );
     res.setHeader("Content-Type", "application/pdf");
 
-    console.log("✅ Redirecting to signed Cloudinary download URL...");
+    // console.log("✅ Redirecting to signed Cloudinary download URL...");
     return res.redirect(signedUrl);
   } catch (error) {
     console.error("❌ Download customer contract error:", error);
@@ -2219,8 +2218,7 @@ exports.downloadSellerContract = async (req, res) => {
     const { bidId } = req.params;
     const customerId = req.session.userId;
 
-    console.log("🔹 bidId:", bidId);
-    console.log("🔹 customerId from session:", customerId);
+   
 
     // 1️⃣ Validate access
     const bid = await Bid.findOne({ _id: bidId }).populate("project");
@@ -2243,7 +2241,7 @@ exports.downloadSellerContract = async (req, res) => {
       publicId = urlPart?.split(".pdf")[0];
     }
 
-    console.log("📂 Extracted publicId:", publicId);
+    // console.log("📂 Extracted publicId:", publicId);
 
     // 4️⃣ Generate signed Cloudinary URL for download
     // Use type=upload because your uploadContracts uses that (not authenticated)
@@ -2253,7 +2251,7 @@ exports.downloadSellerContract = async (req, res) => {
       attachment: true, // ✅ forces browser download
     });
 
-    console.log("🔗 Signed URL generated:", signedUrl);
+    // console.log("🔗 Signed URL generated:", signedUrl);
 
     // 5️⃣ Set headers for clean file download
     res.setHeader(
@@ -2262,7 +2260,7 @@ exports.downloadSellerContract = async (req, res) => {
     );
     res.setHeader("Content-Type", "application/pdf");
 
-    console.log("✅ Redirecting to signed Cloudinary download URL...");
+    // console.log("✅ Redirecting to signed Cloudinary download URL...");
     return res.redirect(signedUrl);
 
   } catch (error) {
