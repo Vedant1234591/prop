@@ -1657,19 +1657,23 @@ exports.postProjectStep3 = async (req, res) => {
       return res.redirect(`/customer/project-form/${category}?step=3`);
     }
 
-   const bidEndDate = moment(req.body.bidEndDate, "YYYY-MM-DDTHH:mm").toDate();
+   // const bidEndDate = moment(req.body.bidEndDate, "YYYY-MM-DDTHH:mm").toDate();
 
     // const startDate = new Date(req.body.startDate);
     // Keep Date object for all calculations
-const startDate = new Date(Date.now() + 3 * 60 * 1000);
+// const startDate = new Date(Date.now() + 3 * 60 * 1000);
 
 // Only for logs (optional)
+    const bidEndDate = moment(req.body.bidEndDate).utc().toDate();
+const endDate = moment(req.body.endDate).utc().toDate();
+const startDate = moment().add(3, "minutes").utc().toDate();
+
 console.log("This is START date", startDate.toISOString().slice(0, 16));
 
 
     // console.log("This is stART date",startDate)
 
-    const endDate = new Date(req.body.endDate);
+    // const endDate = new Date(req.body.endDate);
     const now = new Date();
 
     if (bidEndDate <= now) {
