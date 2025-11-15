@@ -1,0 +1,541 @@
+# adminSideNav.ejs
+
+```html
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+  :root {
+    --propload-primary: #e9e2b3;
+    --propload-secondary: #2f6c7b;
+    --surface: #ffffff;
+    --muted: #6b7280;
+    --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+  }
+
+  .logout-btn {
+    background: var(--surface);
+    color: var(--propload-secondary);
+    border: 1px solid rgba(15, 23, 42, 0.04);
+    transition: background .2s, color .2s;
+  }
+  .logout-btn:hover {
+    background: var(--propload-primary);
+    color: #1f2937;
+  }
+
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid rgba(15, 23, 42, 0.04);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 1.25rem;
+    transition: transform .3s ease;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    padding: .625rem .75rem;
+    border-radius: .75rem;
+    color: var(--propload-secondary);
+    font-weight: 600;
+    transition: background .18s ease, transform .12s ease, color .12s ease;
+  }
+  .menu-item:hover {
+    background: var(--propload-primary);
+    color: var(--propload-secondary);
+    transform: translateY(-2px);
+  }
+  .menu-item.active {
+    background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03));
+    color: var(--propload-secondary);
+    box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04);
+  }
+
+  .menu-item i {
+    width: 1.25rem;
+    text-align: center;
+    font-size: 1.05rem;
+  }
+
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 40;
+    display: none;
+  }
+  .drawer-backdrop.show { display: block; }
+
+  .muted { color: var(--muted); }
+</style>
+
+<!-- Sidebar -->
+<aside id="sidebar"
+  class="sidebar fixed top-0 left-0 h-full bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
+  aria-hidden="true">
+
+  <div class="flex flex-col h-full">
+    <!-- Logo + Profile -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="cursor-pointer" onclick="window.location.href='/admin/profile'">
+        <img src="/images/landing/logo.png" alt="Propload"
+          class="h-12 w-auto object-contain" onerror="this.style.display='none'">
+        <div class="flex items-center gap-2 mt-2">
+          <div class="ml-3 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
+            <i class="fas fa-user" style="color: var(--propload-secondary);"></i>
+          </div>
+          <div class="text-s muted">Admin</div>
+        </div>
+      </div>
+
+      <button id="sidebarCloseBtn" class="lg:hidden p-2 rounded-md text-slate-500"
+        aria-label="Close menu" title="Close menu">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto">
+      <ul class="space-y-1">
+        <li><a href="/admin/dashboard"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='dashboard') ? 'active' : '' %>">
+            <i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+        <li><a href="/admin/all-users"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='all-users') ? 'active' : '' %>">
+            <i class="fas fa-users"></i><span>All Users</span></a></li>
+        <li><a href="/admin/all-projects"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='all-projects') ? 'active' : '' %>">
+            <i class="fas fa-project-diagram"></i><span>All Projects</span></a></li>
+        <li><a href="/admin/pending-contracts"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='pending-contracts') ? 'active' : '' %>">
+            <i class="fas fa-file-contract"></i><span>Pending Contracts</span></a></li>
+        <li><a href="/admin/project-verification"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='project-verification') ? 'active' : '' %>">
+            <i class="fas fa-check-circle"></i><span>Project Verification</span></a></li>
+        <li><a href="/admin/system-status"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='system-status') ? 'active' : '' %>">
+            <i class="fas fa-cog"></i><span>System Status</span></a></li>
+        <li><a href="/admin/support"
+            class="menu-item <%= (typeof active !== 'undefined' && active==='support') ? 'active' : '' %>">
+            <i class="fas fa-headset"></i><span>Support</span></a></li>
+      </ul>
+    </nav>
+
+    <!-- Footer / Logout -->
+    <div class="mt-6">
+      <form action="/auth/logout" method="post" class="inline-block w-full">
+        <button type="submit" class="w-full text-left px-3 py-2 rounded-md font-semibold logout-btn">
+          <i class="fas fa-sign-out-alt mr-3"></i><span>Logout</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</aside>
+
+<!-- Backdrop for Mobile -->
+<div id="drawerBackdrop" class="drawer-backdrop hidden lg:hidden"></div>
+
+<!-- Mobile Sidebar Toggle Button -->
+<button id="openSidebarBtn"
+  class="fixed top-1 left-1 z-50 lg:hidden text-[var(--propload-secondary)] bg-white border border-gray-100 shadow-sm rounded-md flex items-center gap-2 px-3 py-2">
+  <i class="fas fa-bars"></i>
+</button>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("sidebar");
+  const openBtn = document.getElementById("openSidebarBtn");
+  const closeBtn = document.getElementById("sidebarCloseBtn");
+  const backdrop = document.getElementById("drawerBackdrop");
+
+  const openSidebar = () => {
+    sidebar.classList.remove("-translate-x-full");
+    backdrop.classList.add("show");
+    document.body.classList.add("overflow-hidden");
+    openBtn.classList.add("hidden");
+  };
+
+  const closeSidebar = () => {
+    sidebar.classList.add("-translate-x-full");
+    backdrop.classList.remove("show");
+    document.body.classList.remove("overflow-hidden");
+    openBtn.classList.remove("hidden");
+  };
+
+  openBtn.addEventListener("click", openSidebar);
+  closeBtn.addEventListener("click", closeSidebar);
+  backdrop.addEventListener("click", closeSidebar);
+
+  // Prevent clicks inside sidebar from closing it
+  sidebar.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 1024) {
+      sidebar.classList.remove("-translate-x-full");
+      backdrop.classList.remove("show");
+      document.body.classList.remove("overflow-hidden");
+      openBtn.classList.remove("hidden");
+    } else {
+      sidebar.classList.add("-translate-x-full");
+    }
+  });
+});
+</script>
+```
+
+---
+
+# adminDashboard.ejs
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/png" href="/images/landing/Vector.jpeg">
+  <title>Admin Dashboard - Propload</title>
+
+  <!-- Tailwind & Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* Brand colors provided by you */
+    :root {
+      --propload-primary: #e9e2b3;
+      --propload-secondary: #2f6c7b;
+      --surface: #ffffff;
+      --muted: #6b7280;
+      --card-shadow: 0 8px 20px rgba(47, 76, 86, 0.06);
+    }
+
+    .logout-btn {
+      background: #ffffff;
+      color: var(--propload-secondary);
+      border: 1px solid rgba(15, 23, 42, 0.04);
+      transition: background .2s, color .2s;
+    }
+
+    .logout-btn:hover {
+      background: var(--propload-primary);
+      color: #1f2937;
+    }
+
+    /* Layout */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-right: 1px solid rgba(15, 23, 42, 0.04);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 40;
+      padding: 1.25rem;
+    }
+
+    .content-area {
+      margin-left: 280px;
+      transition: margin-left .25s ease;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(0); position: fixed; left: 0; top: 0; bottom: 0; }
+      .content-area { margin-left: 0; }
+    }
+
+    /* Card */
+    .card { background: var(--surface); border-radius: 10px; box-shadow: var(--card-shadow); border: 1px solid rgba(15, 23, 42, 0.03); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(47, 76, 86, 0.08); }
+
+    .menu-item { display: flex; align-items: center; gap: .875rem; padding: .625rem .75rem; border-radius: .75rem; color: var(--propload-secondary); font-weight: 600; transition: background .18s ease, transform .12s ease, color .12s ease; }
+    .menu-item:hover { background: var(--propload-primary); color: var(--propload-secondary); transform: translateY(-2px); }
+    .menu-item.active { background: linear-gradient(90deg, rgba(233,226,179,0.32), rgba(47,108,123,0.03)); color: var(--propload-secondary); box-shadow: inset 0 0 0 1px rgba(47,108,123,0.04); }
+
+    .muted { color: var(--muted); }
+
+    .status-badge { font-weight: 700; font-size: .75rem; padding: .25rem .5rem; border-radius: 999px; display: inline-block; }
+
+    .table-row-hover tbody tr:hover { background: #fbfdff; }
+
+    @media (max-width: 640px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 30; display: none; }
+    .drawer-backdrop.show { display: block; }
+
+    .notice-item { cursor: pointer; transition: background .15s ease; }
+    .notice-item:hover { background: #f9fafb; }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800 antialiased">
+
+  <%- include('./adminSideNav') %>
+
+  <main id="mainContent" class="content-area min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <!-- Top header -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div class="min-w-0">
+          <h1 class="text-2xl md:text-3xl font-bold" style="color: var(--muted);">Admin Dashboard</h1>
+          <p class="text-sm text-slate-500 mt-1">Welcome back, <span class="font-semibold text-slate-700"><%= adminUser?.name || 'Admin' %></span>. Here's your overview.</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <a href="/admin/project-verification" class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-white text-sm shadow-sm" style="background-color: var(--propload-secondary);">
+            <i class="fas fa-check-circle"></i> Review Verifications
+          </a>
+
+          <a href="/admin/all-projects" class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-slate-800 text-md font-semibold shadow" style="background-color: var(--propload-primary);">
+            <i class="fas fa-folder-open"></i> All Projects
+          </a>
+        </div>
+      </div>
+
+      <%- include('../partials/flash-messages1') %>
+
+      <!-- Real-time Status Header -->
+      <div class="card p-4 mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="rounded-md p-2" style="background: rgba(47,108,123,0.08)"><i class="fas fa-sync-alt" style="color:var(--propload-secondary)"></i></div>
+            <div>
+              <p class="text-sm text-slate-600">System monitoring active</p>
+              <p class="text-xs muted">Key metrics update automatically</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="last-updated" class="text-xs muted">Updated just now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stats-grid">
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(47,108,123,0.12);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(47,108,123,0.06)"><i class="fas fa-users" style="color:var(--propload-secondary)"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Total Users</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.totalUsers || 0 %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(34,197,94,0.08);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(34,197,94,0.06)"><i class="fas fa-project-diagram" style="color:#16a34a"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Total Projects</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.totalProjects || 0 %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(250,204,21,0.12);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(250,204,21,0.06)"><i class="fas fa-gavel" style="color:#b45309"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Total Bids</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.totalBids || 0 %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-4 sm:p-6 border-l-4" style="border-color: rgba(239,68,68,0.08);">
+          <div class="flex items-center">
+            <div class="p-2 sm:p-3 rounded-lg" style="background: rgba(239,68,68,0.06)"><i class="fas fa-file-contract" style="color:#ef4444"></i></div>
+            <div class="ml-3 sm:ml-4 min-w-0">
+              <h3 class="text-xs sm:text-sm font-medium muted">Pending Contracts</h3>
+              <p class="text-xl sm:text-2xl font-bold text-slate-800"><%= stats.pendingContracts || 0 %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Contracts (like customer) -->
+      <% if (pendingContracts && pendingContracts.length> 0) { %>
+        <div class="card p-4 mb-6" style="background: linear-gradient(90deg, rgba(233,226,179,0.18), rgba(47,108,123,0.02))">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="rounded-md p-2" style="background: rgba(47,108,123,0.06)">
+                <i class="fas fa-file-contract" style="color:var(--propload-secondary)"></i>
+              </div>
+              <div>
+                <p class="text-sm text-slate-700">You have <strong><%= pendingContracts.length %></strong> pending contract(s)</p>
+                <p class="text-xs muted">Action required to move forward</p>
+              </div>
+            </div>
+
+            <a href="/admin/pending-contracts" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--propload-secondary)] text-white text-sm">
+              <i class="fas fa-eye"></i> View Contracts
+            </a>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <!-- Left - Top Notices -->
+        <div class="lg:col-span-1">
+          <div class="card overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+              <h3 class="text-base sm:text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-bell" style="color:var(--propload-secondary)"></i>
+                Top Notices
+              </h3>
+            </div>
+            <div class="p-4 sm:p-6 space-y-3">
+              <% if (notices && notices.length> 0) { %>
+                <% notices.slice(0,5).forEach(notice=> { %>
+                  <div class="notice-item border border-gray-100 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/admin/notices'">
+                    <div class="flex justify-between items-start mb-1">
+                      <h4 class="font-semibold text-slate-800 truncate text-sm sm:text-base flex-1 mr-2"><%= notice.title %></h4>
+                      <span class="text-xs muted"><%= new Date(notice.createdAt).toLocaleDateString() %></span>
+                    </div>
+                    <p class="text-xs muted truncate"><%= notice.description %></p>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <p class="text-sm muted">No notices available</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center - Main content cards -->
+        <div class="lg:col-span-2 card p-4 sm:p-6">
+          <!-- Projects Pending Verification -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-slate-800">Projects Pending Verification</h3>
+            <p class="text-sm muted">Projects waiting for admin approval</p>
+
+            <div class="mt-4">
+              <% const pendingProjects = recentProjects.filter(project => project.adminStatus === 'pending'); %>
+              <% if (pendingProjects.length > 0) { %>
+                <div class="space-y-4">
+                  <% pendingProjects.forEach(project => { %>
+                    <div class="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50">
+                      <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="font-medium text-slate-800"><%= project.title %></h4>
+                          <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending Verification</span>
+                        </div>
+                        <p class="text-sm muted">by <%= project.customer.name %> • Category: <span class="capitalize"><%= project.category %></span> • Created: <%= moment(project.createdAt).format('MMM D, YYYY') %></p>
+                        <p class="text-sm text-slate-500 mt-1">Starting Bid: $<%= project.bidSettings.startingBid %> • Timeline: <%= project.timeline.duration %> days</p>
+                      </div>
+                      <div class="ml-4 flex space-x-2">
+                        <a href="/admin/project-verification/<%= project._id %>" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm">Review</a>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } else { %>
+                <div class="text-center py-8">
+                  <i class="fas fa-check-circle text-green-400 text-4xl mb-3"></i>
+                  <p class="text-gray-500">No projects pending verification</p>
+                  <p class="text-sm text-gray-400 mt-1">All projects have been reviewed</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Recent Projects -->
+          <div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-3">Recent Projects</h3>
+            <% if (recentProjects.length > 0) { %>
+              <div class="space-y-4">
+                <% recentProjects.forEach(project => { %>
+                  <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div>
+                      <h4 class="font-medium text-slate-800"><%= project.title %></h4>
+                      <p class="text-sm muted">by <%= project.customer.name %> • <span class="capitalize"><%= project.status %></span></p>
+                    </div>
+                    <a href="/admin/projects/<%= project._id %>" class="text-[var(--propload-secondary)] hover:underline"><i class="fas fa-arrow-right"></i></a>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-muted text-center py-4">No projects found</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8 mt-6">
+        <!-- Pending Verifications -->
+        <div class="card">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-slate-800">Pending Contract Verifications</h2>
+          </div>
+          <div class="p-6">
+            <% if (pendingVerifications.length > 0) { %>
+              <div class="space-y-4">
+                <% pendingVerifications.forEach(contract => { %>
+                  <div class="p-3 border border-yellow-200 rounded-lg bg-yellow-50">
+                    <h3 class="font-medium text-slate-800"><%= contract.project.title %></h3>
+                    <p class="text-sm muted">Seller: <%= contract.seller.companyName || contract.seller.name %> • Amount: $<%= contract.bid.amount.toLocaleString() %></p>
+                    <div class="mt-2 flex space-x-2">
+                      <a href="/admin/pending-contracts" class="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">Review</a>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p class="text-muted text-center py-4">No pending verifications</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card p-6">
+          <h2 class="text-lg font-semibold text-slate-800 mb-4">Quick Actions</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="/admin/all-users" class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center hover:bg-blue-100">
+              <i class="fas fa-users text-blue-600 text-xl mb-2"></i>
+              <p class="font-medium text-blue-900">Manage Users</p>
+            </a>
+            <a href="/admin/all-projects" class="bg-green-50 border border-green-200 rounded-lg p-4 text-center hover:bg-green-100">
+              <i class="fas fa-project-diagram text-green-600 text-xl mb-2"></i>
+              <p class="font-medium text-green-900">View Projects</p>
+            </a>
+            <a href="/admin/pending-contracts" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center hover:bg-yellow-100">
+              <i class="fas fa-file-contract text-yellow-600 text-xl mb-2"></i>
+              <p class="font-medium text-yellow-900">Verify Contracts</p>
+            </a>
+            <a href="/admin/system-status" class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center hover:bg-purple-100">
+              <i class="fas fa-cog text-purple-600 text-xl mb-2"></i>
+              <p class="font-medium text-purple-900">System Status</p>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Small script to update "last-updated" time marker
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('last-updated');
+      if (el) el.textContent = 'Updated just now';
+    });
+  </script>
+</body>
+
+</html>
+```
