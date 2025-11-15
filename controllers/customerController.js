@@ -1657,7 +1657,8 @@ exports.postProjectStep3 = async (req, res) => {
       return res.redirect(`/customer/project-form/${category}?step=3`);
     }
 
-    const bidEndDate = new Date(req.body.bidEndDate);
+   const bidEndDate = moment(req.body.bidEndDate, "YYYY-MM-DDTHH:mm").toDate();
+
     // const startDate = new Date(req.body.startDate);
     // Keep Date object for all calculations
 const startDate = new Date(Date.now() + 3 * 60 * 1000);
